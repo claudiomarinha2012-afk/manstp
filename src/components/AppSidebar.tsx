@@ -1,0 +1,85 @@
+import { Home, Users, BookOpen, School, BarChart3, FileText, LogOut } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarFooter,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { signOut } from "@/lib/supabase";
+import { toast } from "sonner";
+
+const menuItems = [
+  { title: "Dashboard", url: "/", icon: Home },
+  { title: "Alunos", url: "/alunos", icon: Users },
+  { title: "Cursos", url: "/cursos", icon: BookOpen },
+  { title: "Turmas", url: "/turmas", icon: School },
+  { title: "Estatísticas", url: "/estatisticas", icon: BarChart3 },
+  { title: "Relatórios", url: "/relatorios", icon: FileText },
+];
+
+export function AppSidebar() {
+  const { state } = useSidebar();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("Logout realizado com sucesso!");
+      navigate("/auth");
+    } catch (error: any) {
+      toast.error("Erro ao fazer logout");
+    }
+  };
+
+  return (
+    <Sidebar collapsible="icon">
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-sidebar-primary">
+            Sistema Militar
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {menuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
+                      end={item.url === "/"}
+                      className={({ isActive }) =>
+                        isActive
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                          : ""
+                      }
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter>
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          onClick={handleSignOut}
+        >
+          <LogOut className="h-4 w-4" />
+          {state !== "collapsed" && <span className="ml-2">Sair</span>}
+        </Button>
+      </SidebarFooter>
+    </Sidebar>
+  );
+}

@@ -17,6 +17,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { TurmaForm } from "@/components/TurmaForm";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { VincularAlunoTurma } from "@/components/VincularAlunoTurma";
 
 interface Turma {
   id: string;
@@ -158,15 +159,27 @@ export default function Turmas() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewAlunos(turma)}
-                        className="gap-2"
-                      >
-                        <Users className="h-4 w-4" />
-                        Ver Alunos
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewAlunos(turma)}
+                          className="gap-2"
+                        >
+                          <Users className="h-4 w-4" />
+                          Ver Alunos
+                        </Button>
+                        <VincularAlunoTurma
+                          turmaId={turma.id}
+                          turmaNome={turma.nome}
+                          onSuccess={() => {
+                            fetchTurmas();
+                            if (selectedTurma?.id === turma.id) {
+                              fetchAlunosTurma(turma.id);
+                            }
+                          }}
+                        />
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">

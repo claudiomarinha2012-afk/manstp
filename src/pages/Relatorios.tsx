@@ -36,7 +36,7 @@ export default function Relatorios() {
 
       if (incluirAlunos) {
         let query = supabase.from("alunos").select("*");
-        if (selectedTipo) query = query.eq("tipo_militar", selectedTipo as any);
+        if (selectedTipo) query = query.eq("tipo_militar", selectedTipo as "Fuzileiro Naval" | "Guarda Costeiro");
         const { data: alunosData } = await query;
         if (alunosData && alunosData.length > 0) {
           headers = Object.keys(alunosData[0]);

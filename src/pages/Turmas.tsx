@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Users } from "lucide-react";
+import { Search, Users, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { TurmaForm } from "@/components/TurmaForm";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { VincularAlunoTurma } from "@/components/VincularAlunoTurma";
+import { toast } from "sonner";
 
 interface Turma {
   id: string;
@@ -35,6 +36,8 @@ interface Aluno {
   graduacao: string;
   tipo_militar: string;
   local_servico?: string;
+  status?: string;
+  vinculo_id?: string;
   email: string | null;
   telefone: string | null;
 }
@@ -73,15 +76,34 @@ export default function Turmas() {
     try {
       const { data, error } = await supabase
         .from("aluno_turma")
-        .select("aluno_id, alunos(id, nome_completo, graduacao, tipo_militar, local_servico, email, telefone)")
+        .select("id, aluno_id, alunos(id, nome_completo, graduacao, tipo_militar, local_servico, status, email, telefone)")
         .eq("turma_id", turmaId);
 
       if (error) throw error;
-      setAlunosTurma(data?.map((item: any) => item.alunos) || []);
+      setAlunosTurma(data?.map((item: any) => ({...item.alunos, vinculo_id: item.id})) || []);
     } catch (error) {
       console.error("Erro ao buscar alunos da turma:", error);
     } finally {
       setLoadingAlunos(false);
+    }
+  };
+
+  const handleDesvincular = async (vinculoId: string) => {
+    try {
+      const { error } = await supabase
+        .from("aluno_turma")
+        .delete()
+        .eq("id", vinculoId);
+
+      if (error) throw error;
+      
+      if (selectedTurma) {
+        fetchAlunosTurma(selectedTurma.id);
+      }
+      toast.success("Aluno desvinculado com sucesso");
+    } catch (error) {
+      console.error("Erro ao desvincular aluno:", error);
+      toast.error("Erro ao desvincular aluno");
     }
   };
 
@@ -223,7 +245,9 @@ export default function Turmas() {
                   <TableHead>Graduação</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Local de Serviço</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Contato</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -244,10 +268,33 @@ export default function Turmas() {
                     </TableCell>
                     <TableCell>{aluno.local_servico || "-"}</TableCell>
                     <TableCell>
+                      <Badge
+                        variant={
+                          aluno.status === "Aprovado" ? "default" :
+                          aluno.status === "Reprovado" ? "destructive" :
+                          aluno.status === "Desligado" ? "secondary" :
+                          "outline"
+                        }
+                      >
+                        {aluno.status || "Cursando"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
                       <div className="text-sm">
                         {aluno.email && <div>{aluno.email}</div>}
                         {aluno.telefone && <div className="text-muted-foreground">{aluno.telefone}</div>}
                       </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDesvincular(aluno.vinculo_id!)}
+                        className="gap-2"
+                      >
+                        <X className="h-4 w-4" />
+                        Desvincular
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

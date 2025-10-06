@@ -95,6 +95,7 @@ export type Database = {
           local_servico: string | null
           nome_completo: string
           observacoes: string | null
+          status: Database["public"]["Enums"]["status_aluno"] | null
           telefone: string | null
           tipo_militar: Database["public"]["Enums"]["tipo_militar"]
           updated_at: string | null
@@ -108,6 +109,7 @@ export type Database = {
           local_servico?: string | null
           nome_completo: string
           observacoes?: string | null
+          status?: Database["public"]["Enums"]["status_aluno"] | null
           telefone?: string | null
           tipo_militar: Database["public"]["Enums"]["tipo_militar"]
           updated_at?: string | null
@@ -121,6 +123,7 @@ export type Database = {
           local_servico?: string | null
           nome_completo?: string
           observacoes?: string | null
+          status?: Database["public"]["Enums"]["status_aluno"] | null
           telefone?: string | null
           tipo_militar?: Database["public"]["Enums"]["tipo_militar"]
           updated_at?: string | null
@@ -267,35 +270,74 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role: "coordenador" | "visualizador"
       graduacao_militar:
-        | "Soldado"
-        | "Cabo"
-        | "Terceiro Sargento"
-        | "Segundo Sargento"
-        | "Primeiro Sargento"
-        | "Subtenente"
-        | "Aspirante"
-        | "Segundo Tenente"
-        | "Primeiro Tenente"
-        | "Capitão"
-        | "Major"
-        | "Tenente Coronel"
+        | "Brigadeiro"
         | "Coronel"
-        | "1º Tenente"
-        | "2º Tenente"
-        | "Tenente-Coronel"
-        | "1º Sargento"
-        | "2º Sargento"
-        | "3º Sargento"
+        | "Capitão de Mar e Guerra"
+        | "Tenente Coronel"
+        | "Capitão de Fragata"
+        | "Major"
+        | "Capitão Tenente"
+        | "Capitão"
+        | "Primeiro Tenente"
+        | "Tenente"
+        | "Segundo Tenente"
+        | "Alferes"
+        | "Guarda Marinha"
+        | "Aspirante"
+        | "Sargento Mor"
+        | "Sargento Chefe"
+        | "Sargento Ajudante"
+        | "Primeiro Sargento"
+        | "Segundo Sargento"
+        | "Furriel"
+        | "Primeiro Subsargento"
+        | "Segundo Furriel"
+        | "Subsargento"
+        | "Cabo de Seção"
+        | "Cabo"
+        | "Segundo Cabo"
+        | "Segundo Marinheiro"
+        | "Soldado"
+        | "Grumete"
       situacao_curso: "Em Andamento" | "Concluído" | "Cancelado"
+      status_aluno: "Aprovado" | "Reprovado" | "Desligado" | "Cursando"
       tipo_militar: "Fuzileiro Naval" | "Guarda Costeiro"
     }
     CompositeTypes: {
@@ -424,28 +466,40 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["coordenador", "visualizador"],
       graduacao_militar: [
-        "Soldado",
-        "Cabo",
-        "Terceiro Sargento",
-        "Segundo Sargento",
-        "Primeiro Sargento",
-        "Subtenente",
-        "Aspirante",
-        "Segundo Tenente",
-        "Primeiro Tenente",
-        "Capitão",
-        "Major",
-        "Tenente Coronel",
+        "Brigadeiro",
         "Coronel",
-        "1º Tenente",
-        "2º Tenente",
-        "Tenente-Coronel",
-        "1º Sargento",
-        "2º Sargento",
-        "3º Sargento",
+        "Capitão de Mar e Guerra",
+        "Tenente Coronel",
+        "Capitão de Fragata",
+        "Major",
+        "Capitão Tenente",
+        "Capitão",
+        "Primeiro Tenente",
+        "Tenente",
+        "Segundo Tenente",
+        "Alferes",
+        "Guarda Marinha",
+        "Aspirante",
+        "Sargento Mor",
+        "Sargento Chefe",
+        "Sargento Ajudante",
+        "Primeiro Sargento",
+        "Segundo Sargento",
+        "Furriel",
+        "Primeiro Subsargento",
+        "Segundo Furriel",
+        "Subsargento",
+        "Cabo de Seção",
+        "Cabo",
+        "Segundo Cabo",
+        "Segundo Marinheiro",
+        "Soldado",
+        "Grumete",
       ],
       situacao_curso: ["Em Andamento", "Concluído", "Cancelado"],
+      status_aluno: ["Aprovado", "Reprovado", "Desligado", "Cursando"],
       tipo_militar: ["Fuzileiro Naval", "Guarda Costeiro"],
     },
   },

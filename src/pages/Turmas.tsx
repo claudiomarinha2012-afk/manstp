@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Users, X } from "lucide-react";
+import { Search, Users, X, GraduationCap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { TurmaForm } from "@/components/TurmaForm";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { VincularAlunoTurma } from "@/components/VincularAlunoTurma";
+import { VincularInstrutorTurma } from "@/components/VincularInstrutorTurma";
 import { toast } from "sonner";
 
 interface Turma {
@@ -42,6 +43,17 @@ interface Aluno {
   telefone: string | null;
 }
 
+interface Instrutor {
+  id: string;
+  nome_completo: string;
+  graduacao: string;
+  tipo_militar: string;
+  especialidade?: string;
+  vinculo_id?: string;
+  email: string | null;
+  telefone: string | null;
+}
+
 export default function Turmas() {
   const { user } = useAuth();
   const [turmas, setTurmas] = useState<Turma[]>([]);
@@ -49,7 +61,10 @@ export default function Turmas() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTurma, setSelectedTurma] = useState<Turma | null>(null);
   const [alunosTurma, setAlunosTurma] = useState<Aluno[]>([]);
+  const [instrutoresTurma, setInstrutoresTurma] = useState<Instrutor[]>([]);
   const [loadingAlunos, setLoadingAlunos] = useState(false);
+  const [loadingInstrutores, setLoadingInstrutores] = useState(false);
+  const [viewType, setViewType] = useState<'alunos' | 'instrutores'>('alunos');
 
   useEffect(() => {
     fetchTurmas();
@@ -88,6 +103,23 @@ export default function Turmas() {
     }
   };
 
+  const fetchInstrutoresTurma = async (turmaId: string) => {
+    setLoadingInstrutores(true);
+    try {
+      const { data, error } = await supabase
+        .from("instrutor_turma")
+        .select("id, instrutor_id, instrutores(id, nome_completo, graduacao, tipo_militar, especialidade, email, telefone)")
+        .eq("turma_id", turmaId);
+
+      if (error) throw error;
+      setInstrutoresTurma(data?.map((item: any) => ({...item.instrutores, vinculo_id: item.id})) || []);
+    } catch (error) {
+      console.error("Erro ao buscar instrutores da turma:", error);
+    } finally {
+      setLoadingInstrutores(false);
+    }
+  };
+
   const handleDesvincular = async (vinculoId: string) => {
     try {
       const { error } = await supabase
@@ -107,9 +139,35 @@ export default function Turmas() {
     }
   };
 
+  const handleDesvincularInstrutor = async (vinculoId: string) => {
+    try {
+      const { error } = await supabase
+        .from("instrutor_turma")
+        .delete()
+        .eq("id", vinculoId);
+
+      if (error) throw error;
+      
+      if (selectedTurma) {
+        fetchInstrutoresTurma(selectedTurma.id);
+      }
+      toast.success("Instrutor desvinculado com sucesso");
+    } catch (error) {
+      console.error("Erro ao desvincular instrutor:", error);
+      toast.error("Erro ao desvincular instrutor");
+    }
+  };
+
   const handleViewAlunos = (turma: Turma) => {
     setSelectedTurma(turma);
+    setViewType('alunos');
     fetchAlunosTurma(turma.id);
+  };
+
+  const handleViewInstrutores = (turma: Turma) => {
+    setSelectedTurma(turma);
+    setViewType('instrutores');
+    fetchInstrutoresTurma(turma.id);
   };
 
   const filteredTurmas = turmas.filter((turma) =>
@@ -191,6 +249,15 @@ export default function Turmas() {
                           <Users className="h-4 w-4" />
                           Ver Alunos
                         </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewInstrutores(turma)}
+                          className="gap-2"
+                        >
+                          <GraduationCap className="h-4 w-4" />
+                          Ver Instrutores
+                        </Button>
                         <VincularAlunoTurma
                           turmaId={turma.id}
                           turmaNome={turma.nome}
@@ -198,6 +265,15 @@ export default function Turmas() {
                             fetchTurmas();
                             if (selectedTurma?.id === turma.id) {
                               fetchAlunosTurma(turma.id);
+                            }
+                          }}
+                        />
+                        <VincularInstrutorTurma
+                          turmaId={turma.id}
+                          onSuccess={() => {
+                            fetchTurmas();
+                            if (selectedTurma?.id === turma.id) {
+                              fetchInstrutoresTurma(turma.id);
                             }
                           }}
                         />
@@ -226,80 +302,142 @@ export default function Turmas() {
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              Alunos da Turma: {selectedTurma?.nome} ({selectedTurma?.ano})
+              {viewType === 'alunos' ? 'Alunos' : 'Instrutores'} da Turma: {selectedTurma?.nome} ({selectedTurma?.ano})
             </DialogTitle>
           </DialogHeader>
-          {loadingAlunos ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            </div>
-          ) : alunosTurma.length === 0 ? (
-            <div className="py-12 text-center">
-              <p className="text-muted-foreground">Nenhum aluno vinculado a esta turma</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Graduação</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Local de Serviço</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Contato</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {alunosTurma.map((aluno) => (
-                  <TableRow key={aluno.id}>
-                    <TableCell className="font-medium">{aluno.nome_completo}</TableCell>
-                    <TableCell>{aluno.graduacao}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          aluno.tipo_militar === "Fuzileiro Naval"
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {aluno.tipo_militar}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{aluno.local_servico || "-"}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          aluno.status === "Aprovado" ? "default" :
-                          aluno.status === "Reprovado" ? "destructive" :
-                          aluno.status === "Desligado" ? "secondary" :
-                          "outline"
-                        }
-                      >
-                        {aluno.status || "Cursando"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {aluno.email && <div>{aluno.email}</div>}
-                        {aluno.telefone && <div className="text-muted-foreground">{aluno.telefone}</div>}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDesvincular(aluno.vinculo_id!)}
-                        className="gap-2"
-                      >
-                        <X className="h-4 w-4" />
-                        Desvincular
-                      </Button>
-                    </TableCell>
+          {viewType === 'alunos' ? (
+            loadingAlunos ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+              </div>
+            ) : alunosTurma.length === 0 ? (
+              <div className="py-12 text-center">
+                <p className="text-muted-foreground">Nenhum aluno vinculado a esta turma</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Graduação</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Local de Serviço</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Contato</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {alunosTurma.map((aluno) => (
+                    <TableRow key={aluno.id}>
+                      <TableCell className="font-medium">{aluno.nome_completo}</TableCell>
+                      <TableCell>{aluno.graduacao}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            aluno.tipo_militar === "Fuzileiro Naval"
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {aluno.tipo_militar}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{aluno.local_servico || "-"}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            aluno.status === "Aprovado" ? "default" :
+                            aluno.status === "Reprovado" ? "destructive" :
+                            aluno.status === "Desligado" ? "secondary" :
+                            "outline"
+                          }
+                        >
+                          {aluno.status || "Cursando"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {aluno.email && <div>{aluno.email}</div>}
+                          {aluno.telefone && <div className="text-muted-foreground">{aluno.telefone}</div>}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDesvincular(aluno.vinculo_id!)}
+                          className="gap-2"
+                        >
+                          <X className="h-4 w-4" />
+                          Desvincular
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )
+          ) : (
+            loadingInstrutores ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+              </div>
+            ) : instrutoresTurma.length === 0 ? (
+              <div className="py-12 text-center">
+                <p className="text-muted-foreground">Nenhum instrutor vinculado a esta turma</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Graduação</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Especialidade</TableHead>
+                    <TableHead>Contato</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {instrutoresTurma.map((instrutor) => (
+                    <TableRow key={instrutor.id}>
+                      <TableCell className="font-medium">{instrutor.nome_completo}</TableCell>
+                      <TableCell>{instrutor.graduacao}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            instrutor.tipo_militar === "Fuzileiro Naval"
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {instrutor.tipo_militar}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{instrutor.especialidade || "-"}</TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {instrutor.email && <div>{instrutor.email}</div>}
+                          {instrutor.telefone && <div className="text-muted-foreground">{instrutor.telefone}</div>}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDesvincularInstrutor(instrutor.vinculo_id!)}
+                          className="gap-2"
+                        >
+                          <X className="h-4 w-4" />
+                          Desvincular
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )
           )}
         </DialogContent>
       </Dialog>

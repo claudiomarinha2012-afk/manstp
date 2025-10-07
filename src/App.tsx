@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Alunos from "./pages/Alunos";
 import Cursos from "./pages/Cursos";
 import Turmas from "./pages/Turmas";
+import Instrutores from "./pages/Instrutores";
 import Estatisticas from "./pages/Estatisticas";
 import Relatorios from "./pages/Relatorios";
 import NotFound from "./pages/NotFound";
@@ -62,6 +63,16 @@ const App = () => (
                 <ProtectedRoute>
                   <MainLayout>
                     <Turmas />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/instrutores"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Instrutores />
                   </MainLayout>
                 </ProtectedRoute>
               }

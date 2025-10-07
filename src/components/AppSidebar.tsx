@@ -1,4 +1,4 @@
-import { Home, Users, BookOpen, School, BarChart3, FileText, LogOut } from "lucide-react";
+import { Home, Users, BookOpen, School, GraduationCap, BarChart3, FileText, LogOut } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -19,6 +19,7 @@ import { toast } from "sonner";
 const menuItems = [
   { title: "Dashboard", url: "/", icon: Home },
   { title: "Alunos", url: "/alunos", icon: Users },
+  { title: "Instrutores", url: "/instrutores", icon: GraduationCap },
   { title: "Cursos", url: "/cursos", icon: BookOpen },
   { title: "Turmas", url: "/turmas", icon: School },
   { title: "Estatísticas", url: "/estatisticas", icon: BarChart3 },

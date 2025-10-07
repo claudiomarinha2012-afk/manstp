@@ -205,6 +205,84 @@ export type Database = {
           },
         ]
       }
+      instrutor_turma: {
+        Row: {
+          created_at: string | null
+          id: string
+          instrutor_id: string
+          turma_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          instrutor_id: string
+          turma_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          instrutor_id?: string
+          turma_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instrutor_turma_instrutor_id_fkey"
+            columns: ["instrutor_id"]
+            isOneToOne: false
+            referencedRelation: "instrutores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instrutor_turma_turma_id_fkey"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "turmas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instrutores: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          especialidade: string | null
+          graduacao: Database["public"]["Enums"]["graduacao_militar"]
+          id: string
+          nome_completo: string
+          observacoes: string | null
+          telefone: string | null
+          tipo_militar: Database["public"]["Enums"]["tipo_militar"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          especialidade?: string | null
+          graduacao: Database["public"]["Enums"]["graduacao_militar"]
+          id?: string
+          nome_completo: string
+          observacoes?: string | null
+          telefone?: string | null
+          tipo_militar: Database["public"]["Enums"]["tipo_militar"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          especialidade?: string | null
+          graduacao?: Database["public"]["Enums"]["graduacao_militar"]
+          id?: string
+          nome_completo?: string
+          observacoes?: string | null
+          telefone?: string | null
+          tipo_militar?: Database["public"]["Enums"]["tipo_militar"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null

@@ -1,8 +1,15 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
+import { useLocation } from "react-router-dom";
 import logoFundo from "@/assets/logo-fundo.png";
+import logoFundo2 from "@/assets/logo-fundo-2.png";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  
+  // Alternar entre as duas imagens baseado na rota
+  const pagesWithLogo2 = ["/cursos", "/instrutores", "/relatorios"];
+  const backgroundImage = pagesWithLogo2.includes(location.pathname) ? logoFundo2 : logoFundo;
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -11,7 +18,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           <div 
             className="fixed inset-0 z-0 bg-no-repeat pointer-events-none"
             style={{ 
-              backgroundImage: `url(${logoFundo})`,
+              backgroundImage: `url(${backgroundImage})`,
               opacity: 0.05,
               backgroundSize: 'cover',
               backgroundPosition: '70% 60%'

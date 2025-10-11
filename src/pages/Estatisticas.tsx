@@ -397,7 +397,7 @@ export default function Estatisticas() {
       {/* Location Chart - Cursos por Local */}
       <Card>
         <CardHeader>
-          <CardTitle>Cursos por Ano - CIABA (São Tomé) e CIAGA (Brasil)</CardTitle>
+          <CardTitle>Cursos Realizados no CIAGA e CIABA</CardTitle>
         </CardHeader>
         <CardContent>
           <ChartContainer config={locationChartConfig} className="h-[400px] w-full">

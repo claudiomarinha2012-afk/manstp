@@ -1,15 +1,28 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/lib/supabase";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
-const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))"];
+interface CursoStats {
+  cursoNome: string;
+  cursoId: string;
+  anoStats: {
+    ano: number;
+    categorias: {
+      "Fuzileiro Naval": number;
+      "Guarda Costeiro": number;
+      "Exército": number;
+      "Civil": number;
+    };
+    totalAno: number;
+  }[];
+  totalCurso: number;
+}
 
 export default function Estatisticas() {
   const [loading, setLoading] = useState(true);
-  const [alunosPorGraduacao, setAlunosPorGraduacao] = useState<any[]>([]);
-  const [alunosPorTipo, setAlunosPorTipo] = useState<any[]>([]);
-  const [cursosPorSituacao, setCursosPorSituacao] = useState<any[]>([]);
+  const [estatisticas, setEstatisticas] = useState<CursoStats[]>([]);
 
   useEffect(() => {
     fetchStats();
@@ -17,58 +30,77 @@ export default function Estatisticas() {
 
   const fetchStats = async () => {
     try {
-      // Alunos por graduação
-      const { data: graduacaoData } = await supabase
-        .from("alunos")
-        .select("graduacao, tipo_militar");
+      // Buscar todos os alunos vinculados a turmas com informações de curso
+      const { data, error } = await supabase
+        .from("aluno_turma")
+        .select(`
+          aluno_id,
+          alunos!inner(tipo_militar),
+          turmas!inner(
+            ano,
+            curso_id,
+            cursos!inner(nome)
+          )
+        `);
 
-      if (graduacaoData) {
-        const graduacaoStats = graduacaoData.reduce((acc: any, aluno) => {
-          const grad = aluno.graduacao;
-          if (!acc[grad]) {
-            acc[grad] = { graduacao: grad, Fuzileiro: 0, "Guarda Costeiro": 0 };
-          }
-          if (aluno.tipo_militar === "Fuzileiro Naval") {
-            acc[grad].Fuzileiro++;
-          } else {
-            acc[grad]["Guarda Costeiro"]++;
-          }
-          return acc;
-        }, {});
-        setAlunosPorGraduacao(Object.values(graduacaoStats));
-      }
+      if (error) throw error;
 
-      // Alunos por tipo militar
-      const { data: tipoData } = await supabase
-        .from("alunos")
-        .select("tipo_militar");
+      // Estrutura para agrupar os dados
+      const cursosMap = new Map<string, CursoStats>();
 
-      if (tipoData) {
-        const tipoStats = tipoData.reduce((acc: any, aluno) => {
-          const tipo = aluno.tipo_militar;
-          acc[tipo] = (acc[tipo] || 0) + 1;
-          return acc;
-        }, {});
-        setAlunosPorTipo(
-          Object.entries(tipoStats).map(([name, value]) => ({ name, value }))
-        );
-      }
+      data?.forEach((item: any) => {
+        const cursoId = item.turmas.curso_id;
+        const cursoNome = item.turmas.cursos.nome;
+        const ano = item.turmas.ano;
+        const tipoMilitar = item.alunos.tipo_militar;
 
-      // Cursos por situação
-      const { data: cursosData } = await supabase
-        .from("cursos")
-        .select("situacao");
+        // Inicializar curso se não existir
+        if (!cursosMap.has(cursoId)) {
+          cursosMap.set(cursoId, {
+            cursoId,
+            cursoNome,
+            anoStats: [],
+            totalCurso: 0,
+          });
+        }
 
-      if (cursosData) {
-        const cursosStats = cursosData.reduce((acc: any, curso) => {
-          const situacao = curso.situacao || "Sem situação";
-          acc[situacao] = (acc[situacao] || 0) + 1;
-          return acc;
-        }, {});
-        setCursosPorSituacao(
-          Object.entries(cursosStats).map(([name, value]) => ({ name, value }))
-        );
-      }
+        const curso = cursosMap.get(cursoId)!;
+
+        // Buscar ou criar ano
+        let anoStat = curso.anoStats.find((a) => a.ano === ano);
+        if (!anoStat) {
+          anoStat = {
+            ano,
+            categorias: {
+              "Fuzileiro Naval": 0,
+              "Guarda Costeiro": 0,
+              "Exército": 0,
+              "Civil": 0,
+            },
+            totalAno: 0,
+          };
+          curso.anoStats.push(anoStat);
+        }
+
+        // Incrementar contador da categoria
+        if (tipoMilitar in anoStat.categorias) {
+          anoStat.categorias[tipoMilitar as keyof typeof anoStat.categorias]++;
+          anoStat.totalAno++;
+          curso.totalCurso++;
+        }
+      });
+
+      // Ordenar anos dentro de cada curso
+      cursosMap.forEach((curso) => {
+        curso.anoStats.sort((a, b) => b.ano - a.ano);
+      });
+
+      // Converter Map para Array e ordenar por nome do curso
+      const estatisticasArray = Array.from(cursosMap.values()).sort((a, b) =>
+        a.cursoNome.localeCompare(b.cursoNome)
+      );
+
+      setEstatisticas(estatisticasArray);
     } catch (error) {
       console.error("Erro ao buscar estatísticas:", error);
     } finally {
@@ -84,77 +116,105 @@ export default function Estatisticas() {
     );
   }
 
+  if (estatisticas.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Estatísticas</h2>
+          <p className="text-muted-foreground">Visualize estatísticas e métricas do sistema</p>
+        </div>
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            Nenhum dado disponível. Cadastre alunos e vincule-os a turmas para visualizar estatísticas.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Estatísticas</h2>
-        <p className="text-muted-foreground">Visualize estatísticas e métricas do sistema</p>
+        <p className="text-muted-foreground">
+          Alunos agrupados por Curso → Ano → Categoria
+        </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle>Alunos por Graduação e Tipo Militar</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={alunosPorGraduacao}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="graduacao" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="Fuzileiro" fill={COLORS[0]} />
-                <Bar dataKey="Guarda Costeiro" fill={COLORS[1]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue={estatisticas[0]?.cursoId} className="w-full">
+        <TabsList className="w-full flex-wrap h-auto gap-2 justify-start">
+          {estatisticas.map((curso) => (
+            <TabsTrigger key={curso.cursoId} value={curso.cursoId}>
+              {curso.cursoNome}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle>Distribuição por Tipo Militar</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={alunosPorTipo}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {alunosPorTipo.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+        {estatisticas.map((curso) => (
+          <TabsContent key={curso.cursoId} value={curso.cursoId} className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>{curso.cursoNome}</span>
+                  <span className="text-primary">Total: {curso.totalCurso} alunos</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {curso.anoStats.map((anoStat) => (
+                    <div key={anoStat.ano} className="space-y-2">
+                      <h3 className="text-lg font-semibold flex items-center justify-between border-b pb-2">
+                        <span>Ano: {anoStat.ano}</span>
+                        <span className="text-sm text-muted-foreground">
+                          Total do ano: {anoStat.totalAno} alunos
+                        </span>
+                      </h3>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Categoria</TableHead>
+                            <TableHead className="text-right">Quantidade</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell className="font-medium">Fuzileiro Naval</TableCell>
+                            <TableCell className="text-right">
+                              {anoStat.categorias["Fuzileiro Naval"]}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell className="font-medium">Guarda Costeiro</TableCell>
+                            <TableCell className="text-right">
+                              {anoStat.categorias["Guarda Costeiro"]}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell className="font-medium">Exército</TableCell>
+                            <TableCell className="text-right">
+                              {anoStat.categorias["Exército"]}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell className="font-medium">Civil</TableCell>
+                            <TableCell className="text-right">
+                              {anoStat.categorias["Civil"]}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow className="bg-muted/50 font-semibold">
+                            <TableCell>Total do Ano</TableCell>
+                            <TableCell className="text-right">{anoStat.totalAno}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </div>
                   ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-card md:col-span-2">
-          <CardHeader>
-            <CardTitle>Cursos por Situação</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={cursosPorSituacao}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill={COLORS[0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        ))}
+      </Tabs>
     </div>
   );
 }

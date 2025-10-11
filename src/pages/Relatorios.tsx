@@ -4,10 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FileDown, FileSpreadsheet, User, TrendingUp } from "lucide-react";
+import { FileDown, FileSpreadsheet, User } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -140,20 +139,8 @@ export default function Relatorios() {
         yPosition += 5;
       }
 
-      // Capturar gráficos se existirem
-      const chartsElement = document.getElementById("charts-container");
-      if (chartsElement) {
-        const canvas = await html2canvas(chartsElement, { scale: 2 });
-        const imgData = canvas.toDataURL("image/png");
-        
-        if (yPosition + 100 > pdf.internal.pageSize.getHeight()) {
-          pdf.addPage();
-          yPosition = 20;
-        }
-        
-        pdf.addImage(imgData, "PNG", 14, yPosition, pageWidth - 28, 80);
-        yPosition += 90;
-      }
+      // Capturar gráficos se existirem (removido)
+
 
       // Dados tabulares
       let data: any[] = [];
@@ -287,7 +274,6 @@ export default function Relatorios() {
     }
   };
 
-  const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))", "hsl(var(--muted))"];
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -295,32 +281,6 @@ export default function Relatorios() {
         <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Relatórios</h2>
         <p className="text-sm sm:text-base text-muted-foreground">Gere e exporte relatórios customizados com gráficos e análises</p>
       </div>
-
-      {/* Gráficos de Estatísticas */}
-      {statsData && (
-        <div id="charts-container" className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
-          <Card className="shadow-card">
-            <CardHeader className="p-4 sm:p-6">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
-                Tipo Militar
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6 pt-0">
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={statsData.tipoData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: '12px' }} />
-                  <Bar dataKey="value" fill="hsl(var(--primary))" name="Quantidade" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
       {/* Relatório Individual */}
       <Card className="shadow-card">

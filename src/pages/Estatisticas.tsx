@@ -353,29 +353,6 @@ export default function Estatisticas() {
         </CardContent>
       </Card>
 
-      {/* Stacked Bar Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Visão Geral por Curso e Status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="h-[400px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="curso" angle={-45} textAnchor="end" height={100} />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Legend />
-                <Bar dataKey="Desertores" stackId="a" fill={chartConfig.Desertores.color} />
-                <Bar dataKey="Desligados" stackId="a" fill={chartConfig.Desligados.color} />
-                <Bar dataKey="Aprovados" stackId="a" fill={chartConfig.Aprovados.color} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        </CardContent>
-      </Card>
-
       {/* Table Data */}
       <Card>
         <CardHeader>

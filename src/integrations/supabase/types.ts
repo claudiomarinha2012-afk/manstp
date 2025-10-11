@@ -55,18 +55,21 @@ export type Database = {
           aluno_id: string
           created_at: string | null
           id: string
+          status: Database["public"]["Enums"]["status_aluno"] | null
           turma_id: string
         }
         Insert: {
           aluno_id: string
           created_at?: string | null
           id?: string
+          status?: Database["public"]["Enums"]["status_aluno"] | null
           turma_id: string
         }
         Update: {
           aluno_id?: string
           created_at?: string | null
           id?: string
+          status?: Database["public"]["Enums"]["status_aluno"] | null
           turma_id?: string
         }
         Relationships: [
@@ -317,7 +320,6 @@ export type Database = {
           id: string
           nome: string
           observacoes: string | null
-          status: Database["public"]["Enums"]["status_aluno"] | null
           tipo_militar: Database["public"]["Enums"]["tipo_militar"]
           updated_at: string | null
           user_id: string
@@ -331,7 +333,6 @@ export type Database = {
           id?: string
           nome: string
           observacoes?: string | null
-          status?: Database["public"]["Enums"]["status_aluno"] | null
           tipo_militar: Database["public"]["Enums"]["tipo_militar"]
           updated_at?: string | null
           user_id: string
@@ -345,7 +346,6 @@ export type Database = {
           id?: string
           nome?: string
           observacoes?: string | null
-          status?: Database["public"]["Enums"]["status_aluno"] | null
           tipo_militar?: Database["public"]["Enums"]["tipo_militar"]
           updated_at?: string | null
           user_id?: string

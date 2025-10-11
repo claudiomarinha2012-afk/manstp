@@ -38,7 +38,6 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
     data_inicio: string;
     data_fim: string;
     observacoes: string;
-    status: string;
   }>({
     nome: turma?.nome || "",
     curso_id: turma?.curso_id || "",
@@ -47,7 +46,6 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
     data_inicio: (turma as any)?.data_inicio || "",
     data_fim: (turma as any)?.data_fim || "",
     observacoes: turma?.observacoes || "",
-    status: (turma as any)?.status || "Cursando",
   });
 
   useEffect(() => {
@@ -104,7 +102,6 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
           data_inicio: "",
           data_fim: "",
           observacoes: "",
-          status: "Cursando",
         });
       }
     } catch (error) {
@@ -215,24 +212,6 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
                 value={formData.data_fim}
                 onChange={(e) => setFormData({ ...formData, data_fim: e.target.value })}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => setFormData({ ...formData, status: value })}
-              >
-                <SelectTrigger id="status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Cursando">Cursando</SelectItem>
-                  <SelectItem value="Aprovado">Aprovado</SelectItem>
-                  <SelectItem value="Reprovado">Reprovado</SelectItem>
-                  <SelectItem value="Desligado">Desligado</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             <div className="space-y-2 md:col-span-2">

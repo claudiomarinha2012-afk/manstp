@@ -25,6 +25,7 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
   const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [alunosVinculados, setAlunosVinculados] = useState<string[]>([]);
   const [selectedAluno, setSelectedAluno] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("Cursando");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -78,12 +79,13 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
     try {
       const { error } = await supabase
         .from("aluno_turma")
-        .insert({ aluno_id: selectedAluno, turma_id: turmaId });
+        .insert([{ aluno_id: selectedAluno, turma_id: turmaId, status: selectedStatus as any }]);
 
       if (error) throw error;
 
       toast.success("Aluno vinculado com sucesso!");
       setSelectedAluno("");
+      setSelectedStatus("Cursando");
       fetchAlunosVinculados();
       onSuccess();
     } catch (error) {
@@ -129,6 +131,20 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
                     </SelectItem>
                   ))
                 )}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Status</Label>
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Cursando">Cursando</SelectItem>
+                <SelectItem value="Aprovado">Aprovado</SelectItem>
+                <SelectItem value="Reprovado">Reprovado</SelectItem>
+                <SelectItem value="Desligado">Desligado</SelectItem>
               </SelectContent>
             </Select>
           </div>

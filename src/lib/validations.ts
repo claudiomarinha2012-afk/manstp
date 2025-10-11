@@ -68,7 +68,6 @@ export const turmaSchema = z.object({
   data_inicio: z.string().optional(),
   data_fim: z.string().optional(),
   observacoes: textAreaSchema,
-  status: z.string().optional(),
 });
 
 export const authSchema = z.object({

@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -38,6 +39,7 @@ interface Aluno {
   graduacao: string;
   tipo_militar: string;
   local_servico?: string;
+  status?: string;
   vinculo_id?: string;
   email: string | null;
   telefone: string | null;
@@ -92,11 +94,11 @@ export default function Turmas() {
     try {
       const { data, error } = await supabase
         .from("aluno_turma")
-        .select("id, aluno_id, alunos(id, nome_completo, graduacao, tipo_militar, local_servico, email, telefone)")
+        .select("id, aluno_id, status, alunos(id, nome_completo, graduacao, tipo_militar, local_servico, email, telefone)")
         .eq("turma_id", turmaId);
 
       if (error) throw error;
-      setAlunosTurma(data?.map((item: any) => ({...item.alunos, vinculo_id: item.id})) || []);
+      setAlunosTurma(data?.map((item: any) => ({...item.alunos, vinculo_id: item.id, status: item.status})) || []);
     } catch (error) {
       console.error("Erro ao buscar alunos da turma:", error);
     } finally {
@@ -118,6 +120,25 @@ export default function Turmas() {
       console.error("Erro ao buscar instrutores da turma:", error);
     } finally {
       setLoadingInstrutores(false);
+    }
+  };
+
+  const handleUpdateStatus = async (vinculoId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from("aluno_turma")
+        .update({ status: newStatus as any })
+        .eq("id", vinculoId);
+
+      if (error) throw error;
+      
+      if (selectedTurma) {
+        fetchAlunosTurma(selectedTurma.id);
+      }
+      toast.success("Status atualizado com sucesso");
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error);
+      toast.error("Erro ao atualizar status");
     }
   };
 
@@ -330,6 +351,7 @@ export default function Turmas() {
                     <TableHead>Graduação</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Local de Serviço</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Contato</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -352,6 +374,22 @@ export default function Turmas() {
                         </Badge>
                       </TableCell>
                       <TableCell>{aluno.local_servico || "-"}</TableCell>
+                      <TableCell>
+                        <Select
+                          value={aluno.status || "Cursando"}
+                          onValueChange={(value) => handleUpdateStatus(aluno.vinculo_id!, value)}
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Cursando">Cursando</SelectItem>
+                            <SelectItem value="Aprovado">Aprovado</SelectItem>
+                            <SelectItem value="Reprovado">Reprovado</SelectItem>
+                            <SelectItem value="Desligado">Desligado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
                       <TableCell>
                         <div className="text-sm">
                           {aluno.email && <div>{aluno.email}</div>}

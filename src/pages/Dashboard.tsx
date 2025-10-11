@@ -11,6 +11,7 @@ interface Stats {
   cursosEmAndamento: number;
   fuzieiros: number;
   guardaCosteiros: number;
+  civis: number;
 }
 
 export default function Dashboard() {
@@ -22,6 +23,7 @@ export default function Dashboard() {
     cursosEmAndamento: 0,
     fuzieiros: 0,
     guardaCosteiros: 0,
+    civis: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -37,13 +39,19 @@ export default function Dashboard() {
           supabase.from("cursos").select("id", { count: "exact", head: true }).eq("situacao", "Em Andamento"),
         ]);
 
+        const totalAlunos = alunosRes.count || 0;
+        const fuzieiros = fuzileirosRes.count || 0;
+        const guardaCosteiros = guardaCosteirosRes.count || 0;
+        const civis = totalAlunos - fuzieiros - guardaCosteiros;
+
         setStats({
-          totalAlunos: alunosRes.count || 0,
+          totalAlunos,
           totalCursos: cursosRes.count || 0,
           totalTurmas: turmasRes.count || 0,
           cursosEmAndamento: emAndamentoRes.count || 0,
-          fuzieiros: fuzileirosRes.count || 0,
-          guardaCosteiros: guardaCosteirosRes.count || 0,
+          fuzieiros,
+          guardaCosteiros,
+          civis,
         });
       } catch (error) {
         console.error("Erro ao buscar estatísticas:", error);
@@ -70,7 +78,7 @@ export default function Dashboard() {
       title: "Total de Alunos",
       value: stats.totalAlunos,
       icon: Users,
-      description: `${stats.fuzieiros} Fuzileiros | ${stats.guardaCosteiros} Guardas Costeiros`,
+      description: `${stats.fuzieiros} Fuzileiros | ${stats.guardaCosteiros} Guardas | ${stats.civis} Civis`,
     },
     {
       title: "Total de Cursos",

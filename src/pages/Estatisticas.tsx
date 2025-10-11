@@ -22,10 +22,18 @@ interface TableData {
   total: number;
 }
 
+interface YearChartData {
+  ano: number;
+  CONCLUIDOS: number;
+  GCSTP: number;
+  FUZILEIRO: number;
+}
+
 export default function Estatisticas() {
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [tableData, setTableData] = useState<TableData[]>([]);
+  const [yearChartData, setYearChartData] = useState<YearChartData[]>([]);
   const [cursos, setCursos] = useState<string[]>([]);
   const [categorias, setCategorias] = useState<string[]>([]);
   const [anos, setAnos] = useState<number[]>([]);
@@ -108,6 +116,33 @@ export default function Estatisticas() {
       .sort((a, b) => a.curso.localeCompare(b.curso));
 
     setChartData(chartArray);
+
+    // Year chart data - group by year and categoria (Fuzileiro Naval, Guarda Costeiro)
+    const yearMap = new Map<number, { CONCLUIDOS: number; GCSTP: number; FUZILEIRO: number }>();
+
+    filteredData.forEach((item: any) => {
+      const ano = item.turmas.ano;
+      const categoria = item.alunos.tipo_militar;
+
+      if (!yearMap.has(ano)) {
+        yearMap.set(ano, { CONCLUIDOS: 0, GCSTP: 0, FUZILEIRO: 0 });
+      }
+
+      const yearData = yearMap.get(ano)!;
+      yearData.CONCLUIDOS++;
+      
+      if (categoria === "Guarda Costeiro") {
+        yearData.GCSTP++;
+      } else if (categoria === "Fuzileiro Naval") {
+        yearData.FUZILEIRO++;
+      }
+    });
+
+    const yearArray: YearChartData[] = Array.from(yearMap.entries())
+      .map(([ano, counts]) => ({ ano, ...counts }))
+      .sort((a, b) => a.ano - b.ano);
+
+    setYearChartData(yearArray);
 
     // Table data - group by curso and categoria
     const tableMap = new Map<string, TableData>();
@@ -199,6 +234,12 @@ export default function Estatisticas() {
     Desertores: { label: "Desertores", color: "hsl(0, 84%, 60%)" },
   };
 
+  const yearChartConfig = {
+    CONCLUIDOS: { label: "CONCLUIDOS", color: "hsl(142, 76%, 36%)" },
+    GCSTP: { label: "GCSTP", color: "hsl(210, 100%, 50%)" },
+    FUZILEIRO: { label: "FUZILEIRO", color: "hsl(0, 84%, 60%)" },
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -263,6 +304,29 @@ export default function Estatisticas() {
               </Select>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Year Chart - Inscritos por Categoria */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Inscritos por Ano - Fuzileiros Navais e Guarda Costeira</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={yearChartConfig} className="h-[400px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={yearChartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="ano" />
+                <YAxis />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Legend />
+                <Bar dataKey="CONCLUIDOS" fill={yearChartConfig.CONCLUIDOS.color} label={{ position: 'top' }} />
+                <Bar dataKey="GCSTP" fill={yearChartConfig.GCSTP.color} label={{ position: 'top' }} />
+                <Bar dataKey="FUZILEIRO" fill={yearChartConfig.FUZILEIRO.color} label={{ position: 'top' }} />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartContainer>
         </CardContent>
       </Card>
 

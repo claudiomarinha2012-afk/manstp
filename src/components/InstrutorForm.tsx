@@ -9,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { instrutorSchema } from "@/lib/validations";
@@ -28,7 +27,6 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
     especialidade: instrutor?.especialidade || "",
     telefone: instrutor?.telefone || "",
     email: instrutor?.email || "",
-    observacoes: instrutor?.observacoes || "",
   });
 
   const graduacoes = [
@@ -191,17 +189,6 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
           value={formData.email}
           onChange={(e) =>
             setFormData({ ...formData, email: e.target.value })
-          }
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="observacoes">Observações</Label>
-        <Textarea
-          id="observacoes"
-          value={formData.observacoes}
-          onChange={(e) =>
-            setFormData({ ...formData, observacoes: e.target.value })
           }
         />
       </div>

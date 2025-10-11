@@ -47,7 +47,6 @@ export const instrutorSchema = z.object({
   graduacao: z.string().min(1, { message: "Graduação é obrigatória" }),
   tipo_militar: z.string().min(1, { message: "Tipo militar é obrigatório" }),
   especialidade: z.string().trim().max(200).optional().or(z.literal("")),
-  observacoes: textAreaSchema,
 });
 
 export const cursoSchema = z.object({
@@ -65,6 +64,8 @@ export const turmaSchema = z.object({
   curso_id: z.string().min(1, { message: "Curso é obrigatório" }),
   ano: z.number().min(1900).max(2100),
   tipo_militar: z.string().min(1, { message: "Tipo militar é obrigatório" }),
+  data_inicio: z.string().optional(),
+  data_fim: z.string().optional(),
   observacoes: textAreaSchema,
 });
 

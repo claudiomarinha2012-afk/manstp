@@ -309,6 +309,8 @@ export type Database = {
           ano: number
           created_at: string | null
           curso_id: string
+          data_fim: string | null
+          data_inicio: string | null
           id: string
           nome: string
           observacoes: string | null
@@ -320,6 +322,8 @@ export type Database = {
           ano: number
           created_at?: string | null
           curso_id: string
+          data_fim?: string | null
+          data_inicio?: string | null
           id?: string
           nome: string
           observacoes?: string | null
@@ -331,6 +335,8 @@ export type Database = {
           ano?: number
           created_at?: string | null
           curso_id?: string
+          data_fim?: string | null
+          data_inicio?: string | null
           id?: string
           nome?: string
           observacoes?: string | null

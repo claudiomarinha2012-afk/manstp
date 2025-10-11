@@ -35,12 +35,16 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
     curso_id: string;
     ano: number;
     tipo_militar: string;
+    data_inicio: string;
+    data_fim: string;
     observacoes: string;
   }>({
     nome: turma?.nome || "",
     curso_id: turma?.curso_id || "",
     ano: turma?.ano || new Date().getFullYear(),
     tipo_militar: turma?.tipo_militar || "",
+    data_inicio: (turma as any)?.data_inicio || "",
+    data_fim: (turma as any)?.data_fim || "",
     observacoes: turma?.observacoes || "",
   });
 
@@ -95,6 +99,8 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
           curso_id: "",
           ano: new Date().getFullYear(),
           tipo_militar: "",
+          data_inicio: "",
+          data_fim: "",
           observacoes: "",
         });
       }
@@ -184,6 +190,26 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
                   <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="data_inicio">Data Início</Label>
+              <Input
+                id="data_inicio"
+                type="date"
+                value={formData.data_inicio}
+                onChange={(e) => setFormData({ ...formData, data_inicio: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="data_fim">Data Fim</Label>
+              <Input
+                id="data_fim"
+                type="date"
+                value={formData.data_fim}
+                onChange={(e) => setFormData({ ...formData, data_fim: e.target.value })}
+              />
             </div>
 
             <div className="space-y-2 md:col-span-2">

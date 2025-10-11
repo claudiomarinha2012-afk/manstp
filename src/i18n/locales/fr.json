@@ -91,5 +91,8 @@
   "errorSavingClass": "Erreur lors de l'enregistrement de la classe",
   "logoutSuccess": "Déconnexion réussie!",
   "errorLogout": "Erreur lors de la déconnexion",
-  "userNotAuthenticated": "Utilisateur non authentifié"
+  "userNotAuthenticated": "Utilisateur non authentifié",
+  "onlineUsers": "Utilisateurs En Ligne",
+  "online": "en ligne",
+  "noUsersOnline": "Aucun utilisateur en ligne"
 }

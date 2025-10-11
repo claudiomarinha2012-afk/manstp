@@ -91,5 +91,8 @@
   "errorSavingClass": "Error saving class",
   "logoutSuccess": "Logout successful!",
   "errorLogout": "Error logging out",
-  "userNotAuthenticated": "User not authenticated"
+  "userNotAuthenticated": "User not authenticated",
+  "onlineUsers": "Online Users",
+  "online": "online",
+  "noUsersOnline": "No users online"
 }

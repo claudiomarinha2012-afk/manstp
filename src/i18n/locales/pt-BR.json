@@ -91,5 +91,8 @@
   "errorSavingClass": "Erro ao salvar turma",
   "logoutSuccess": "Logout realizado com sucesso!",
   "errorLogout": "Erro ao fazer logout",
-  "userNotAuthenticated": "Usuário não autenticado"
+  "userNotAuthenticated": "Usuário não autenticado",
+  "onlineUsers": "Usuários Online",
+  "online": "online",
+  "noUsersOnline": "Nenhum usuário online"
 }

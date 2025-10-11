@@ -91,5 +91,8 @@
   "errorSavingClass": "Error al guardar clase",
   "logoutSuccess": "¡Cierre de sesión exitoso!",
   "errorLogout": "Error al cerrar sesión",
-  "userNotAuthenticated": "Usuario no autenticado"
+  "userNotAuthenticated": "Usuario no autenticado",
+  "onlineUsers": "Usuarios En Línea",
+  "online": "en línea",
+  "noUsersOnline": "No hay usuarios en línea"
 }

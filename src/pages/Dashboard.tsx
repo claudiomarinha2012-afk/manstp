@@ -30,28 +30,24 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [alunosRes, cursosRes, turmasRes, fuzileirosRes, guardaCosteirosRes, emAndamentoRes] = await Promise.all([
+        const [alunosRes, cursosRes, turmasRes, fuzileirosRes, guardaCosteirosRes, civisRes, emAndamentoRes] = await Promise.all([
           supabase.from("alunos").select("id", { count: "exact", head: true }),
           supabase.from("cursos").select("id", { count: "exact", head: true }),
           supabase.from("turmas").select("id", { count: "exact", head: true }),
           supabase.from("alunos").select("id", { count: "exact", head: true }).eq("tipo_militar", "Fuzileiro Naval"),
           supabase.from("alunos").select("id", { count: "exact", head: true }).eq("tipo_militar", "Guarda Costeiro"),
+          supabase.from("alunos").select("id", { count: "exact", head: true }).eq("tipo_militar", "Civil"),
           supabase.from("cursos").select("id", { count: "exact", head: true }).eq("situacao", "Em Andamento"),
         ]);
 
-        const totalAlunos = alunosRes.count || 0;
-        const fuzieiros = fuzileirosRes.count || 0;
-        const guardaCosteiros = guardaCosteirosRes.count || 0;
-        const civis = totalAlunos - fuzieiros - guardaCosteiros;
-
         setStats({
-          totalAlunos,
+          totalAlunos: alunosRes.count || 0,
           totalCursos: cursosRes.count || 0,
           totalTurmas: turmasRes.count || 0,
           cursosEmAndamento: emAndamentoRes.count || 0,
-          fuzieiros,
-          guardaCosteiros,
-          civis,
+          fuzieiros: fuzileirosRes.count || 0,
+          guardaCosteiros: guardaCosteirosRes.count || 0,
+          civis: civisRes.count || 0,
         });
       } catch (error) {
         console.error("Erro ao buscar estatísticas:", error);

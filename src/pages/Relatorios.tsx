@@ -386,7 +386,7 @@ export default function Relatorios() {
 
       const { data: turmasData } = await supabase
         .from("aluno_turma")
-        .select("turma_id, turmas(nome, cursos(nome))")
+        .select("status, turmas(nome, ano, cursos(nome))")
         .eq("aluno_id", selectedAluno);
 
       if (!alunoData) {
@@ -433,8 +433,21 @@ export default function Relatorios() {
 
         pdf.setFontSize(10);
         turmasData.forEach((item: any) => {
-          pdf.text(`• ${item.turmas?.nome} - ${item.turmas?.cursos?.nome}`, 14, yPosition);
-          yPosition += 7;
+          if (yPosition > pdf.internal.pageSize.getHeight() - 30) {
+            pdf.addPage();
+            yPosition = 20;
+          }
+          
+          const turma = item.turmas;
+          const status = item.status || 'Cursando';
+          const ano = turma?.ano || 'Não informado';
+          
+          pdf.text(`• Curso: ${turma?.cursos?.nome}`, 14, yPosition);
+          yPosition += 6;
+          pdf.text(`  Turma: ${turma?.nome} | Ano: ${ano}`, 14, yPosition);
+          yPosition += 6;
+          pdf.text(`  Status: ${status}`, 14, yPosition);
+          yPosition += 8;
         });
       }
 

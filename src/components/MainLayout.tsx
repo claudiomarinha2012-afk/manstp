@@ -52,7 +52,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             style={{ 
               backgroundImage: `url(${backgroundImage})`,
               opacity: 0.10,
-              backgroundSize: 'contain'
+              backgroundSize: '70%'
             }}
           />
           <header className="sticky top-0 z-10 flex h-14 items-center gap-2 sm:gap-4 border-b bg-card px-3 sm:px-4 shadow-sm">

@@ -38,7 +38,6 @@ interface Aluno {
   graduacao: string;
   tipo_militar: string;
   local_servico?: string;
-  status?: string;
   vinculo_id?: string;
   email: string | null;
   telefone: string | null;
@@ -93,7 +92,7 @@ export default function Turmas() {
     try {
       const { data, error } = await supabase
         .from("aluno_turma")
-        .select("id, aluno_id, alunos(id, nome_completo, graduacao, tipo_militar, local_servico, status, email, telefone)")
+        .select("id, aluno_id, alunos(id, nome_completo, graduacao, tipo_militar, local_servico, email, telefone)")
         .eq("turma_id", turmaId);
 
       if (error) throw error;
@@ -232,9 +231,10 @@ export default function Turmas() {
                     <TableCell>
                       <Badge
                         variant={
-                          turma.tipo_militar === "Fuzileiro Naval"
-                            ? "default"
-                            : "secondary"
+                          turma.tipo_militar === "Fuzileiro Naval" ? "default" :
+                          turma.tipo_militar === "Guarda Costeiro" ? "secondary" :
+                          turma.tipo_militar === "Exercito" ? "outline" :
+                          "destructive"
                         }
                       >
                         {turma.tipo_militar}
@@ -330,7 +330,6 @@ export default function Turmas() {
                     <TableHead>Graduação</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Local de Serviço</TableHead>
-                    <TableHead>Status</TableHead>
                     <TableHead>Contato</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -343,27 +342,16 @@ export default function Turmas() {
                       <TableCell>
                         <Badge
                           variant={
-                            aluno.tipo_militar === "Fuzileiro Naval"
-                              ? "default"
-                              : "secondary"
+                            aluno.tipo_militar === "Fuzileiro Naval" ? "default" :
+                            aluno.tipo_militar === "Guarda Costeiro" ? "secondary" :
+                            aluno.tipo_militar === "Exercito" ? "outline" :
+                            "destructive"
                           }
                         >
                           {aluno.tipo_militar}
                         </Badge>
                       </TableCell>
                       <TableCell>{aluno.local_servico || "-"}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            aluno.status === "Aprovado" ? "default" :
-                            aluno.status === "Reprovado" ? "destructive" :
-                            aluno.status === "Desligado" ? "secondary" :
-                            "outline"
-                          }
-                        >
-                          {aluno.status || "Cursando"}
-                        </Badge>
-                      </TableCell>
                       <TableCell>
                         <div className="text-sm">
                           {aluno.email && <div>{aluno.email}</div>}
@@ -417,9 +405,10 @@ export default function Turmas() {
                       <TableCell>
                         <Badge
                           variant={
-                            instrutor.tipo_militar === "Fuzileiro Naval"
-                              ? "default"
-                              : "secondary"
+                            instrutor.tipo_militar === "Fuzileiro Naval" ? "default" :
+                            instrutor.tipo_militar === "Guarda Costeiro" ? "secondary" :
+                            instrutor.tipo_militar === "Exercito" ? "outline" :
+                            "destructive"
                           }
                         >
                           {instrutor.tipo_militar}

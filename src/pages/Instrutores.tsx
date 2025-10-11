@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -131,7 +132,18 @@ export default function Instrutores() {
                     {instrutor.nome_completo}
                   </TableCell>
                   <TableCell>{instrutor.graduacao}</TableCell>
-                  <TableCell>{instrutor.tipo_militar}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        instrutor.tipo_militar === "Fuzileiro Naval" ? "default" :
+                        instrutor.tipo_militar === "Guarda Costeiro" ? "secondary" :
+                        instrutor.tipo_militar === "Exercito" ? "outline" :
+                        "destructive"
+                      }
+                    >
+                      {instrutor.tipo_militar}
+                    </Badge>
+                  </TableCell>
                   <TableCell>{instrutor.especialidade || "-"}</TableCell>
                   <TableCell>
                     {instrutor.telefone && <div>{instrutor.telefone}</div>}

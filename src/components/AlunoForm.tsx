@@ -38,7 +38,6 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
     telefone: string;
     email: string;
     observacoes: string;
-    status: string;
   }>({
     nome_completo: aluno?.nome_completo || "",
     graduacao: aluno?.graduacao || "",
@@ -47,7 +46,6 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
     telefone: aluno?.telefone || "",
     email: aluno?.email || "",
     observacoes: aluno?.observacoes || "",
-    status: (aluno as any)?.status || "Cursando",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -92,7 +90,6 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
           telefone: "",
           email: "",
           observacoes: "",
-          status: "Cursando",
         });
       }
     } catch (error) {
@@ -190,6 +187,8 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
                 <SelectContent>
                   <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
                   <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
+                  <SelectItem value="Exercito">Exército</SelectItem>
+                  <SelectItem value="Bombeiro">Bombeiro</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -224,7 +223,7 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="email">E-mail</Label>
               <Input
                 id="email"
@@ -232,24 +231,6 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => setFormData({ ...formData, status: value })}
-              >
-                <SelectTrigger id="status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Cursando">Cursando</SelectItem>
-                  <SelectItem value="Aprovado">Aprovado</SelectItem>
-                  <SelectItem value="Reprovado">Reprovado</SelectItem>
-                  <SelectItem value="Desligado">Desligado</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             <div className="space-y-2 md:col-span-2">

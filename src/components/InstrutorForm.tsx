@@ -155,6 +155,8 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
           <SelectContent>
             <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
             <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
+            <SelectItem value="Exercito">Exército</SelectItem>
+            <SelectItem value="Bombeiro">Bombeiro</SelectItem>
           </SelectContent>
         </Select>
       </div>

@@ -95,7 +95,6 @@ export type Database = {
           local_servico: string | null
           nome_completo: string
           observacoes: string | null
-          status: Database["public"]["Enums"]["status_aluno"] | null
           telefone: string | null
           tipo_militar: Database["public"]["Enums"]["tipo_militar"]
           updated_at: string | null
@@ -109,7 +108,6 @@ export type Database = {
           local_servico?: string | null
           nome_completo: string
           observacoes?: string | null
-          status?: Database["public"]["Enums"]["status_aluno"] | null
           telefone?: string | null
           tipo_militar: Database["public"]["Enums"]["tipo_militar"]
           updated_at?: string | null
@@ -123,7 +121,6 @@ export type Database = {
           local_servico?: string | null
           nome_completo?: string
           observacoes?: string | null
-          status?: Database["public"]["Enums"]["status_aluno"] | null
           telefone?: string | null
           tipo_militar?: Database["public"]["Enums"]["tipo_militar"]
           updated_at?: string | null
@@ -320,6 +317,7 @@ export type Database = {
           id: string
           nome: string
           observacoes: string | null
+          status: Database["public"]["Enums"]["status_aluno"] | null
           tipo_militar: Database["public"]["Enums"]["tipo_militar"]
           updated_at: string | null
           user_id: string
@@ -333,6 +331,7 @@ export type Database = {
           id?: string
           nome: string
           observacoes?: string | null
+          status?: Database["public"]["Enums"]["status_aluno"] | null
           tipo_militar: Database["public"]["Enums"]["tipo_militar"]
           updated_at?: string | null
           user_id: string
@@ -346,6 +345,7 @@ export type Database = {
           id?: string
           nome?: string
           observacoes?: string | null
+          status?: Database["public"]["Enums"]["status_aluno"] | null
           tipo_militar?: Database["public"]["Enums"]["tipo_militar"]
           updated_at?: string | null
           user_id?: string
@@ -428,7 +428,11 @@ export type Database = {
         | "Grumete"
       situacao_curso: "Em Andamento" | "Concluído" | "Cancelado"
       status_aluno: "Aprovado" | "Reprovado" | "Desligado" | "Cursando"
-      tipo_militar: "Fuzileiro Naval" | "Guarda Costeiro"
+      tipo_militar:
+        | "Fuzileiro Naval"
+        | "Guarda Costeiro"
+        | "Exercito"
+        | "Bombeiro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -590,7 +594,12 @@ export const Constants = {
       ],
       situacao_curso: ["Em Andamento", "Concluído", "Cancelado"],
       status_aluno: ["Aprovado", "Reprovado", "Desligado", "Cursando"],
-      tipo_militar: ["Fuzileiro Naval", "Guarda Costeiro"],
+      tipo_militar: [
+        "Fuzileiro Naval",
+        "Guarda Costeiro",
+        "Exercito",
+        "Bombeiro",
+      ],
     },
   },
 } as const

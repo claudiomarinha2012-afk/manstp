@@ -39,13 +39,8 @@ export default function Relatorios() {
   };
 
   const fetchStats = async () => {
-    const { data: alunosData } = await supabase.from("alunos").select("status, graduacao, tipo_militar");
+    const { data: alunosData } = await supabase.from("alunos").select("graduacao, tipo_militar");
     if (!alunosData) return;
-
-    const statusCounts = alunosData.reduce((acc: any, aluno) => {
-      acc[aluno.status] = (acc[aluno.status] || 0) + 1;
-      return acc;
-    }, {});
 
     const graduacaoCounts = alunosData.reduce((acc: any, aluno) => {
       acc[aluno.graduacao] = (acc[aluno.graduacao] || 0) + 1;
@@ -58,7 +53,6 @@ export default function Relatorios() {
     }, {});
 
     setStatsData({
-      statusData: Object.entries(statusCounts).map(([name, value]) => ({ name, value })),
       graduacaoData: Object.entries(graduacaoCounts).map(([name, value]) => ({ name, value })),
       tipoData: Object.entries(tipoCounts).map(([name, value]) => ({ name, value })),
     });
@@ -139,7 +133,7 @@ export default function Relatorios() {
         yPosition += 10;
 
         pdf.setFontSize(10);
-        statsData.statusData.forEach((item: any) => {
+        statsData.tipoData.forEach((item: any) => {
           pdf.text(`${item.name}: ${item.value} alunos`, 14, yPosition);
           yPosition += 7;
         });
@@ -186,7 +180,7 @@ export default function Relatorios() {
             pdf.addPage();
             yPosition = 20;
           }
-          pdf.text(`${item.nome_completo} - ${item.graduacao} - ${item.status}`, 14, yPosition);
+          pdf.text(`${item.nome_completo} - ${item.graduacao} - ${item.tipo_militar}`, 14, yPosition);
           yPosition += 7;
         });
       }
@@ -241,7 +235,6 @@ export default function Relatorios() {
         `Nome: ${alunoData.nome_completo}`,
         `Graduação: ${alunoData.graduacao}`,
         `Tipo Militar: ${alunoData.tipo_militar}`,
-        `Status: ${alunoData.status}`,
         `Email: ${alunoData.email || "Não informado"}`,
         `Telefone: ${alunoData.telefone || "Não informado"}`,
         `Local de Serviço: ${alunoData.local_servico || "Não informado"}`,
@@ -306,36 +299,6 @@ export default function Relatorios() {
       {/* Gráficos de Estatísticas */}
       {statsData && (
         <div id="charts-container" className="grid gap-6 md:grid-cols-2">
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Status dos Alunos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={statsData.statusData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="hsl(var(--primary))"
-                    dataKey="value"
-                  >
-                    {statsData.statusData.map((_: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
           <Card className="shadow-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -441,6 +404,8 @@ export default function Relatorios() {
                   <SelectItem value="all">Todos os tipos</SelectItem>
                   <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
                   <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
+                  <SelectItem value="Exercito">Exército</SelectItem>
+                  <SelectItem value="Bombeiro">Bombeiro</SelectItem>
                 </SelectContent>
               </Select>
             </div>

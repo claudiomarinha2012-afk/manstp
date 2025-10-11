@@ -37,7 +37,6 @@ export const alunoSchema = z.object({
   tipo_militar: z.string().min(1, { message: "Tipo militar é obrigatório" }),
   local_servico: z.string().trim().max(200).optional().or(z.literal("")),
   observacoes: textAreaSchema,
-  status: z.string().optional(),
 });
 
 export const instrutorSchema = z.object({
@@ -69,6 +68,7 @@ export const turmaSchema = z.object({
   data_inicio: z.string().optional(),
   data_fim: z.string().optional(),
   observacoes: textAreaSchema,
+  status: z.string().optional(),
 });
 
 export const authSchema = z.object({

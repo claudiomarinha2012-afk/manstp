@@ -23,7 +23,6 @@ interface Aluno {
   graduacao: string;
   tipo_militar: string;
   local_servico?: string;
-  status?: string;
   telefone: string | null;
   email: string | null;
   observacoes: string | null;
@@ -105,7 +104,6 @@ export default function Alunos() {
                   <TableHead>Graduação</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Local de Serviço</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Contato</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -118,27 +116,16 @@ export default function Alunos() {
                     <TableCell>
                       <Badge
                         variant={
-                          aluno.tipo_militar === "Fuzileiro Naval"
-                            ? "default"
-                            : "secondary"
+                          aluno.tipo_militar === "Fuzileiro Naval" ? "default" :
+                          aluno.tipo_militar === "Guarda Costeiro" ? "secondary" :
+                          aluno.tipo_militar === "Exercito" ? "outline" :
+                          "destructive"
                         }
                       >
                         {aluno.tipo_militar}
                       </Badge>
                     </TableCell>
                     <TableCell>{aluno.local_servico || "-"}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          aluno.status === "Aprovado" ? "default" :
-                          aluno.status === "Reprovado" ? "destructive" :
-                          aluno.status === "Desligado" ? "secondary" :
-                          "outline"
-                        }
-                      >
-                        {aluno.status || "Cursando"}
-                      </Badge>
-                    </TableCell>
                     <TableCell>
                       <div className="text-sm">
                         {aluno.email && <div>{aluno.email}</div>}

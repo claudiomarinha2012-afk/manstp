@@ -98,26 +98,32 @@ export default function Usuarios() {
 
     setSubmitting(true);
     try {
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: { 
-            nome_completo: formData.nome_completo,
-            role: formData.role 
-          },
-          emailRedirectTo: `${window.location.origin}/`,
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
         },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          nome_completo: formData.nome_completo,
+          role: formData.role
+        }),
       });
 
-      if (signUpError) throw signUpError;
+      const result = await response.json();
 
-      if (authData.user) {
-        toast.success("Usuário criado com sucesso! Email de confirmação enviado.");
-        setOpen(false);
-        setFormData({ email: "", nome_completo: "", password: "", role: "visualizador" });
-        fetchUsers();
+      if (!response.ok) {
+        throw new Error(result.error || 'Erro ao criar usuário');
       }
+
+      toast.success("Usuário criado com sucesso!");
+      setOpen(false);
+      setFormData({ email: "", nome_completo: "", password: "", role: "visualizador" });
+      fetchUsers();
     } catch (error: any) {
       console.error("Erro ao criar usuário:", error);
       toast.error(error.message || "Erro ao criar usuário");

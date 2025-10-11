@@ -30,6 +30,17 @@ interface AlunoFormProps {
 export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
   const { user } = useAuth();
   const { t } = useTranslation();
+
+  const rankKeys = [
+    "brigadeiro", "coronel", "capitao_mar_guerra", "tenente_coronel",
+    "capitao_fragata", "major", "capitao_tenente", "capitao",
+    "primeiro_tenente", "tenente", "segundo_tenente", "alferes",
+    "guarda_marinha", "aspirante", "sargento_mor", "sargento_chefe",
+    "sargento_ajudante", "primeiro_sargento", "segundo_sargento",
+    "furriel", "primeiro_subsargento", "segundo_furriel", "subsargento",
+    "cabo_secao", "cabo", "segundo_cabo", "segundo_marinheiro",
+    "soldado", "grumete"
+  ];
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<{
@@ -142,35 +153,11 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
                   <SelectValue placeholder={t("selectRank")} />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px] overflow-y-auto bg-background">
-                  <SelectItem value="Brigadeiro">Brigadeiro</SelectItem>
-                  <SelectItem value="Coronel">Coronel</SelectItem>
-                  <SelectItem value="Capitão de Mar e Guerra">Capitão de Mar e Guerra</SelectItem>
-                  <SelectItem value="Tenente Coronel">Tenente Coronel</SelectItem>
-                  <SelectItem value="Capitão de Fragata">Capitão de Fragata</SelectItem>
-                  <SelectItem value="Major">Major</SelectItem>
-                  <SelectItem value="Capitão Tenente">Capitão Tenente</SelectItem>
-                  <SelectItem value="Capitão">Capitão</SelectItem>
-                  <SelectItem value="Primeiro Tenente">Primeiro Tenente</SelectItem>
-                  <SelectItem value="Tenente">Tenente</SelectItem>
-                  <SelectItem value="Segundo Tenente">Segundo Tenente</SelectItem>
-                  <SelectItem value="Alferes">Alferes</SelectItem>
-                  <SelectItem value="Guarda Marinha">Guarda Marinha</SelectItem>
-                  <SelectItem value="Aspirante">Aspirante</SelectItem>
-                  <SelectItem value="Sargento Mor">Sargento Mor</SelectItem>
-                  <SelectItem value="Sargento Chefe">Sargento Chefe</SelectItem>
-                  <SelectItem value="Sargento Ajudante">Sargento Ajudante</SelectItem>
-                  <SelectItem value="Primeiro Sargento">Primeiro Sargento</SelectItem>
-                  <SelectItem value="Segundo Sargento">Segundo Sargento</SelectItem>
-                  <SelectItem value="Furriel">Furriel</SelectItem>
-                  <SelectItem value="Primeiro Subsargento">Primeiro Subsargento</SelectItem>
-                  <SelectItem value="Segundo Furriel">Segundo Furriel</SelectItem>
-                  <SelectItem value="Subsargento">Subsargento</SelectItem>
-                  <SelectItem value="Cabo de Seção">Cabo de Seção</SelectItem>
-                  <SelectItem value="Cabo">Cabo</SelectItem>
-                  <SelectItem value="Segundo Cabo">Segundo Cabo</SelectItem>
-                  <SelectItem value="Segundo Marinheiro">Segundo Marinheiro</SelectItem>
-                  <SelectItem value="Soldado">Soldado</SelectItem>
-                  <SelectItem value="Grumete">Grumete</SelectItem>
+                  {rankKeys.map((key) => (
+                    <SelectItem key={key} value={t(`ranks.${key}`)}>
+                      {t(`ranks.${key}`)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

@@ -31,36 +31,15 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
     email: instrutor?.email || "",
   });
 
-  const graduacoes = [
-    "Brigadeiro",
-    "Coronel",
-    "Capitão de Mar e Guerra",
-    "Tenente Coronel",
-    "Capitão de Fragata",
-    "Major",
-    "Capitão Tenente",
-    "Capitão",
-    "Primeiro Tenente",
-    "Tenente",
-    "Segundo Tenente",
-    "Alferes",
-    "Guarda Marinha",
-    "Aspirante",
-    "Sargento Mor",
-    "Sargento Chefe",
-    "Sargento Ajudante",
-    "Primeiro Sargento",
-    "Segundo Sargento",
-    "Furriel",
-    "Primeiro Subsargento",
-    "Segundo Furriel",
-    "Subsargento",
-    "Cabo de Seção",
-    "Cabo",
-    "Segundo Cabo",
-    "Segundo Marinheiro",
-    "Soldado",
-    "Grumete",
+  const rankKeys = [
+    "brigadeiro", "coronel", "capitao_mar_guerra", "tenente_coronel",
+    "capitao_fragata", "major", "capitao_tenente", "capitao",
+    "primeiro_tenente", "tenente", "segundo_tenente", "alferes",
+    "guarda_marinha", "aspirante", "sargento_mor", "sargento_chefe",
+    "sargento_ajudante", "primeiro_sargento", "segundo_sargento",
+    "furriel", "primeiro_subsargento", "segundo_furriel", "subsargento",
+    "cabo_secao", "cabo", "segundo_cabo", "segundo_marinheiro",
+    "soldado", "grumete"
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -131,10 +110,10 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
           <SelectTrigger>
             <SelectValue placeholder={t("selectRank")} />
           </SelectTrigger>
-          <SelectContent className="bg-background">
-            {graduacoes.map((grad) => (
-              <SelectItem key={grad} value={grad}>
-                {grad}
+          <SelectContent className="max-h-[300px] overflow-y-auto bg-background">
+            {rankKeys.map((key) => (
+              <SelectItem key={key} value={t(`ranks.${key}`)}>
+                {t(`ranks.${key}`)}
               </SelectItem>
             ))}
           </SelectContent>

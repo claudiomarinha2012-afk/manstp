@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { turmaSchema } from "@/lib/validations";
+import { useTranslation } from "react-i18next";
 
 interface Turma {
   id: string;
@@ -27,6 +28,7 @@ interface TurmaFormProps {
 
 export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cursos, setCursos] = useState<any[]>([]);
@@ -64,7 +66,6 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
     e.preventDefault();
     if (!user) return;
 
-    // Validate form data
     const validation = turmaSchema.safeParse(formData);
     if (!validation.success) {
       const firstError = validation.error.errors[0];
@@ -81,14 +82,14 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
           .eq("id", turma.id);
 
         if (error) throw error;
-        toast.success("Turma atualizada com sucesso");
+        toast.success(t("classUpdatedSuccess"));
       } else {
         const { error } = await supabase
           .from("turmas")
           .insert([{ ...formData, user_id: user.id } as any]);
 
         if (error) throw error;
-        toast.success("Turma cadastrada com sucesso");
+        toast.success(t("classRegisteredSuccess"));
       }
 
       setOpen(false);
@@ -106,7 +107,7 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
       }
     } catch (error) {
       console.error("Erro ao salvar turma:", error);
-      toast.error("Erro ao salvar turma");
+      toast.error(t("errorSavingClass"));
     } finally {
       setLoading(false);
     }
@@ -122,18 +123,18 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
         ) : (
           <Button className="gap-2">
             <Plus className="h-4 w-4" />
-            Nova Turma
+            {t("newClass")}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{turma ? "Editar Turma" : "Nova Turma"}</DialogTitle>
+          <DialogTitle>{turma ? t("editClass") : t("newClass")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="nome">Nome da Turma *</Label>
+              <Label htmlFor="nome">{t("className")} *</Label>
               <Input
                 id="nome"
                 required
@@ -143,16 +144,16 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="curso_id">Curso Vinculado *</Label>
+              <Label htmlFor="curso_id">{t("linkedCourse")} *</Label>
               <Select
                 required
                 value={formData.curso_id}
                 onValueChange={(value) => setFormData({ ...formData, curso_id: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o curso" />
+                  <SelectValue placeholder={t("selectCourse")} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background">
                   {cursos.map((curso) => (
                     <SelectItem key={curso.id} value={curso.id}>
                       {curso.nome}
@@ -163,7 +164,7 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="ano">Ano *</Label>
+              <Label htmlFor="ano">{t("year")} *</Label>
               <Input
                 id="ano"
                 type="number"
@@ -176,16 +177,16 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tipo_militar">Tipo Militar *</Label>
+              <Label htmlFor="tipo_militar">{t("militaryType")} *</Label>
               <Select
                 required
                 value={formData.tipo_militar}
                 onValueChange={(value) => setFormData({ ...formData, tipo_militar: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
+                  <SelectValue placeholder={t("selectType")} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background">
                   <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
                   <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
                   <SelectItem value="Exercito">Exército</SelectItem>
@@ -195,7 +196,7 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="data_inicio">Data Início</Label>
+              <Label htmlFor="data_inicio">{t("startDateShort")}</Label>
               <Input
                 id="data_inicio"
                 type="date"
@@ -205,7 +206,7 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="data_fim">Data Fim</Label>
+              <Label htmlFor="data_fim">{t("endDateShort")}</Label>
               <Input
                 id="data_fim"
                 type="date"
@@ -215,7 +216,7 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="observacoes">Observações</Label>
+              <Label htmlFor="observacoes">{t("observations")}</Label>
               <Textarea
                 id="observacoes"
                 value={formData.observacoes}
@@ -227,10 +228,10 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancelar
+              {t("cancel")}
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Salvando..." : "Salvar"}
+              {loading ? t("saving") : t("save")}
             </Button>
           </div>
         </form>

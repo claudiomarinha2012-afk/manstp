@@ -12,6 +12,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { instrutorSchema } from "@/lib/validations";
+import { useTranslation } from "react-i18next";
 
 interface InstrutorFormProps {
   instrutor?: any;
@@ -20,6 +21,7 @@ interface InstrutorFormProps {
 }
 
 export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormProps) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     nome_completo: instrutor?.nome_completo || "",
     graduacao: instrutor?.graduacao || "",
@@ -64,7 +66,6 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate form data
     const validation = instrutorSchema.safeParse(formData);
     if (!validation.success) {
       const firstError = validation.error.errors[0];
@@ -74,7 +75,7 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      toast.error("Usuário não autenticado");
+      toast.error(t("userNotAuthenticated"));
       return;
     }
 
@@ -85,20 +86,20 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
         .eq("id", instrutor.id);
 
       if (error) {
-        toast.error("Erro ao atualizar instrutor");
+        toast.error(t("errorSavingInstructor"));
         return;
       }
-      toast.success("Instrutor atualizado com sucesso!");
+      toast.success(t("instructorUpdatedSuccess"));
     } else {
       const { error } = await supabase
         .from("instrutores")
         .insert([{ ...formData, user_id: user.id }]);
 
       if (error) {
-        toast.error("Erro ao cadastrar instrutor");
+        toast.error(t("errorSavingInstructor"));
         return;
       }
-      toast.success("Instrutor cadastrado com sucesso!");
+      toast.success(t("instructorRegisteredSuccess"));
     }
 
     onSuccess();
@@ -107,7 +108,7 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <Label htmlFor="nome_completo">Nome Completo *</Label>
+        <Label htmlFor="nome_completo">{t("fullName")} *</Label>
         <Input
           id="nome_completo"
           value={formData.nome_completo}
@@ -119,7 +120,7 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
       </div>
 
       <div>
-        <Label htmlFor="graduacao">Graduação *</Label>
+        <Label htmlFor="graduacao">{t("rank")} *</Label>
         <Select
           value={formData.graduacao}
           onValueChange={(value) =>
@@ -128,9 +129,9 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
           required
         >
           <SelectTrigger>
-            <SelectValue placeholder="Selecione a graduação" />
+            <SelectValue placeholder={t("selectRank")} />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-background">
             {graduacoes.map((grad) => (
               <SelectItem key={grad} value={grad}>
                 {grad}
@@ -141,7 +142,7 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
       </div>
 
       <div>
-        <Label htmlFor="tipo_militar">Tipo Militar *</Label>
+        <Label htmlFor="tipo_militar">{t("militaryType")} *</Label>
         <Select
           value={formData.tipo_militar}
           onValueChange={(value) =>
@@ -150,9 +151,9 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
           required
         >
           <SelectTrigger>
-            <SelectValue placeholder="Selecione o tipo" />
+            <SelectValue placeholder={t("selectType")} />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-background">
             <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
             <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
             <SelectItem value="Exercito">Exército</SelectItem>
@@ -162,7 +163,7 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
       </div>
 
       <div>
-        <Label htmlFor="especialidade">Especialidade</Label>
+        <Label htmlFor="especialidade">{t("specialty")}</Label>
         <Input
           id="especialidade"
           value={formData.especialidade}
@@ -173,7 +174,7 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
       </div>
 
       <div>
-        <Label htmlFor="telefone">Telefone</Label>
+        <Label htmlFor="telefone">{t("phone")}</Label>
         <Input
           id="telefone"
           value={formData.telefone}
@@ -184,7 +185,7 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
       </div>
 
       <div>
-        <Label htmlFor="email">E-mail</Label>
+        <Label htmlFor="email">{t("email")}</Label>
         <Input
           id="email"
           type="email"
@@ -197,10 +198,10 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
 
       <div className="flex gap-2 justify-end">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancelar
+          {t("cancel")}
         </Button>
         <Button type="submit">
-          {instrutor ? "Atualizar" : "Cadastrar"}
+          {instrutor ? t("update") : t("register")}
         </Button>
       </div>
     </form>

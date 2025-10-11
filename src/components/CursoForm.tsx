@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { cursoSchema } from "@/lib/validations";
+import { useTranslation } from "react-i18next";
 
 interface Curso {
   id: string;
@@ -31,23 +32,14 @@ interface CursoFormProps {
   onSuccess: () => void;
 }
 
+const countries = ["Afeganistão", "África do Sul", "Albânia", "Alemanha", "Andorra", "Angola", "Antígua e Barbuda", "Arábia Saudita", "Argélia", "Argentina", "Armênia", "Austrália", "Áustria", "Azerbaijão", "Bahamas", "Bahrein", "Bangladesh", "Barbados", "Bélgica", "Belize", "Benin", "Bielorrússia", "Bolívia", "Bósnia e Herzegovina", "Botsuana", "Brasil", "Brunei", "Bulgária", "Burkina Faso", "Burundi", "Butão", "Cabo Verde", "Camarões", "Camboja", "Canadá", "Catar", "Cazaquistão", "Chade", "Chile", "China", "Chipre", "Colômbia", "Comores", "Congo", "Coreia do Norte", "Coreia do Sul", "Costa do Marfim", "Costa Rica", "Croácia", "Cuba", "Dinamarca", "Djibuti", "Dominica", "Egito", "El Salvador", "Emirados Árabes Unidos", "Equador", "Eritreia", "Eslováquia", "Eslovênia", "Espanha", "Estados Unidos", "Estônia", "Etiópia", "Fiji", "Filipinas", "Finlândia", "França", "Gabão", "Gâmbia", "Gana", "Geórgia", "Granada", "Grécia", "Guatemala", "Guiana", "Guiné", "Guiné Equatorial", "Guiné-Bissau", "Haiti", "Honduras", "Hungria", "Iêmen", "Ilhas Marshall", "Ilhas Salomão", "Índia", "Indonésia", "Irã", "Iraque", "Irlanda", "Islândia", "Israel", "Itália", "Jamaica", "Japão", "Jordânia", "Kiribati", "Kosovo", "Kuwait", "Laos", "Lesoto", "Letônia", "Líbano", "Libéria", "Líbia", "Liechtenstein", "Lituânia", "Luxemburgo", "Macedônia do Norte", "Madagascar", "Malásia", "Malauí", "Maldivas", "Mali", "Malta", "Marrocos", "Maurícia", "Mauritânia", "México", "Mianmar", "Micronésia", "Moçambique", "Moldávia", "Mônaco", "Mongólia", "Montenegro", "Namíbia", "Nauru", "Nepal", "Nicarágua", "Níger", "Nigéria", "Noruega", "Nova Zelândia", "Omã", "Países Baixos", "Palau", "Panamá", "Papua-Nova Guiné", "Paquistão", "Paraguai", "Peru", "Polônia", "Portugal", "Quênia", "Quirguistão", "Reino Unido", "República Centro-Africana", "República Democrática do Congo", "República Dominicana", "República Tcheca", "Romênia", "Ruanda", "Rússia", "Samoa", "San Marino", "Santa Lúcia", "São Cristóvão e Nevis", "São Tomé e Príncipe", "São Vicente e Granadinas", "Senegal", "Serra Leoa", "Sérvia", "Seychelles", "Singapura", "Síria", "Somália", "Sri Lanka", "Suazilândia", "Sudão", "Sudão do Sul", "Suécia", "Suíça", "Suriname", "Tailândia", "Tajiquistão", "Tanzânia", "Timor-Leste", "Togo", "Tonga", "Trinidad e Tobago", "Tunísia", "Turcomenistão", "Turquia", "Tuvalu", "Ucrânia", "Uganda", "Uruguai", "Uzbequistão", "Vanuatu", "Vaticano", "Venezuela", "Vietnã", "Zâmbia", "Zimbábue"];
+
 export function CursoForm({ curso, onSuccess }: CursoFormProps) {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<{
-    nome: string;
-    instituicao: string;
-    local_realizacao: string;
-    tipo_curso: string;
-    modalidade: string;
-    data_inicio: string;
-    data_fim: string;
-    situacao: string;
-    categoria: string;
-    observacoes: string;
-    coordenador: string;
-  }>({
+  const [formData, setFormData] = useState({
     nome: curso?.nome || "",
     instituicao: curso?.instituicao || "",
     local_realizacao: curso?.local_realizacao || "",
@@ -65,53 +57,27 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
     e.preventDefault();
     if (!user) return;
 
-    // Validate form data
     const validation = cursoSchema.safeParse(formData);
     if (!validation.success) {
-      const firstError = validation.error.errors[0];
-      toast.error(firstError.message);
+      toast.error(validation.error.errors[0].message);
       return;
     }
 
     setLoading(true);
     try {
       if (curso) {
-        const { error } = await supabase
-          .from("cursos")
-          .update(formData as any)
-          .eq("id", curso.id);
-
+        const { error } = await supabase.from("cursos").update(formData as any).eq("id", curso.id);
         if (error) throw error;
-        toast.success("Curso atualizado com sucesso");
+        toast.success(t("courseUpdatedSuccess"));
       } else {
-        const { error } = await supabase
-          .from("cursos")
-          .insert([{ ...formData, user_id: user.id } as any]);
-
+        const { error } = await supabase.from("cursos").insert([{ ...formData, user_id: user.id } as any]);
         if (error) throw error;
-        toast.success("Curso cadastrado com sucesso");
+        toast.success(t("courseRegisteredSuccess"));
       }
-
       setOpen(false);
       onSuccess();
-      if (!curso) {
-        setFormData({
-          nome: "",
-          instituicao: "",
-          local_realizacao: "",
-          tipo_curso: "",
-          modalidade: "",
-          data_inicio: "",
-          data_fim: "",
-          situacao: "Em Andamento",
-          categoria: "",
-          observacoes: "",
-          coordenador: "",
-        });
-      }
     } catch (error) {
-      console.error("Erro ao salvar curso:", error);
-      toast.error("Erro ao salvar curso");
+      toast.error(t("errorSavingCourse"));
     } finally {
       setLoading(false);
     }
@@ -120,357 +86,27 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {curso ? (
-          <Button variant="ghost" size="icon">
-            <Pencil className="h-4 w-4" />
-          </Button>
-        ) : (
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Novo Curso
-          </Button>
-        )}
+        {curso ? <Button variant="ghost" size="icon"><Pencil className="h-4 w-4" /></Button> : <Button className="gap-2"><Plus className="h-4 w-4" />{t("newCourse")}</Button>}
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{curso ? "Editar Curso" : "Novo Curso"}</DialogTitle>
-        </DialogHeader>
+        <DialogHeader><DialogTitle>{curso ? t("editCourse") : t("newCourse")}</DialogTitle></DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="nome">Nome do Curso *</Label>
-              <Input
-                id="nome"
-                required
-                value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="instituicao">Instituição</Label>
-              <Input
-                id="instituicao"
-                value={formData.instituicao}
-                onChange={(e) => setFormData({ ...formData, instituicao: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="categoria">Categoria</Label>
-              <Input
-                id="categoria"
-                value={formData.categoria}
-                onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="coordenador">Coordenador</Label>
-              <Input
-                id="coordenador"
-                value={formData.coordenador}
-                onChange={(e) => setFormData({ ...formData, coordenador: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="local_realizacao">País onde é Realizado</Label>
-              <Select
-                value={formData.local_realizacao}
-                onValueChange={(value) => setFormData({ ...formData, local_realizacao: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o país" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[300px] overflow-y-auto bg-background">
-                  <SelectItem value="Afeganistão">Afeganistão</SelectItem>
-                  <SelectItem value="África do Sul">África do Sul</SelectItem>
-                  <SelectItem value="Albânia">Albânia</SelectItem>
-                  <SelectItem value="Alemanha">Alemanha</SelectItem>
-                  <SelectItem value="Andorra">Andorra</SelectItem>
-                  <SelectItem value="Angola">Angola</SelectItem>
-                  <SelectItem value="Antígua e Barbuda">Antígua e Barbuda</SelectItem>
-                  <SelectItem value="Arábia Saudita">Arábia Saudita</SelectItem>
-                  <SelectItem value="Argélia">Argélia</SelectItem>
-                  <SelectItem value="Argentina">Argentina</SelectItem>
-                  <SelectItem value="Armênia">Armênia</SelectItem>
-                  <SelectItem value="Austrália">Austrália</SelectItem>
-                  <SelectItem value="Áustria">Áustria</SelectItem>
-                  <SelectItem value="Azerbaijão">Azerbaijão</SelectItem>
-                  <SelectItem value="Bahamas">Bahamas</SelectItem>
-                  <SelectItem value="Bahrein">Bahrein</SelectItem>
-                  <SelectItem value="Bangladesh">Bangladesh</SelectItem>
-                  <SelectItem value="Barbados">Barbados</SelectItem>
-                  <SelectItem value="Bélgica">Bélgica</SelectItem>
-                  <SelectItem value="Belize">Belize</SelectItem>
-                  <SelectItem value="Benin">Benin</SelectItem>
-                  <SelectItem value="Bielorrússia">Bielorrússia</SelectItem>
-                  <SelectItem value="Bolívia">Bolívia</SelectItem>
-                  <SelectItem value="Bósnia e Herzegovina">Bósnia e Herzegovina</SelectItem>
-                  <SelectItem value="Botsuana">Botsuana</SelectItem>
-                  <SelectItem value="Brasil">Brasil</SelectItem>
-                  <SelectItem value="Brunei">Brunei</SelectItem>
-                  <SelectItem value="Bulgária">Bulgária</SelectItem>
-                  <SelectItem value="Burkina Faso">Burkina Faso</SelectItem>
-                  <SelectItem value="Burundi">Burundi</SelectItem>
-                  <SelectItem value="Butão">Butão</SelectItem>
-                  <SelectItem value="Cabo Verde">Cabo Verde</SelectItem>
-                  <SelectItem value="Camarões">Camarões</SelectItem>
-                  <SelectItem value="Camboja">Camboja</SelectItem>
-                  <SelectItem value="Canadá">Canadá</SelectItem>
-                  <SelectItem value="Catar">Catar</SelectItem>
-                  <SelectItem value="Cazaquistão">Cazaquistão</SelectItem>
-                  <SelectItem value="Chade">Chade</SelectItem>
-                  <SelectItem value="Chile">Chile</SelectItem>
-                  <SelectItem value="China">China</SelectItem>
-                  <SelectItem value="Chipre">Chipre</SelectItem>
-                  <SelectItem value="Colômbia">Colômbia</SelectItem>
-                  <SelectItem value="Comores">Comores</SelectItem>
-                  <SelectItem value="Congo">Congo</SelectItem>
-                  <SelectItem value="Coreia do Norte">Coreia do Norte</SelectItem>
-                  <SelectItem value="Coreia do Sul">Coreia do Sul</SelectItem>
-                  <SelectItem value="Costa do Marfim">Costa do Marfim</SelectItem>
-                  <SelectItem value="Costa Rica">Costa Rica</SelectItem>
-                  <SelectItem value="Croácia">Croácia</SelectItem>
-                  <SelectItem value="Cuba">Cuba</SelectItem>
-                  <SelectItem value="Dinamarca">Dinamarca</SelectItem>
-                  <SelectItem value="Djibuti">Djibuti</SelectItem>
-                  <SelectItem value="Dominica">Dominica</SelectItem>
-                  <SelectItem value="Egito">Egito</SelectItem>
-                  <SelectItem value="El Salvador">El Salvador</SelectItem>
-                  <SelectItem value="Emirados Árabes Unidos">Emirados Árabes Unidos</SelectItem>
-                  <SelectItem value="Equador">Equador</SelectItem>
-                  <SelectItem value="Eritreia">Eritreia</SelectItem>
-                  <SelectItem value="Eslováquia">Eslováquia</SelectItem>
-                  <SelectItem value="Eslovênia">Eslovênia</SelectItem>
-                  <SelectItem value="Espanha">Espanha</SelectItem>
-                  <SelectItem value="Estados Unidos">Estados Unidos</SelectItem>
-                  <SelectItem value="Estônia">Estônia</SelectItem>
-                  <SelectItem value="Etiópia">Etiópia</SelectItem>
-                  <SelectItem value="Fiji">Fiji</SelectItem>
-                  <SelectItem value="Filipinas">Filipinas</SelectItem>
-                  <SelectItem value="Finlândia">Finlândia</SelectItem>
-                  <SelectItem value="França">França</SelectItem>
-                  <SelectItem value="Gabão">Gabão</SelectItem>
-                  <SelectItem value="Gâmbia">Gâmbia</SelectItem>
-                  <SelectItem value="Gana">Gana</SelectItem>
-                  <SelectItem value="Geórgia">Geórgia</SelectItem>
-                  <SelectItem value="Granada">Granada</SelectItem>
-                  <SelectItem value="Grécia">Grécia</SelectItem>
-                  <SelectItem value="Guatemala">Guatemala</SelectItem>
-                  <SelectItem value="Guiana">Guiana</SelectItem>
-                  <SelectItem value="Guiné">Guiné</SelectItem>
-                  <SelectItem value="Guiné Equatorial">Guiné Equatorial</SelectItem>
-                  <SelectItem value="Guiné-Bissau">Guiné-Bissau</SelectItem>
-                  <SelectItem value="Haiti">Haiti</SelectItem>
-                  <SelectItem value="Honduras">Honduras</SelectItem>
-                  <SelectItem value="Hungria">Hungria</SelectItem>
-                  <SelectItem value="Iêmen">Iêmen</SelectItem>
-                  <SelectItem value="Ilhas Marshall">Ilhas Marshall</SelectItem>
-                  <SelectItem value="Ilhas Salomão">Ilhas Salomão</SelectItem>
-                  <SelectItem value="Índia">Índia</SelectItem>
-                  <SelectItem value="Indonésia">Indonésia</SelectItem>
-                  <SelectItem value="Irã">Irã</SelectItem>
-                  <SelectItem value="Iraque">Iraque</SelectItem>
-                  <SelectItem value="Irlanda">Irlanda</SelectItem>
-                  <SelectItem value="Islândia">Islândia</SelectItem>
-                  <SelectItem value="Israel">Israel</SelectItem>
-                  <SelectItem value="Itália">Itália</SelectItem>
-                  <SelectItem value="Jamaica">Jamaica</SelectItem>
-                  <SelectItem value="Japão">Japão</SelectItem>
-                  <SelectItem value="Jordânia">Jordânia</SelectItem>
-                  <SelectItem value="Kiribati">Kiribati</SelectItem>
-                  <SelectItem value="Kosovo">Kosovo</SelectItem>
-                  <SelectItem value="Kuwait">Kuwait</SelectItem>
-                  <SelectItem value="Laos">Laos</SelectItem>
-                  <SelectItem value="Lesoto">Lesoto</SelectItem>
-                  <SelectItem value="Letônia">Letônia</SelectItem>
-                  <SelectItem value="Líbano">Líbano</SelectItem>
-                  <SelectItem value="Libéria">Libéria</SelectItem>
-                  <SelectItem value="Líbia">Líbia</SelectItem>
-                  <SelectItem value="Liechtenstein">Liechtenstein</SelectItem>
-                  <SelectItem value="Lituânia">Lituânia</SelectItem>
-                  <SelectItem value="Luxemburgo">Luxemburgo</SelectItem>
-                  <SelectItem value="Macedônia do Norte">Macedônia do Norte</SelectItem>
-                  <SelectItem value="Madagascar">Madagascar</SelectItem>
-                  <SelectItem value="Malásia">Malásia</SelectItem>
-                  <SelectItem value="Malauí">Malauí</SelectItem>
-                  <SelectItem value="Maldivas">Maldivas</SelectItem>
-                  <SelectItem value="Mali">Mali</SelectItem>
-                  <SelectItem value="Malta">Malta</SelectItem>
-                  <SelectItem value="Marrocos">Marrocos</SelectItem>
-                  <SelectItem value="Maurícia">Maurícia</SelectItem>
-                  <SelectItem value="Mauritânia">Mauritânia</SelectItem>
-                  <SelectItem value="México">México</SelectItem>
-                  <SelectItem value="Mianmar">Mianmar</SelectItem>
-                  <SelectItem value="Micronésia">Micronésia</SelectItem>
-                  <SelectItem value="Moçambique">Moçambique</SelectItem>
-                  <SelectItem value="Moldávia">Moldávia</SelectItem>
-                  <SelectItem value="Mônaco">Mônaco</SelectItem>
-                  <SelectItem value="Mongólia">Mongólia</SelectItem>
-                  <SelectItem value="Montenegro">Montenegro</SelectItem>
-                  <SelectItem value="Namíbia">Namíbia</SelectItem>
-                  <SelectItem value="Nauru">Nauru</SelectItem>
-                  <SelectItem value="Nepal">Nepal</SelectItem>
-                  <SelectItem value="Nicarágua">Nicarágua</SelectItem>
-                  <SelectItem value="Níger">Níger</SelectItem>
-                  <SelectItem value="Nigéria">Nigéria</SelectItem>
-                  <SelectItem value="Noruega">Noruega</SelectItem>
-                  <SelectItem value="Nova Zelândia">Nova Zelândia</SelectItem>
-                  <SelectItem value="Omã">Omã</SelectItem>
-                  <SelectItem value="Países Baixos">Países Baixos</SelectItem>
-                  <SelectItem value="Palau">Palau</SelectItem>
-                  <SelectItem value="Panamá">Panamá</SelectItem>
-                  <SelectItem value="Papua-Nova Guiné">Papua-Nova Guiné</SelectItem>
-                  <SelectItem value="Paquistão">Paquistão</SelectItem>
-                  <SelectItem value="Paraguai">Paraguai</SelectItem>
-                  <SelectItem value="Peru">Peru</SelectItem>
-                  <SelectItem value="Polônia">Polônia</SelectItem>
-                  <SelectItem value="Portugal">Portugal</SelectItem>
-                  <SelectItem value="Quênia">Quênia</SelectItem>
-                  <SelectItem value="Quirguistão">Quirguistão</SelectItem>
-                  <SelectItem value="Reino Unido">Reino Unido</SelectItem>
-                  <SelectItem value="República Centro-Africana">República Centro-Africana</SelectItem>
-                  <SelectItem value="República Democrática do Congo">República Democrática do Congo</SelectItem>
-                  <SelectItem value="República Dominicana">República Dominicana</SelectItem>
-                  <SelectItem value="República Tcheca">República Tcheca</SelectItem>
-                  <SelectItem value="Romênia">Romênia</SelectItem>
-                  <SelectItem value="Ruanda">Ruanda</SelectItem>
-                  <SelectItem value="Rússia">Rússia</SelectItem>
-                  <SelectItem value="Samoa">Samoa</SelectItem>
-                  <SelectItem value="San Marino">San Marino</SelectItem>
-                  <SelectItem value="Santa Lúcia">Santa Lúcia</SelectItem>
-                  <SelectItem value="São Cristóvão e Nevis">São Cristóvão e Nevis</SelectItem>
-                  <SelectItem value="São Tomé e Príncipe">São Tomé e Príncipe</SelectItem>
-                  <SelectItem value="São Vicente e Granadinas">São Vicente e Granadinas</SelectItem>
-                  <SelectItem value="Senegal">Senegal</SelectItem>
-                  <SelectItem value="Serra Leoa">Serra Leoa</SelectItem>
-                  <SelectItem value="Sérvia">Sérvia</SelectItem>
-                  <SelectItem value="Seychelles">Seychelles</SelectItem>
-                  <SelectItem value="Singapura">Singapura</SelectItem>
-                  <SelectItem value="Síria">Síria</SelectItem>
-                  <SelectItem value="Somália">Somália</SelectItem>
-                  <SelectItem value="Sri Lanka">Sri Lanka</SelectItem>
-                  <SelectItem value="Suazilândia">Suazilândia</SelectItem>
-                  <SelectItem value="Sudão">Sudão</SelectItem>
-                  <SelectItem value="Sudão do Sul">Sudão do Sul</SelectItem>
-                  <SelectItem value="Suécia">Suécia</SelectItem>
-                  <SelectItem value="Suíça">Suíça</SelectItem>
-                  <SelectItem value="Suriname">Suriname</SelectItem>
-                  <SelectItem value="Tailândia">Tailândia</SelectItem>
-                  <SelectItem value="Tajiquistão">Tajiquistão</SelectItem>
-                  <SelectItem value="Tanzânia">Tanzânia</SelectItem>
-                  <SelectItem value="Timor-Leste">Timor-Leste</SelectItem>
-                  <SelectItem value="Togo">Togo</SelectItem>
-                  <SelectItem value="Tonga">Tonga</SelectItem>
-                  <SelectItem value="Trinidad e Tobago">Trinidad e Tobago</SelectItem>
-                  <SelectItem value="Tunísia">Tunísia</SelectItem>
-                  <SelectItem value="Turcomenistão">Turcomenistão</SelectItem>
-                  <SelectItem value="Turquia">Turquia</SelectItem>
-                  <SelectItem value="Tuvalu">Tuvalu</SelectItem>
-                  <SelectItem value="Ucrânia">Ucrânia</SelectItem>
-                  <SelectItem value="Uganda">Uganda</SelectItem>
-                  <SelectItem value="Uruguai">Uruguai</SelectItem>
-                  <SelectItem value="Uzbequistão">Uzbequistão</SelectItem>
-                  <SelectItem value="Vanuatu">Vanuatu</SelectItem>
-                  <SelectItem value="Vaticano">Vaticano</SelectItem>
-                  <SelectItem value="Venezuela">Venezuela</SelectItem>
-                  <SelectItem value="Vietnã">Vietnã</SelectItem>
-                  <SelectItem value="Zâmbia">Zâmbia</SelectItem>
-                  <SelectItem value="Zimbábue">Zimbábue</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tipo_curso">Tipo de Curso</Label>
-              <Select
-                value={formData.tipo_curso}
-                onValueChange={(value) => setFormData({ ...formData, tipo_curso: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Expedito">Expedito</SelectItem>
-                  <SelectItem value="Carreira">Carreira</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="modalidade">Modalidade</Label>
-              <Select
-                value={formData.modalidade}
-                onValueChange={(value) => setFormData({ ...formData, modalidade: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a modalidade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Presencial">Presencial</SelectItem>
-                  <SelectItem value="Semipresencial">Semipresencial</SelectItem>
-                  <SelectItem value="A Distância">A Distância</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="data_inicio">Data de Início</Label>
-              <Input
-                id="data_inicio"
-                type="date"
-                value={formData.data_inicio}
-                onChange={(e) => setFormData({ ...formData, data_inicio: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="data_fim">Data de Término</Label>
-              <Input
-                id="data_fim"
-                type="date"
-                value={formData.data_fim}
-                onChange={(e) => setFormData({ ...formData, data_fim: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="situacao">Situação</Label>
-              <Select
-                value={formData.situacao}
-                onValueChange={(value) => setFormData({ ...formData, situacao: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-                  <SelectItem value="Concluído">Concluído</SelectItem>
-                  <SelectItem value="Cancelado">Cancelado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="observacoes">Observações</Label>
-              <Textarea
-                id="observacoes"
-                value={formData.observacoes}
-                onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                rows={3}
-              />
-            </div>
+            <div className="space-y-2 md:col-span-2"><Label>{t("courseName")} *</Label><Input required value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} /></div>
+            <div className="space-y-2"><Label>{t("institution")}</Label><Input value={formData.instituicao} onChange={(e) => setFormData({ ...formData, instituicao: e.target.value })} /></div>
+            <div className="space-y-2"><Label>{t("category")}</Label><Input value={formData.categoria} onChange={(e) => setFormData({ ...formData, categoria: e.target.value })} /></div>
+            <div className="space-y-2"><Label>{t("coordinator")}</Label><Input value={formData.coordenador} onChange={(e) => setFormData({ ...formData, coordenador: e.target.value })} /></div>
+            <div className="space-y-2"><Label>{t("countryLocation")}</Label><Select value={formData.local_realizacao} onValueChange={(value) => setFormData({ ...formData, local_realizacao: value })}><SelectTrigger><SelectValue placeholder={t("selectCountry")} /></SelectTrigger><SelectContent className="max-h-[300px] overflow-y-auto bg-background">{countries.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
+            <div className="space-y-2"><Label>{t("courseType")}</Label><Select value={formData.tipo_curso} onValueChange={(value) => setFormData({ ...formData, tipo_curso: value })}><SelectTrigger><SelectValue placeholder={t("selectType")} /></SelectTrigger><SelectContent className="bg-background"><SelectItem value="Expedito">{t("expedited")}</SelectItem><SelectItem value="Carreira">{t("career")}</SelectItem></SelectContent></Select></div>
+            <div className="space-y-2"><Label>{t("modality")}</Label><Select value={formData.modalidade} onValueChange={(value) => setFormData({ ...formData, modalidade: value })}><SelectTrigger><SelectValue placeholder={t("selectModality")} /></SelectTrigger><SelectContent className="bg-background"><SelectItem value="Presencial">{t("inPerson")}</SelectItem><SelectItem value="Semipresencial">{t("semiPresential")}</SelectItem><SelectItem value="A Distância">{t("distance")}</SelectItem></SelectContent></Select></div>
+            <div className="space-y-2"><Label>{t("startDate")}</Label><Input type="date" value={formData.data_inicio} onChange={(e) => setFormData({ ...formData, data_inicio: e.target.value })} /></div>
+            <div className="space-y-2"><Label>{t("endDate")}</Label><Input type="date" value={formData.data_fim} onChange={(e) => setFormData({ ...formData, data_fim: e.target.value })} /></div>
+            <div className="space-y-2 md:col-span-2"><Label>{t("status")}</Label><Select value={formData.situacao} onValueChange={(value) => setFormData({ ...formData, situacao: value })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent className="bg-background"><SelectItem value="Em Andamento">{t("inProgress")}</SelectItem><SelectItem value="Concluído">{t("completed")}</SelectItem><SelectItem value="Cancelado">{t("cancelled")}</SelectItem></SelectContent></Select></div>
+            <div className="space-y-2 md:col-span-2"><Label>{t("observations")}</Label><Textarea value={formData.observacoes} onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })} rows={3} /></div>
           </div>
-
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Salvando..." : "Salvar"}
-            </Button>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t("cancel")}</Button>
+            <Button type="submit" disabled={loading}>{loading ? t("saving") : t("save")}</Button>
           </div>
         </form>
       </DialogContent>

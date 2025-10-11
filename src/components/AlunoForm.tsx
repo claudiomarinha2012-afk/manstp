@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { alunoSchema } from "@/lib/validations";
+import { useTranslation } from "react-i18next";
 
 interface Aluno {
   id: string;
@@ -28,6 +29,7 @@ interface AlunoFormProps {
 
 export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<{
@@ -52,7 +54,6 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
     e.preventDefault();
     if (!user) return;
 
-    // Validate form data
     const validation = alunoSchema.safeParse(formData);
     if (!validation.success) {
       const firstError = validation.error.errors[0];
@@ -69,14 +70,14 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
           .eq("id", aluno.id);
 
         if (error) throw error;
-        toast.success("Aluno atualizado com sucesso");
+        toast.success(t("studentUpdatedSuccess"));
       } else {
         const { error } = await supabase
           .from("alunos")
           .insert([{ ...formData, user_id: user.id } as any]);
 
         if (error) throw error;
-        toast.success("Aluno cadastrado com sucesso");
+        toast.success(t("studentRegisteredSuccess"));
       }
 
       setOpen(false);
@@ -94,7 +95,7 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
       }
     } catch (error) {
       console.error("Erro ao salvar aluno:", error);
-      toast.error("Erro ao salvar aluno");
+      toast.error(t("errorSavingStudent"));
     } finally {
       setLoading(false);
     }
@@ -110,18 +111,18 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
         ) : (
           <Button className="gap-2">
             <Plus className="h-4 w-4" />
-            Novo Aluno
+            {t("newStudent")}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{aluno ? "Editar Aluno" : "Novo Aluno"}</DialogTitle>
+          <DialogTitle>{aluno ? t("editStudent") : t("newStudent")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="nome_completo">Nome Completo *</Label>
+              <Label htmlFor="nome_completo">{t("fullName")} *</Label>
               <Input
                 id="nome_completo"
                 required
@@ -131,16 +132,16 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="graduacao">Graduação *</Label>
+              <Label htmlFor="graduacao">{t("rank")} *</Label>
               <Select
                 required
                 value={formData.graduacao}
                 onValueChange={(value) => setFormData({ ...formData, graduacao: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione a graduação" />
+                  <SelectValue placeholder={t("selectRank")} />
                 </SelectTrigger>
-                <SelectContent className="max-h-[300px] overflow-y-auto">
+                <SelectContent className="max-h-[300px] overflow-y-auto bg-background">
                   <SelectItem value="Brigadeiro">Brigadeiro</SelectItem>
                   <SelectItem value="Coronel">Coronel</SelectItem>
                   <SelectItem value="Capitão de Mar e Guerra">Capitão de Mar e Guerra</SelectItem>
@@ -175,16 +176,16 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tipo_militar">Tipo Militar *</Label>
+              <Label htmlFor="tipo_militar">{t("militaryType")} *</Label>
               <Select
                 required
                 value={formData.tipo_militar}
                 onValueChange={(value) => setFormData({ ...formData, tipo_militar: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
+                  <SelectValue placeholder={t("selectType")} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background">
                   <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
                   <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
                   <SelectItem value="Exercito">Exército</SelectItem>
@@ -194,16 +195,16 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="local_servico">Local de Serviço *</Label>
+              <Label htmlFor="local_servico">{t("serviceLocation")} *</Label>
               <Select
                 required
                 value={formData.local_servico}
                 onValueChange={(value) => setFormData({ ...formData, local_servico: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o local" />
+                  <SelectValue placeholder={t("selectLocation")} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background">
                   <SelectItem value="Guarda Costeira">Guarda Costeira</SelectItem>
                   <SelectItem value="Exército">Exército</SelectItem>
                   <SelectItem value="Palácio do Governo">Palácio do Governo</SelectItem>
@@ -214,7 +215,7 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="telefone">Telefone</Label>
+              <Label htmlFor="telefone">{t("phone")}</Label>
               <Input
                 id="telefone"
                 type="tel"
@@ -224,7 +225,7 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="email">E-mail</Label>
+              <Label htmlFor="email">{t("email")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -234,7 +235,7 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="observacoes">Observações</Label>
+              <Label htmlFor="observacoes">{t("observations")}</Label>
               <Textarea
                 id="observacoes"
                 value={formData.observacoes}
@@ -246,10 +247,10 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancelar
+              {t("cancel")}
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Salvando..." : "Salvar"}
+              {loading ? t("saving") : t("save")}
             </Button>
           </div>
         </form>

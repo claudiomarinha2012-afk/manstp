@@ -15,29 +15,31 @@ import {
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/supabase";
 import { toast } from "sonner";
-
-const menuItems = [
-  { title: "Dashboard", url: "/", icon: Home },
-  { title: "Alunos", url: "/alunos", icon: Users },
-  { title: "Instrutores", url: "/instrutores", icon: GraduationCap },
-  { title: "Cursos", url: "/cursos", icon: BookOpen },
-  { title: "Turmas", url: "/turmas", icon: School },
-  { title: "Estatísticas", url: "/estatisticas", icon: BarChart3 },
-  { title: "Relatórios", url: "/relatorios", icon: FileText },
-  { title: "Usuários", url: "/usuarios", icon: Shield },
-];
+import { useTranslation } from "react-i18next";
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
+  const menuItems = [
+    { title: t("dashboard"), url: "/", icon: Home },
+    { title: t("students"), url: "/alunos", icon: Users },
+    { title: t("instructors"), url: "/instrutores", icon: GraduationCap },
+    { title: t("courses"), url: "/cursos", icon: BookOpen },
+    { title: t("classes"), url: "/turmas", icon: School },
+    { title: t("statistics"), url: "/estatisticas", icon: BarChart3 },
+    { title: t("reports"), url: "/relatorios", icon: FileText },
+    { title: t("users"), url: "/usuarios", icon: Shield },
+  ];
 
   const handleSignOut = async () => {
     try {
       await signOut();
-      toast.success("Logout realizado com sucesso!");
+      toast.success(t("logoutSuccess"));
       navigate("/auth");
     } catch (error: any) {
-      toast.error("Erro ao fazer logout");
+      toast.error(t("errorLogout"));
     }
   };
 
@@ -46,7 +48,7 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-primary">
-            Sistema Militar
+            {t("militarySystem")}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -79,7 +81,7 @@ export function AppSidebar() {
           onClick={handleSignOut}
         >
           <LogOut className="h-4 w-4" />
-          {state !== "collapsed" && <span className="ml-2">Sair</span>}
+          {state !== "collapsed" && <span className="ml-2">{t("logout")}</span>}
         </Button>
       </SidebarFooter>
     </Sidebar>

@@ -101,10 +101,53 @@ export default function Relatorios() {
     return statsByYear;
   };
 
+  const fetchStatusStats = async () => {
+    const { data: statusData } = await supabase
+      .from("aluno_turma")
+      .select("status");
+    
+    if (!statusData) return null;
+
+    const statusCounts = {
+      cursando: 0,
+      concluido: 0,
+      reprovado: 0,
+      desligado: 0,
+      desertor: 0,
+      total: 0
+    };
+
+    statusData.forEach((item: any) => {
+      statusCounts.total += 1;
+      const status = item.status?.toLowerCase() || 'cursando';
+      if (status === 'cursando') statusCounts.cursando += 1;
+      else if (status === 'concluído' || status === 'concluido') statusCounts.concluido += 1;
+      else if (status === 'reprovado') statusCounts.reprovado += 1;
+      else if (status === 'desligado') statusCounts.desligado += 1;
+      else if (status === 'desertor') statusCounts.desertor += 1;
+    });
+
+    return statusCounts;
+  };
+
   const exportToCSV = async () => {
     try {
       let data: any[] = [];
       let headers: string[] = [];
+
+      // Adicionar estatísticas de status dos alunos
+      const statusStats = await fetchStatusStats();
+      if (statusStats) {
+        data.push({
+          Tipo: "Status dos Alunos",
+          Cursando: statusStats.cursando,
+          Concluído: statusStats.concluido,
+          Reprovado: statusStats.reprovado,
+          Desligado: statusStats.desligado,
+          Desertor: statusStats.desertor,
+          Total: statusStats.total
+        });
+      }
 
       // Adicionar estatísticas de cursos por ano
       const cursosStats = await fetchCursosStats();
@@ -182,6 +225,58 @@ export default function Relatorios() {
       pdf.setFontSize(10);
       pdf.text(`Gerado em: ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}`, pageWidth / 2, yPosition, { align: "center" });
       yPosition += 15;
+
+      // Status dos Alunos
+      const statusStats = await fetchStatusStats();
+      if (statusStats) {
+        pdf.setFontSize(14);
+        pdf.text("Status dos Alunos", 14, yPosition);
+        yPosition += 10;
+
+        // Criar gráfico de barras simples para status
+        const barWidth = 25;
+        const barSpacing = 35;
+        const maxBarHeight = 40;
+        const maxValue = Math.max(statusStats.concluido, statusStats.reprovado, statusStats.desligado, statusStats.desertor, statusStats.cursando);
+        
+        const statuses = [
+          { label: 'Cursando', value: statusStats.cursando, color: [100, 150, 255] },
+          { label: 'Concluído', value: statusStats.concluido, color: [50, 200, 100] },
+          { label: 'Reprovado', value: statusStats.reprovado, color: [255, 100, 100] },
+          { label: 'Desligado', value: statusStats.desligado, color: [255, 200, 50] },
+          { label: 'Desertor', value: statusStats.desertor, color: [150, 150, 150] }
+        ];
+
+        statuses.forEach((status, index) => {
+          const x = 14 + (index * barSpacing);
+          const barHeight = maxValue > 0 ? (status.value / maxValue) * maxBarHeight : 0;
+          const y = yPosition + maxBarHeight - barHeight;
+          
+          // Desenhar barra
+          pdf.setFillColor(status.color[0], status.color[1], status.color[2]);
+          pdf.rect(x, y, barWidth, barHeight, 'F');
+          
+          // Valor acima da barra
+          pdf.setFontSize(8);
+          pdf.text(status.value.toString(), x + barWidth / 2, y - 2, { align: 'center' });
+          
+          // Label abaixo
+          pdf.setFontSize(7);
+          const labelLines = pdf.splitTextToSize(status.label, barWidth);
+          pdf.text(labelLines, x + barWidth / 2, yPosition + maxBarHeight + 5, { align: 'center' });
+        });
+
+        yPosition += maxBarHeight + 20;
+
+        // Texto com totais
+        pdf.setFontSize(10);
+        pdf.text(`Total de vínculos aluno-turma: ${statusStats.total}`, 14, yPosition);
+        yPosition += 7;
+        pdf.text(`Cursando: ${statusStats.cursando} | Concluídos: ${statusStats.concluido} | Reprovados: ${statusStats.reprovado}`, 14, yPosition);
+        yPosition += 7;
+        pdf.text(`Desligados: ${statusStats.desligado} | Desertores: ${statusStats.desertor}`, 14, yPosition);
+        yPosition += 15;
+      }
 
       // Cursos por Ano e Tipo Militar
       const cursosStats = await fetchCursosStats();

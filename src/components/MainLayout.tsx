@@ -9,11 +9,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         <AppSidebar />
         <div className="flex-1 flex flex-col relative">
           <div 
-            className="fixed inset-0 z-0 bg-no-repeat bg-center bg-contain pointer-events-none"
+            className="fixed inset-0 z-0 bg-no-repeat bg-center pointer-events-none"
             style={{ 
               backgroundImage: `url(${logoFundo})`,
-              opacity: 0.08,
-              backgroundSize: '40%'
+              opacity: 0.05,
+              backgroundSize: 'cover'
             }}
           />
           <header className="sticky top-0 z-10 flex h-14 items-center gap-2 sm:gap-4 border-b bg-card px-3 sm:px-4 shadow-sm">

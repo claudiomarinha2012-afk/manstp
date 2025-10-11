@@ -9,6 +9,7 @@ import { Plus, Pencil } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { turmaSchema } from "@/lib/validations";
 
 interface Turma {
   id: string;
@@ -58,6 +59,14 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+
+    // Validate form data
+    const validation = turmaSchema.safeParse(formData);
+    if (!validation.success) {
+      const firstError = validation.error.errors[0];
+      toast.error(firstError.message);
+      return;
+    }
 
     setLoading(true);
     try {

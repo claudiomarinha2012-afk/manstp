@@ -9,6 +9,7 @@ import { Plus, Pencil } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { alunoSchema } from "@/lib/validations";
 
 interface Aluno {
   id: string;
@@ -52,6 +53,14 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+
+    // Validate form data
+    const validation = alunoSchema.safeParse(formData);
+    if (!validation.success) {
+      const firstError = validation.error.errors[0];
+      toast.error(firstError.message);
+      return;
+    }
 
     setLoading(true);
     try {

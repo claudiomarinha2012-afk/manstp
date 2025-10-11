@@ -12,6 +12,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { instrutorSchema } from "@/lib/validations";
 
 interface InstrutorFormProps {
   instrutor?: any;
@@ -64,6 +65,14 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate form data
+    const validation = instrutorSchema.safeParse(formData);
+    if (!validation.success) {
+      const firstError = validation.error.errors[0];
+      toast.error(firstError.message);
+      return;
+    }
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

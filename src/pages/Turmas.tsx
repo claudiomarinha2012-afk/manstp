@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { TurmaForm } from "@/components/TurmaForm";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { VincularAlunoTurma } from "@/components/VincularAlunoTurma";
@@ -56,6 +57,7 @@ interface Instrutor {
 
 export default function Turmas() {
   const { user } = useAuth();
+  const { isCoordenador } = useUserRole();
   const [turmas, setTurmas] = useState<Turma[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -183,7 +185,7 @@ export default function Turmas() {
           <h2 className="text-3xl font-bold tracking-tight">Turmas</h2>
           <p className="text-muted-foreground">Gerencie as turmas cadastradas</p>
         </div>
-        <TurmaForm onSuccess={fetchTurmas} />
+        {isCoordenador && <TurmaForm onSuccess={fetchTurmas} />}
       </div>
 
       <Card className="shadow-card">
@@ -258,37 +260,43 @@ export default function Turmas() {
                           <GraduationCap className="h-4 w-4" />
                           Ver Instrutores
                         </Button>
-                        <VincularAlunoTurma
-                          turmaId={turma.id}
-                          turmaNome={turma.nome}
-                          onSuccess={() => {
-                            fetchTurmas();
-                            if (selectedTurma?.id === turma.id) {
-                              fetchAlunosTurma(turma.id);
-                            }
-                          }}
-                        />
-                        <VincularInstrutorTurma
-                          turmaId={turma.id}
-                          onSuccess={() => {
-                            fetchTurmas();
-                            if (selectedTurma?.id === turma.id) {
-                              fetchInstrutoresTurma(turma.id);
-                            }
-                          }}
-                        />
+                        {isCoordenador && (
+                          <>
+                            <VincularAlunoTurma
+                              turmaId={turma.id}
+                              turmaNome={turma.nome}
+                              onSuccess={() => {
+                                fetchTurmas();
+                                if (selectedTurma?.id === turma.id) {
+                                  fetchAlunosTurma(turma.id);
+                                }
+                              }}
+                            />
+                            <VincularInstrutorTurma
+                              turmaId={turma.id}
+                              onSuccess={() => {
+                                fetchTurmas();
+                                if (selectedTurma?.id === turma.id) {
+                                  fetchInstrutoresTurma(turma.id);
+                                }
+                              }}
+                            />
+                          </>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <TurmaForm turma={turma} onSuccess={fetchTurmas} />
-                        <DeleteDialog
-                          table="turmas"
-                          id={turma.id}
-                          name="Turma"
-                          onSuccess={fetchTurmas}
-                        />
-                      </div>
+                      {isCoordenador && (
+                        <div className="flex justify-end gap-2">
+                          <TurmaForm turma={turma} onSuccess={fetchTurmas} />
+                          <DeleteDialog
+                            table="turmas"
+                            id={turma.id}
+                            name="Turma"
+                            onSuccess={fetchTurmas}
+                          />
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -363,15 +371,17 @@ export default function Turmas() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDesvincular(aluno.vinculo_id!)}
-                          className="gap-2"
-                        >
-                          <X className="h-4 w-4" />
-                          Desvincular
-                        </Button>
+                        {isCoordenador && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDesvincular(aluno.vinculo_id!)}
+                            className="gap-2"
+                          >
+                            <X className="h-4 w-4" />
+                            Desvincular
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -423,15 +433,17 @@ export default function Turmas() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDesvincularInstrutor(instrutor.vinculo_id!)}
-                          className="gap-2"
-                        >
-                          <X className="h-4 w-4" />
-                          Desvincular
-                        </Button>
+                        {isCoordenador && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDesvincularInstrutor(instrutor.vinculo_id!)}
+                            className="gap-2"
+                          >
+                            <X className="h-4 w-4" />
+                            Desvincular
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

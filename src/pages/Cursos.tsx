@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { CursoForm } from "@/components/CursoForm";
 import { DeleteDialog } from "@/components/DeleteDialog";
 
@@ -29,6 +30,7 @@ interface Curso {
 
 export default function Cursos() {
   const { user } = useAuth();
+  const { isCoordenador } = useUserRole();
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -66,7 +68,7 @@ export default function Cursos() {
           <h2 className="text-3xl font-bold tracking-tight">Cursos</h2>
           <p className="text-muted-foreground">Gerencie os cursos cadastrados</p>
         </div>
-        <CursoForm onSuccess={fetchCursos} />
+        {isCoordenador && <CursoForm onSuccess={fetchCursos} />}
       </div>
 
       <Card className="shadow-card">
@@ -126,15 +128,17 @@ export default function Cursos() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <CursoForm curso={curso} onSuccess={fetchCursos} />
-                        <DeleteDialog
-                          table="cursos"
-                          id={curso.id}
-                          name="Curso"
-                          onSuccess={fetchCursos}
-                        />
-                      </div>
+                      {isCoordenador && (
+                        <div className="flex justify-end gap-2">
+                          <CursoForm curso={curso} onSuccess={fetchCursos} />
+                          <DeleteDialog
+                            table="cursos"
+                            id={curso.id}
+                            name="Curso"
+                            onSuccess={fetchCursos}
+                          />
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

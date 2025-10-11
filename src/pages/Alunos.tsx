@@ -11,6 +11,7 @@ import {
 import { Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { AlunoForm } from "@/components/AlunoForm";
@@ -30,6 +31,7 @@ interface Aluno {
 
 export default function Alunos() {
   const { user } = useAuth();
+  const { isCoordenador } = useUserRole();
   const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -67,7 +69,7 @@ export default function Alunos() {
           <h2 className="text-3xl font-bold tracking-tight">Alunos</h2>
           <p className="text-muted-foreground">Gerencie os alunos cadastrados</p>
         </div>
-        <AlunoForm onSuccess={fetchAlunos} />
+        {isCoordenador && <AlunoForm onSuccess={fetchAlunos} />}
       </div>
 
       <Card className="shadow-card">
@@ -144,15 +146,17 @@ export default function Alunos() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <AlunoForm aluno={aluno} onSuccess={fetchAlunos} />
-                        <DeleteDialog
-                          table="alunos"
-                          id={aluno.id}
-                          name="Aluno"
-                          onSuccess={fetchAlunos}
-                        />
-                      </div>
+                      {isCoordenador && (
+                        <div className="flex justify-end gap-2">
+                          <AlunoForm aluno={aluno} onSuccess={fetchAlunos} />
+                          <DeleteDialog
+                            table="alunos"
+                            id={aluno.id}
+                            name="Aluno"
+                            onSuccess={fetchAlunos}
+                          />
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

@@ -7,11 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, UserPlus, Mail } from "lucide-react";
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Search, UserPlus, Mail, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useUserRole } from "@/hooks/useUserRole";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useAuth } from "@/contexts/AuthContext";
 
 const userSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -30,6 +32,7 @@ interface User {
 
 export default function Usuarios() {
   const { isCoordenador } = useUserRole();
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -41,6 +44,8 @@ export default function Usuarios() {
     role: "visualizador" as "coordenador" | "visualizador",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [updatingRoleId, setUpdatingRoleId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isCoordenador) {
@@ -138,6 +143,56 @@ export default function Usuarios() {
     } catch (error: any) {
       console.error("Erro ao enviar email:", error);
       toast.error(error.message || "Erro ao enviar email de recuperação");
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deleteUserId) return;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ userId: deleteUserId }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erro ao deletar usuário');
+      }
+
+      toast.success("Usuário deletado com sucesso!");
+      setDeleteUserId(null);
+      fetchUsers();
+    } catch (error: any) {
+      console.error("Erro ao deletar usuário:", error);
+      toast.error(error.message || "Erro ao deletar usuário");
+    }
+  };
+
+  const handleChangeRole = async (userId: string, newRole: "coordenador" | "visualizador") => {
+    setUpdatingRoleId(userId);
+    try {
+      const { error } = await supabase
+        .from("user_roles")
+        .update({ role: newRole })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      toast.success("Nível de acesso atualizado com sucesso!");
+      fetchUsers();
+    } catch (error: any) {
+      console.error("Erro ao atualizar role:", error);
+      toast.error(error.message || "Erro ao atualizar nível de acesso");
+    } finally {
+      setUpdatingRoleId(null);
     }
   };
 
@@ -276,22 +331,45 @@ export default function Usuarios() {
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">{user.email}</TableCell>
                       <TableCell>
-                        <Badge variant={user.role === "coordenador" ? "default" : "secondary"}>
-                          {user.role === "coordenador" ? "Admin" : "Visualizador"}
-                        </Badge>
+                        <Select
+                          value={user.role}
+                          onValueChange={(value: "coordenador" | "visualizador") => 
+                            handleChangeRole(user.id, value)
+                          }
+                          disabled={user.id === currentUser?.id || updatingRoleId === user.id}
+                        >
+                          <SelectTrigger className="w-[160px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="coordenador">Admin</SelectItem>
+                            <SelectItem value="visualizador">Visualizador</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleSendPasswordReset(user.email)}
-                          className="gap-2"
-                          disabled={!user.email}
-                          title={!user.email ? "Email não disponível" : "Enviar email de recuperação"}
-                        >
-                          <Mail className="h-4 w-4" />
-                          <span className="hidden sm:inline">Recuperar Senha</span>
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleSendPasswordReset(user.email)}
+                            className="gap-2"
+                            disabled={!user.email}
+                            title={!user.email ? "Email não disponível" : "Enviar email de recuperação"}
+                          >
+                            <Mail className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setDeleteUserId(user.id)}
+                            className="gap-2 text-destructive hover:text-destructive"
+                            disabled={user.id === currentUser?.id}
+                            title={user.id === currentUser?.id ? "Você não pode deletar sua própria conta" : "Deletar usuário"}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -301,6 +379,25 @@ export default function Usuarios() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={deleteUserId !== null} onOpenChange={(open) => !open && setDeleteUserId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deletar Usuário</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja deletar este usuário? Esta ação não pode ser desfeita e todos os dados associados serão permanentemente removidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setDeleteUserId(null)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteUser}>
+              Deletar
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

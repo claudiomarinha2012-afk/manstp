@@ -97,7 +97,10 @@ export default function Usuarios() {
         email: formData.email,
         password: formData.password,
         options: {
-          data: { nome_completo: formData.nome_completo },
+          data: { 
+            nome_completo: formData.nome_completo,
+            role: formData.role 
+          },
           emailRedirectTo: `${window.location.origin}/`,
         },
       });
@@ -105,13 +108,7 @@ export default function Usuarios() {
       if (signUpError) throw signUpError;
 
       if (authData.user) {
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .insert([{ user_id: authData.user.id, role: formData.role }]);
-
-        if (roleError) throw roleError;
-
-        toast.success("Usuário criado com sucesso! Email de confirmação enviado para o usuário.");
+        toast.success("Usuário criado com sucesso! Email de confirmação enviado.");
         setOpen(false);
         setFormData({ email: "", nome_completo: "", password: "", role: "visualizador" });
         fetchUsers();

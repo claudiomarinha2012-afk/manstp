@@ -67,6 +67,33 @@ Deno.serve(async (req) => {
       throw createError
     }
 
+    // Criar perfil na tabela profiles
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .insert({
+        id: newUser.user.id,
+        nome_completo,
+        email
+      })
+    
+    if (profileError) {
+      console.error('Erro ao criar perfil:', profileError)
+      throw new Error('Erro ao criar perfil do usuário')
+    }
+
+    // Criar role na tabela user_roles
+    const { error: userRoleError } = await supabaseAdmin
+      .from('user_roles')
+      .insert({
+        user_id: newUser.user.id,
+        role
+      })
+    
+    if (userRoleError) {
+      console.error('Erro ao criar role:', userRoleError)
+      throw new Error('Erro ao criar role do usuário')
+    }
+
     return new Response(
       JSON.stringify({ success: true, user: newUser }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -290,30 +290,30 @@ export default function Relatorios() {
   const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))", "hsl(var(--muted))"];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Relatórios</h2>
-        <p className="text-muted-foreground">Gere e exporte relatórios customizados com gráficos e análises</p>
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Relatórios</h2>
+        <p className="text-sm sm:text-base text-muted-foreground">Gere e exporte relatórios customizados com gráficos e análises</p>
       </div>
 
       {/* Gráficos de Estatísticas */}
       {statsData && (
-        <div id="charts-container" className="grid gap-6 md:grid-cols-2">
+        <div id="charts-container" className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
           <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
                 Tipo Militar
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={statsData.tipoData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
-                  <Legend />
+                  <Legend wrapperStyle={{ fontSize: '12px' }} />
                   <Bar dataKey="value" fill="hsl(var(--primary))" name="Quantidade" />
                 </BarChart>
               </ResponsiveContainer>
@@ -324,15 +324,15 @@ export default function Relatorios() {
 
       {/* Relatório Individual */}
       <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <User className="h-4 w-4 sm:h-5 sm:w-5" />
             Relatório Individual por Aluno
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
           <div className="space-y-2">
-            <Label>Selecionar Aluno</Label>
+            <Label className="text-sm">Selecionar Aluno</Label>
             <Select value={selectedAluno} onValueChange={setSelectedAluno}>
               <SelectTrigger>
                 <SelectValue placeholder="Escolha um aluno" />
@@ -346,20 +346,20 @@ export default function Relatorios() {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={exportAlunoReport} className="gap-2">
+          <Button onClick={exportAlunoReport} className="gap-2 w-full sm:w-auto">
             <FileDown className="h-4 w-4" />
-            Gerar Relatório Individual (PDF)
+            <span className="text-sm">Gerar Relatório Individual (PDF)</span>
           </Button>
         </CardContent>
       </Card>
 
       {/* Relatórios Gerais */}
       <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle>Configurar Relatório Geral</CardTitle>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-base sm:text-lg">Configurar Relatório Geral</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
+        <CardContent className="p-4 sm:p-6 pt-0 space-y-4 sm:space-y-6">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Filtrar por Curso</Label>
               <Select value={selectedCurso} onValueChange={setSelectedCurso}>
@@ -412,7 +412,7 @@ export default function Relatorios() {
           </div>
 
           <div className="space-y-3">
-            <Label>Incluir nos Relatórios:</Label>
+            <Label className="text-sm">Incluir nos Relatórios:</Label>
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -420,7 +420,7 @@ export default function Relatorios() {
                   checked={incluirAlunos}
                   onCheckedChange={(checked) => setIncluirAlunos(checked as boolean)}
                 />
-                <label htmlFor="alunos" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <label htmlFor="alunos" className="text-xs sm:text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   Alunos
                 </label>
               </div>
@@ -430,7 +430,7 @@ export default function Relatorios() {
                   checked={incluirCursos}
                   onCheckedChange={(checked) => setIncluirCursos(checked as boolean)}
                 />
-                <label htmlFor="cursos" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <label htmlFor="cursos" className="text-xs sm:text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   Cursos
                 </label>
               </div>
@@ -440,21 +440,21 @@ export default function Relatorios() {
                   checked={incluirTurmas}
                   onCheckedChange={(checked) => setIncluirTurmas(checked as boolean)}
                 />
-                <label htmlFor="turmas" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <label htmlFor="turmas" className="text-xs sm:text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   Turmas
                 </label>
               </div>
             </div>
           </div>
 
-          <div className="flex gap-3">
-            <Button onClick={exportToCSV} className="gap-2">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button onClick={exportToCSV} className="gap-2 w-full sm:w-auto">
               <FileSpreadsheet className="h-4 w-4" />
-              Exportar Excel/CSV
+              <span className="text-sm">Exportar Excel/CSV</span>
             </Button>
-            <Button onClick={exportToPDF} variant="outline" className="gap-2">
+            <Button onClick={exportToPDF} variant="outline" className="gap-2 w-full sm:w-auto">
               <FileDown className="h-4 w-4" />
-              Exportar PDF
+              <span className="text-sm">Exportar PDF</span>
             </Button>
           </div>
         </CardContent>

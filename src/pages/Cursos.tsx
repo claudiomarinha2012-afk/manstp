@@ -64,28 +64,28 @@ export default function Cursos() {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Cursos</h2>
-          <p className="text-muted-foreground">Gerencie os cursos cadastrados</p>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Cursos</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">Gerencie os cursos cadastrados</p>
         </div>
         {isCoordenador && <CursoForm onSuccess={fetchCursos} />}
       </div>
 
       <Card className="shadow-card">
-        <CardHeader>
+        <CardHeader className="p-4 sm:p-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar cursos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
+              className="pl-9 text-sm"
             />
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0 sm:p-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
@@ -97,69 +97,72 @@ export default function Cursos() {
               </p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Instituição</TableHead>
-                  <TableHead>Local</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Período</TableHead>
-                  <TableHead>Situação</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCursos.map((curso) => (
-                  <TableRow key={curso.id}>
-                    <TableCell className="font-medium">{curso.nome}</TableCell>
-                    <TableCell>{curso.instituicao || "-"}</TableCell>
-                    <TableCell>
-                      {curso.local_realizacao ? (
-                        <Badge variant="outline">{curso.local_realizacao}</Badge>
-                      ) : "-"}
-                    </TableCell>
-                    <TableCell>
-                      {curso.tipo_curso ? (
-                        <Badge variant={curso.tipo_curso === "Carreira" ? "default" : "secondary"}>
-                          {curso.tipo_curso}
-                        </Badge>
-                      ) : "-"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {curso.data_inicio && <div>Início: {new Date(curso.data_inicio).toLocaleDateString()}</div>}
-                        {curso.data_fim && <div>Fim: {new Date(curso.data_fim).toLocaleDateString()}</div>}
-                        {!curso.data_inicio && !curso.data_fim && "-"}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          curso.situacao === "Concluído" ? "default" :
-                          curso.situacao === "Em Andamento" ? "secondary" : "outline"
-                        }
-                      >
-                        {curso.situacao}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {isCoordenador && (
-                        <div className="flex justify-end gap-2">
-                          <CursoForm curso={curso} onSuccess={fetchCursos} />
-                          <DeleteDialog
-                            table="cursos"
-                            id={curso.id}
-                            name="Curso"
-                            onSuccess={fetchCursos}
-                          />
-                        </div>
-                      )}
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[150px]">Nome</TableHead>
+                    <TableHead className="min-w-[120px] hidden sm:table-cell">Instituição</TableHead>
+                    <TableHead className="min-w-[100px]">Local</TableHead>
+                    <TableHead className="min-w-[100px] hidden md:table-cell">Tipo</TableHead>
+                    <TableHead className="min-w-[140px] hidden lg:table-cell">Período</TableHead>
+                    <TableHead className="min-w-[100px]">Situação</TableHead>
+                    <TableHead className="text-right min-w-[100px]">Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredCursos.map((curso) => (
+                    <TableRow key={curso.id}>
+                      <TableCell className="font-medium text-sm">{curso.nome}</TableCell>
+                      <TableCell className="hidden sm:table-cell text-sm">{curso.instituicao || "-"}</TableCell>
+                      <TableCell>
+                        {curso.local_realizacao ? (
+                          <Badge variant="outline" className="text-xs">{curso.local_realizacao}</Badge>
+                        ) : "-"}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {curso.tipo_curso ? (
+                          <Badge variant={curso.tipo_curso === "Carreira" ? "default" : "secondary"} className="text-xs">
+                            {curso.tipo_curso}
+                          </Badge>
+                        ) : "-"}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <div className="text-xs">
+                          {curso.data_inicio && <div>Início: {new Date(curso.data_inicio).toLocaleDateString()}</div>}
+                          {curso.data_fim && <div>Fim: {new Date(curso.data_fim).toLocaleDateString()}</div>}
+                          {!curso.data_inicio && !curso.data_fim && "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          className="text-xs"
+                          variant={
+                            curso.situacao === "Concluído" ? "default" :
+                            curso.situacao === "Em Andamento" ? "secondary" : "outline"
+                          }
+                        >
+                          {curso.situacao}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {isCoordenador && (
+                          <div className="flex justify-end gap-1 sm:gap-2">
+                            <CursoForm curso={curso} onSuccess={fetchCursos} />
+                            <DeleteDialog
+                              table="cursos"
+                              id={curso.id}
+                              name="Curso"
+                              onSuccess={fetchCursos}
+                            />
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

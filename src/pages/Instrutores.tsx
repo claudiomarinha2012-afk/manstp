@@ -90,15 +90,16 @@ export default function Instrutores() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Instrutores</h1>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold">Instrutores</h1>
         {isCoordenador && (
           <Button
             onClick={() => {
               setSelectedInstrutor(null);
               setIsDialogOpen(true);
             }}
+            className="w-full sm:w-auto"
           >
             <Plus className="w-4 h-4 mr-2" />
             Novo Instrutor
@@ -106,16 +107,16 @@ export default function Instrutores() {
         )}
       </div>
 
-      <div className="border rounded-lg">
+      <div className="border rounded-lg overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Graduação</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Especialidade</TableHead>
-              <TableHead>Contato</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead className="min-w-[150px]">Nome</TableHead>
+              <TableHead className="min-w-[120px]">Graduação</TableHead>
+              <TableHead className="min-w-[140px]">Tipo</TableHead>
+              <TableHead className="min-w-[130px] hidden md:table-cell">Especialidade</TableHead>
+              <TableHead className="min-w-[150px] hidden lg:table-cell">Contato</TableHead>
+              <TableHead className="text-right min-w-[100px]">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -128,12 +129,13 @@ export default function Instrutores() {
             ) : (
               instrutores.map((instrutor) => (
                 <TableRow key={instrutor.id}>
-                  <TableCell className="font-medium">
+                  <TableCell className="font-medium text-sm">
                     {instrutor.nome_completo}
                   </TableCell>
-                  <TableCell>{instrutor.graduacao}</TableCell>
+                  <TableCell className="text-sm">{instrutor.graduacao}</TableCell>
                   <TableCell>
                     <Badge
+                      className="text-xs"
                       variant={
                         instrutor.tipo_militar === "Fuzileiro Naval" ? "default" :
                         instrutor.tipo_militar === "Guarda Costeiro" ? "secondary" :
@@ -144,18 +146,20 @@ export default function Instrutores() {
                       {instrutor.tipo_militar}
                     </Badge>
                   </TableCell>
-                  <TableCell>{instrutor.especialidade || "-"}</TableCell>
-                  <TableCell>
-                    {instrutor.telefone && <div>{instrutor.telefone}</div>}
-                    {instrutor.email && (
-                      <div className="text-sm text-muted-foreground">
-                        {instrutor.email}
-                      </div>
-                    )}
+                  <TableCell className="hidden md:table-cell text-sm">{instrutor.especialidade || "-"}</TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    <div className="text-xs">
+                      {instrutor.telefone && <div>{instrutor.telefone}</div>}
+                      {instrutor.email && (
+                        <div className="text-muted-foreground truncate max-w-[200px]">
+                          {instrutor.email}
+                        </div>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     {isCoordenador && (
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-1 sm:gap-2">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -181,9 +185,9 @@ export default function Instrutores() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl">
               {selectedInstrutor ? "Editar Instrutor" : "Novo Instrutor"}
             </DialogTitle>
           </DialogHeader>

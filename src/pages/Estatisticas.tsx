@@ -348,20 +348,20 @@ export default function Estatisticas() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Estatísticas</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Estatísticas</h2>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Análise de alunos por curso, categoria e status
         </p>
       </div>
 
       {/* Filters */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Curso</label>
+              <label className="text-xs sm:text-sm font-medium">Curso</label>
               <Select value={selectedCurso} onValueChange={setSelectedCurso}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o curso" />
@@ -378,7 +378,7 @@ export default function Estatisticas() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Categoria</label>
+              <label className="text-xs sm:text-sm font-medium">Categoria</label>
               <Select value={selectedCategoria} onValueChange={setSelectedCategoria}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a categoria" />
@@ -395,7 +395,7 @@ export default function Estatisticas() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Ano</label>
+              <label className="text-xs sm:text-sm font-medium">Ano</label>
               <Select value={selectedAno} onValueChange={setSelectedAno}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o ano" />
@@ -416,21 +416,21 @@ export default function Estatisticas() {
 
       {/* Year Chart - Inscritos por Categoria */}
       <Card>
-        <CardHeader>
-          <CardTitle>Inscritos por Ano - Fuzileiros Navais e Guarda Costeira</CardTitle>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-base sm:text-lg">Inscritos por Ano - Fuzileiros Navais e Guarda Costeira</CardTitle>
         </CardHeader>
-        <CardContent>
-          <ChartContainer config={yearChartConfig} className="h-[400px] w-full">
+        <CardContent className="p-4 sm:p-6 pt-0">
+          <ChartContainer config={yearChartConfig} className="h-[300px] sm:h-[400px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={yearChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="ano" />
-                <YAxis />
+                <XAxis dataKey="ano" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Legend />
-                <Bar dataKey="CONCLUIDOS" fill={yearChartConfig.CONCLUIDOS.color} label={{ position: 'top' }} />
-                <Bar dataKey="GCSTP" fill={yearChartConfig.GCSTP.color} label={{ position: 'top' }} />
-                <Bar dataKey="FUZILEIRO" fill={yearChartConfig.FUZILEIRO.color} label={{ position: 'top' }} />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                <Bar dataKey="CONCLUIDOS" fill={yearChartConfig.CONCLUIDOS.color} label={{ position: 'top', fontSize: 10 }} />
+                <Bar dataKey="GCSTP" fill={yearChartConfig.GCSTP.color} label={{ position: 'top', fontSize: 10 }} />
+                <Bar dataKey="FUZILEIRO" fill={yearChartConfig.FUZILEIRO.color} label={{ position: 'top', fontSize: 10 }} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
@@ -439,21 +439,21 @@ export default function Estatisticas() {
 
       {/* Location Chart - Cursos por Local */}
       <Card>
-        <CardHeader>
-          <CardTitle>Cursos Realizados no CIAGA e CIABA</CardTitle>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-base sm:text-lg">Cursos Realizados no CIAGA e CIABA</CardTitle>
         </CardHeader>
-        <CardContent>
-          <ChartContainer config={locationChartConfig} className="h-[400px] w-full">
+        <CardContent className="p-4 sm:p-6 pt-0">
+          <ChartContainer config={locationChartConfig} className="h-[300px] sm:h-[400px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={locationChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="ano" />
-                <YAxis />
+                <XAxis dataKey="ano" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Legend />
-                <Bar dataKey="TOTAL" fill={locationChartConfig.TOTAL.color} label={{ position: 'top' }} />
-                <Bar dataKey="CIABA" fill={locationChartConfig.CIABA.color} label={{ position: 'top' }} />
-                <Bar dataKey="CIAGA" fill={locationChartConfig.CIAGA.color} label={{ position: 'top' }} />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                <Bar dataKey="TOTAL" fill={locationChartConfig.TOTAL.color} label={{ position: 'top', fontSize: 10 }} />
+                <Bar dataKey="CIABA" fill={locationChartConfig.CIABA.color} label={{ position: 'top', fontSize: 10 }} />
+                <Bar dataKey="CIAGA" fill={locationChartConfig.CIAGA.color} label={{ position: 'top', fontSize: 10 }} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
@@ -462,21 +462,21 @@ export default function Estatisticas() {
 
       {/* Course Type Chart - Cursos Expeditos e Carreira */}
       <Card>
-        <CardHeader>
-          <CardTitle>Cursos Expeditos e de Carreira</CardTitle>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-base sm:text-lg">Cursos Expeditos e de Carreira</CardTitle>
         </CardHeader>
-        <CardContent>
-          <ChartContainer config={courseTypeChartConfig} className="h-[400px] w-full">
+        <CardContent className="p-4 sm:p-6 pt-0">
+          <ChartContainer config={courseTypeChartConfig} className="h-[300px] sm:h-[400px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={courseTypeChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="ano" />
-                <YAxis />
+                <XAxis dataKey="ano" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Legend />
-                <Bar dataKey="TOTAL" fill={courseTypeChartConfig.TOTAL.color} label={{ position: 'top' }} />
-                <Bar dataKey="Expedito" fill={courseTypeChartConfig.Expedito.color} label={{ position: 'top' }} />
-                <Bar dataKey="Carreira" fill={courseTypeChartConfig.Carreira.color} label={{ position: 'top' }} />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                <Bar dataKey="TOTAL" fill={courseTypeChartConfig.TOTAL.color} label={{ position: 'top', fontSize: 10 }} />
+                <Bar dataKey="Expedito" fill={courseTypeChartConfig.Expedito.color} label={{ position: 'top', fontSize: 10 }} />
+                <Bar dataKey="Carreira" fill={courseTypeChartConfig.Carreira.color} label={{ position: 'top', fontSize: 10 }} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
@@ -485,11 +485,12 @@ export default function Estatisticas() {
 
       {/* Table Data */}
       <Card>
-        <CardHeader>
-          <CardTitle>Detalhamento por Curso e Categoria</CardTitle>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-base sm:text-lg">Detalhamento por Curso e Categoria</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
+        <CardContent className="p-0 sm:p-6">
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Curso</TableHead>
@@ -504,17 +505,18 @@ export default function Estatisticas() {
             <TableBody>
               {tableData.map((row, index) => (
                 <TableRow key={index}>
-                  <TableCell className="font-medium">{row.curso}</TableCell>
-                  <TableCell>{row.categoria}</TableCell>
-                  <TableCell className="text-right font-semibold">{row.total}</TableCell>
-                  <TableCell className="text-right">{row.aprovados}</TableCell>
-                  <TableCell className="text-right">{row.desligados}</TableCell>
-                  <TableCell className="text-right">{row.desertores}</TableCell>
-                  <TableCell className="text-right font-semibold">{row.total}</TableCell>
+                  <TableCell className="font-medium text-sm">{row.curso}</TableCell>
+                  <TableCell className="text-sm">{row.categoria}</TableCell>
+                  <TableCell className="text-right font-semibold text-sm">{row.total}</TableCell>
+                  <TableCell className="text-right text-sm">{row.aprovados}</TableCell>
+                  <TableCell className="text-right text-sm">{row.desligados}</TableCell>
+                  <TableCell className="text-right text-sm">{row.desertores}</TableCell>
+                  <TableCell className="text-right font-semibold text-sm">{row.total}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -62,30 +62,30 @@ export default function Alunos() {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Alunos</h2>
-          <p className="text-muted-foreground">Gerencie os alunos cadastrados</p>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Alunos</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">Gerencie os alunos cadastrados</p>
         </div>
         {isCoordenador && <AlunoForm onSuccess={fetchAlunos} />}
       </div>
 
       <Card className="shadow-card">
-        <CardHeader>
+        <CardHeader className="p-4 sm:p-6">
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nome, graduação ou tipo militar..."
+                placeholder="Buscar alunos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
+                className="pl-9 text-sm"
               />
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0 sm:p-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
@@ -97,24 +97,26 @@ export default function Alunos() {
               </p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Graduação</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Local de Serviço</TableHead>
-                  <TableHead>Contato</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[150px]">Nome</TableHead>
+                    <TableHead className="min-w-[120px]">Graduação</TableHead>
+                    <TableHead className="min-w-[140px]">Tipo</TableHead>
+                    <TableHead className="min-w-[120px] hidden sm:table-cell">Local de Serviço</TableHead>
+                    <TableHead className="min-w-[150px] hidden md:table-cell">Contato</TableHead>
+                    <TableHead className="text-right min-w-[100px]">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                 {filteredAlunos.map((aluno) => (
                   <TableRow key={aluno.id}>
-                    <TableCell className="font-medium">{aluno.nome_completo}</TableCell>
-                    <TableCell>{aluno.graduacao}</TableCell>
+                    <TableCell className="font-medium text-sm">{aluno.nome_completo}</TableCell>
+                    <TableCell className="text-sm">{aluno.graduacao}</TableCell>
                     <TableCell>
                       <Badge
+                        className="text-xs"
                         variant={
                           aluno.tipo_militar === "Fuzileiro Naval" ? "default" :
                           aluno.tipo_militar === "Guarda Costeiro" ? "secondary" :
@@ -125,16 +127,16 @@ export default function Alunos() {
                         {aluno.tipo_militar}
                       </Badge>
                     </TableCell>
-                    <TableCell>{aluno.local_servico || "-"}</TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {aluno.email && <div>{aluno.email}</div>}
+                    <TableCell className="hidden sm:table-cell text-sm">{aluno.local_servico || "-"}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <div className="text-xs">
+                        {aluno.email && <div className="truncate max-w-[200px]">{aluno.email}</div>}
                         {aluno.telefone && <div className="text-muted-foreground">{aluno.telefone}</div>}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
                       {isCoordenador && (
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-1 sm:gap-2">
                           <AlunoForm aluno={aluno} onSuccess={fetchAlunos} />
                           <DeleteDialog
                             table="alunos"
@@ -149,6 +151,7 @@ export default function Alunos() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

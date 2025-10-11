@@ -93,33 +93,33 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-muted-foreground">Visão geral do sistema de gestão militar</p>
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h2>
+        <p className="text-sm sm:text-base text-muted-foreground">Visão geral do sistema de gestão militar</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat, index) => (
           <Card key={index} className="shadow-card transition-all hover:shadow-elevated">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">{stat.title}</CardTitle>
+              <stat.icon className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.description}</p>
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="text-xl sm:text-2xl font-bold">{stat.value}</div>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">{stat.description}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
       <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle>Bem-vindo ao Sistema</CardTitle>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-base sm:text-lg">Bem-vindo ao Sistema</CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
+        <CardContent className="p-4 sm:p-6 pt-0">
+          <p className="text-sm sm:text-base text-muted-foreground">
             Use o menu lateral para navegar entre as diferentes seções do sistema.
             Gerencie alunos, cursos, turmas e acompanhe estatísticas detalhadas.
           </p>

@@ -111,14 +111,7 @@ export default function Usuarios() {
 
         if (roleError) throw roleError;
 
-        await supabase.functions.invoke("send-password-reset", {
-          body: {
-            email: formData.email,
-            resetLink: `${window.location.origin}/auth`,
-          },
-        });
-
-        toast.success("Usuário criado com sucesso! Email de boas-vindas enviado.");
+        toast.success("Usuário criado com sucesso! Email de confirmação enviado para o usuário.");
         setOpen(false);
         setFormData({ email: "", nome_completo: "", password: "", role: "visualizador" });
         fetchUsers();
@@ -132,6 +125,11 @@ export default function Usuarios() {
   };
 
   const handleSendPasswordReset = async (email: string) => {
+    if (!email) {
+      toast.error("Email do usuário não disponível. Por favor, atualize o cadastro do usuário.");
+      return;
+    }
+
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth`,
@@ -142,7 +140,7 @@ export default function Usuarios() {
       toast.success("Email de recuperação enviado com sucesso!");
     } catch (error: any) {
       console.error("Erro ao enviar email:", error);
-      toast.error("Erro ao enviar email de recuperação");
+      toast.error(error.message || "Erro ao enviar email de recuperação");
     }
   };
 
@@ -291,6 +289,8 @@ export default function Usuarios() {
                           size="sm"
                           onClick={() => handleSendPasswordReset(user.email)}
                           className="gap-2"
+                          disabled={!user.email}
+                          title={!user.email ? "Email não disponível" : "Enviar email de recuperação"}
                         >
                           <Mail className="h-4 w-4" />
                           <span className="hidden sm:inline">Recuperar Senha</span>

@@ -37,8 +37,8 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
     "primeiro_tenente", "tenente", "segundo_tenente", "alferes",
     "guarda_marinha", "aspirante", "sargento_mor", "sargento_chefe",
     "sargento_ajudante", "primeiro_sargento", "segundo_sargento",
-    "furriel", "primeiro_subsargento", "segundo_furriel", "subsargento",
-    "cabo_secao", "cabo", "segundo_cabo", "segundo_marinheiro",
+    "furriel", "primeiro_subsargento", "segundo_furriel", "suboficial",
+    "subsargento", "cabo_secao", "cabo", "segundo_cabo", "segundo_marinheiro",
     "soldado", "grumete"
   ];
   const [open, setOpen] = useState(false);

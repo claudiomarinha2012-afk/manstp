@@ -499,6 +499,7 @@ export type Database = {
         | "Segundo Marinheiro"
         | "Soldado"
         | "Grumete"
+        | "Suboficial"
       situacao_curso: "Em Andamento" | "Concluído" | "Cancelado"
       status_aluno: "Aprovado" | "Reprovado" | "Desligado" | "Cursando"
       tipo_militar:
@@ -666,6 +667,7 @@ export const Constants = {
         "Segundo Marinheiro",
         "Soldado",
         "Grumete",
+        "Suboficial",
       ],
       situacao_curso: ["Em Andamento", "Concluído", "Cancelado"],
       status_aluno: ["Aprovado", "Reprovado", "Desligado", "Cursando"],

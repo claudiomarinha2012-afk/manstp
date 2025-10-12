@@ -35,7 +35,7 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
   const validGraduacoes = [
     "Almirante", "Vice-Almirante", "Contra-Almirante", "Capitão de Mar e Guerra",
     "Capitão de Fragata", "Capitão de Corveta", "Capitão-Tenente", "Primeiro-Tenente",
-    "Segundo-Tenente", "Guarda-Marinha", "Suboficial", "Primeiro-Sargento",
+    "Segundo-Tenente", "Guarda-Marinha", "Suboficial", "Subsargento", "Primeiro-Sargento",
     "Segundo-Sargento", "Terceiro-Sargento", "Cabo", "Marinheiro"
   ];
 

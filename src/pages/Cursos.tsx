@@ -107,7 +107,6 @@ export default function Cursos() {
                     <TableHead className="min-w-[120px] hidden sm:table-cell">Instituição</TableHead>
                     <TableHead className="min-w-[100px]">Local</TableHead>
                     <TableHead className="min-w-[100px] hidden md:table-cell">Tipo</TableHead>
-                    <TableHead className="min-w-[140px] hidden lg:table-cell">Período</TableHead>
                     <TableHead className="min-w-[100px]">Situação</TableHead>
                     <TableHead className="text-right min-w-[100px]">Ações</TableHead>
                   </TableRow>
@@ -128,13 +127,6 @@ export default function Cursos() {
                             {curso.tipo_curso}
                           </Badge>
                         ) : "-"}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        <div className="text-xs">
-                          {curso.data_inicio && <div>Início: {new Date(curso.data_inicio).toLocaleDateString()}</div>}
-                          {curso.data_fim && <div>Fim: {new Date(curso.data_fim).toLocaleDateString()}</div>}
-                          {!curso.data_inicio && !curso.data_fim && "-"}
-                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge

@@ -168,7 +168,7 @@ export type Database = {
           record_id: string | null
           table_name: string | null
           user_email: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           action_type: Database["public"]["Enums"]["audit_action"]
@@ -179,7 +179,7 @@ export type Database = {
           record_id?: string | null
           table_name?: string | null
           user_email?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           action_type?: Database["public"]["Enums"]["audit_action"]
@@ -190,7 +190,7 @@ export type Database = {
           record_id?: string | null
           table_name?: string | null
           user_email?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }

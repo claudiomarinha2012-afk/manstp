@@ -1,9 +1,17 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+const createUserSchema = z.object({
+  email: z.string().email().max(255),
+  password: z.string().min(8).max(72),
+  nome_completo: z.string().min(3).max(200),
+  role: z.enum(['coordenador', 'visualizador'])
+})
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -45,12 +53,18 @@ Deno.serve(async (req) => {
       throw new Error('Apenas coordenadores podem criar usuários')
     }
 
-    // Obter dados do novo usuário
-    const { email, password, nome_completo, role } = await req.json()
+    // Obter e validar dados do novo usuário
+    const body = await req.json()
+    const validation = createUserSchema.safeParse(body)
     
-    if (!email || !password || !nome_completo || !role) {
-      throw new Error('Todos os campos são obrigatórios')
+    if (!validation.success) {
+      return new Response(
+        JSON.stringify({ error: 'Dados inválidos', details: validation.error.errors }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
+    
+    const { email, password, nome_completo, role } = validation.data
 
     // Criar usuário usando admin API (não cria sessão automática)
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
@@ -77,7 +91,10 @@ Deno.serve(async (req) => {
       })
     
     if (profileError) {
-      console.error('Erro ao criar perfil:', profileError)
+      console.error('Profile creation failed:', { 
+        timestamp: new Date().toISOString(),
+        userId: newUser.user.id
+      })
       throw new Error('Erro ao criar perfil do usuário')
     }
 
@@ -90,7 +107,10 @@ Deno.serve(async (req) => {
       })
     
     if (userRoleError) {
-      console.error('Erro ao criar role:', userRoleError)
+      console.error('Role assignment failed:', {
+        timestamp: new Date().toISOString(),
+        userId: newUser.user.id
+      })
       throw new Error('Erro ao criar role do usuário')
     }
 

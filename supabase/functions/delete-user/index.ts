@@ -1,9 +1,14 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+const deleteUserSchema = z.object({
+  userId: z.string().uuid()
+})
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -45,12 +50,18 @@ Deno.serve(async (req) => {
       throw new Error('Apenas coordenadores podem deletar usuários')
     }
 
-    // Obter o ID do usuário a ser deletado
-    const { userId } = await req.json()
+    // Obter e validar o ID do usuário a ser deletado
+    const body = await req.json()
+    const validation = deleteUserSchema.safeParse(body)
     
-    if (!userId) {
-      throw new Error('ID do usuário é obrigatório')
+    if (!validation.success) {
+      return new Response(
+        JSON.stringify({ error: 'ID de usuário inválido', details: validation.error.errors }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
+    
+    const { userId } = validation.data
 
     // Não permitir que o usuário delete a si mesmo
     if (userId === user.id) {

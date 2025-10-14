@@ -56,8 +56,6 @@ export const cursoSchema = z.object({
   local_realizacao: z.string().trim().min(1, { message: "País é obrigatório" }).max(200),
   tipo_curso: z.enum(["Expedito", "Carreira"]).optional(),
   modalidade: z.enum(["Presencial", "Semipresencial", "A Distância"]).optional(),
-  data_inicio: z.string().optional(),
-  data_fim: z.string().optional(),
   situacao: z.string().optional(),
   observacoes: textAreaSchema,
 });

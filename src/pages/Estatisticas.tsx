@@ -145,13 +145,18 @@ export default function Estatisticas() {
     filteredData.forEach((item: any) => {
       const ano = item.turmas.ano;
       const categoria = item.alunos.tipo_militar;
+      const status = item.status || "Cursando";
 
       if (!yearMap.has(ano)) {
         yearMap.set(ano, { CONCLUIDOS: 0, GCSTP: 0, FUZILEIRO: 0, EXERCITO: 0 });
       }
 
       const yearData = yearMap.get(ano)!;
-      yearData.CONCLUIDOS++;
+      
+      // Conta apenas alunos com status "Concluído"
+      if (status === "Concluído") {
+        yearData.CONCLUIDOS++;
+      }
       
       if (categoria === "Guarda Costeiro") {
         yearData.GCSTP++;

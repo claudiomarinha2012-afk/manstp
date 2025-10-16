@@ -32,6 +32,7 @@ interface Turma {
   tipo_militar: string;
   observacoes: string | null;
   cursos?: { nome: string };
+  aluno_count?: number;
 }
 
 interface Aluno {
@@ -82,7 +83,20 @@ export default function Turmas() {
         .order("ano", { ascending: false });
 
       if (error) throw error;
-      setTurmas(data || []);
+      
+      // Buscar contagem de alunos para cada turma
+      const turmasComContagem = await Promise.all(
+        (data || []).map(async (turma) => {
+          const { count } = await supabase
+            .from("aluno_turma")
+            .select("*", { count: "exact", head: true })
+            .eq("turma_id", turma.id);
+          
+          return { ...turma, aluno_count: count || 0 };
+        })
+      );
+      
+      setTurmas(turmasComContagem);
     } catch (error) {
       console.error("Erro ao buscar turmas:", error);
     } finally {
@@ -248,7 +262,14 @@ export default function Turmas() {
               <TableBody>
                 {filteredTurmas.map((turma) => (
                   <TableRow key={turma.id}>
-                    <TableCell className="font-medium">{turma.nome}</TableCell>
+                    <TableCell className="font-medium">
+                      {turma.nome}
+                      {turma.aluno_count !== undefined && (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          ({turma.aluno_count} aluno{turma.aluno_count !== 1 ? 's' : ''})
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>{turma.cursos?.nome || "-"}</TableCell>
                     <TableCell>{turma.ano}</TableCell>
                     <TableCell>
@@ -415,12 +436,13 @@ export default function Turmas() {
                           <SelectTrigger className="w-32">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
+                           <SelectContent>
                             <SelectItem value="Cursando">Cursando</SelectItem>
-                            <SelectItem value="Aprovado">Aprovado</SelectItem>
+                            <SelectItem value="Concluído">Concluído</SelectItem>
                             <SelectItem value="Reprovado">Reprovado</SelectItem>
                             <SelectItem value="Desligado">Desligado</SelectItem>
-                          </SelectContent>
+                            <SelectItem value="Desertor">Desertor</SelectItem>
+                           </SelectContent>
                         </Select>
                       </TableCell>
                       <TableCell>

@@ -269,12 +269,13 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Cursando">Cursando</SelectItem>
-                  <SelectItem value="Aprovado">Aprovado</SelectItem>
-                  <SelectItem value="Reprovado">Reprovado</SelectItem>
-                  <SelectItem value="Desligado">Desligado</SelectItem>
-                </SelectContent>
+                  <SelectContent>
+                    <SelectItem value="Cursando">Cursando</SelectItem>
+                    <SelectItem value="Concluído">Concluído</SelectItem>
+                    <SelectItem value="Reprovado">Reprovado</SelectItem>
+                    <SelectItem value="Desligado">Desligado</SelectItem>
+                    <SelectItem value="Desertor">Desertor</SelectItem>
+                  </SelectContent>
               </Select>
             </div>
             <div className="flex justify-end gap-2">
@@ -368,9 +369,10 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Cursando">Cursando</SelectItem>
-                    <SelectItem value="Aprovado">Aprovado</SelectItem>
+                    <SelectItem value="Concluído">Concluído</SelectItem>
                     <SelectItem value="Reprovado">Reprovado</SelectItem>
                     <SelectItem value="Desligado">Desligado</SelectItem>
+                    <SelectItem value="Desertor">Desertor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

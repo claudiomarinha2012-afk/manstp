@@ -41,7 +41,7 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
   ];
 
   const validTiposMilitares = ["Fuzileiro Naval", "Guarda Costeiro", "Exercito", "Bombeiro", "Civil", "Marinha do Brasil"];
-  const validStatus = ["Cursando", "Aprovado", "Reprovado", "Desligado"];
+  const validStatus = ["Cursando", "Concluído", "Reprovado", "Desligado", "Desertor"];
 
   const processFile = async (file: File) => {
     // Limite de 5MB

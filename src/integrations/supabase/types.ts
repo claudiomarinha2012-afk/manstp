@@ -503,7 +503,12 @@ export type Database = {
         | "Armada"
         | "Primeiro Cabo"
       situacao_curso: "Em Andamento" | "Concluído" | "Cancelado"
-      status_aluno: "Aprovado" | "Reprovado" | "Desligado" | "Cursando"
+      status_aluno:
+        | "Cursando"
+        | "Concluído"
+        | "Reprovado"
+        | "Desligado"
+        | "Desertor"
       tipo_militar:
         | "Fuzileiro Naval"
         | "Guarda Costeiro"
@@ -678,7 +683,13 @@ export const Constants = {
         "Primeiro Cabo",
       ],
       situacao_curso: ["Em Andamento", "Concluído", "Cancelado"],
-      status_aluno: ["Aprovado", "Reprovado", "Desligado", "Cursando"],
+      status_aluno: [
+        "Cursando",
+        "Concluído",
+        "Reprovado",
+        "Desligado",
+        "Desertor",
+      ],
       tipo_militar: [
         "Fuzileiro Naval",
         "Guarda Costeiro",

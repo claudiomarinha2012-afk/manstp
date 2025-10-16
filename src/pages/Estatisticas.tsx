@@ -9,7 +9,8 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 
 interface ChartData {
   curso: string;
-  Aprovados: number;
+  Concluídos: number;
+  Reprovados: number;
   Desligados: number;
   Desertores: number;
 }
@@ -17,7 +18,8 @@ interface ChartData {
 interface TableData {
   curso: string;
   categoria: string;
-  aprovados: number;
+  concluidos: number;
+  reprovados: number;
   desligados: number;
   desertores: number;
   total: number;
@@ -114,18 +116,19 @@ export default function Estatisticas() {
     });
 
     // Chart data - group by curso and status
-    const chartMap = new Map<string, { Aprovados: number; Desligados: number; Desertores: number }>();
+    const chartMap = new Map<string, { Concluídos: number; Reprovados: number; Desligados: number; Desertores: number }>();
 
     filteredData.forEach((item: any) => {
       const curso = item.turmas.cursos.nome;
       const status = item.status || "Cursando";
 
       if (!chartMap.has(curso)) {
-        chartMap.set(curso, { Aprovados: 0, Desligados: 0, Desertores: 0 });
+        chartMap.set(curso, { Concluídos: 0, Reprovados: 0, Desligados: 0, Desertores: 0 });
       }
 
       const cursoData = chartMap.get(curso)!;
-      if (status === "Aprovado") cursoData.Aprovados++;
+      if (status === "Concluído") cursoData.Concluídos++;
+      else if (status === "Reprovado") cursoData.Reprovados++;
       else if (status === "Desligado") cursoData.Desligados++;
       else if (status === "Desertor") cursoData.Desertores++;
     });
@@ -232,7 +235,8 @@ export default function Estatisticas() {
         tableMap.set(key, {
           curso,
           categoria,
-          aprovados: 0,
+          concluidos: 0,
+          reprovados: 0,
           desligados: 0,
           desertores: 0,
           total: 0,
@@ -241,7 +245,8 @@ export default function Estatisticas() {
 
       const rowData = tableMap.get(key)!;
       rowData.total++;
-      if (status === "Aprovado") rowData.aprovados++;
+      if (status === "Concluído") rowData.concluidos++;
+      else if (status === "Reprovado") rowData.reprovados++;
       else if (status === "Desligado") rowData.desligados++;
       else if (status === "Desertor") rowData.desertores++;
     });
@@ -327,7 +332,8 @@ export default function Estatisticas() {
   }
 
   const chartConfig = {
-    Aprovados: { label: "Aprovados", color: "hsl(142, 76%, 36%)" },
+    Concluídos: { label: "Concluídos", color: "hsl(142, 76%, 36%)" },
+    Reprovados: { label: "Reprovados", color: "hsl(25, 95%, 53%)" },
     Desligados: { label: "Desligados", color: "hsl(48, 96%, 53%)" },
     Desertores: { label: "Desertores", color: "hsl(0, 84%, 60%)" },
   };
@@ -510,11 +516,11 @@ export default function Estatisticas() {
               <TableRow>
                 <TableHead>Curso</TableHead>
                 <TableHead>Categoria</TableHead>
-                <TableHead className="text-right">Total Inscritos</TableHead>
-                <TableHead className="text-right">Aprovados</TableHead>
+                <TableHead className="text-right">Inscritos</TableHead>
+                <TableHead className="text-right">Concluídos</TableHead>
+                <TableHead className="text-right">Reprovados</TableHead>
                 <TableHead className="text-right">Desligados</TableHead>
                 <TableHead className="text-right">Desertores</TableHead>
-                <TableHead className="text-right">Total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -523,10 +529,10 @@ export default function Estatisticas() {
                   <TableCell className="font-medium text-sm">{row.curso}</TableCell>
                   <TableCell className="text-sm">{row.categoria}</TableCell>
                   <TableCell className="text-right font-semibold text-sm">{row.total}</TableCell>
-                  <TableCell className="text-right text-sm">{row.aprovados}</TableCell>
+                  <TableCell className="text-right text-sm">{row.concluidos}</TableCell>
+                  <TableCell className="text-right text-sm">{row.reprovados}</TableCell>
                   <TableCell className="text-right text-sm">{row.desligados}</TableCell>
                   <TableCell className="text-right text-sm">{row.desertores}</TableCell>
-                  <TableCell className="text-right font-semibold text-sm">{row.total}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

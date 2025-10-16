@@ -181,7 +181,9 @@ export default function Alunos() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Alunos</h2>
-          <p className="text-sm sm:text-base text-muted-foreground">Gerencie os alunos cadastrados</p>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            Total de Alunos Cadastrados: {alunos.length}
+          </p>
         </div>
         {isCoordenador && (
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">

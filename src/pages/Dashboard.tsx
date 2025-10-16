@@ -64,10 +64,10 @@ export default function Dashboard() {
           .select("id", { count: "exact", head: true })
           .eq("situacao", "Concluído");
         
-        // Buscar alunos aprovados
+        // Buscar alunos concluídos
         const alunosConcluidos = await supabase.from("aluno_turma")
           .select("aluno_id", { count: "exact", head: true })
-          .eq("status", "Aprovado");
+          .eq("status", "Concluído");
         
         // Buscar turmas de cursos em São Tomé e Príncipe
         const { data: turmasSaoTome } = await supabase.from("turmas")
@@ -78,7 +78,7 @@ export default function Dashboard() {
         
         const alunosConcluidosSaoTome = await supabase.from("aluno_turma")
           .select("aluno_id", { count: "exact", head: true })
-          .eq("status", "Aprovado")
+          .eq("status", "Concluído")
           .in("turma_id", turmaSaoTomeIds);
         
         // Buscar turmas de cursos no Brasil
@@ -90,7 +90,7 @@ export default function Dashboard() {
         
         const alunosConcluidosBrasil = await supabase.from("aluno_turma")
           .select("aluno_id", { count: "exact", head: true })
-          .eq("status", "Aprovado")
+          .eq("status", "Concluído")
           .in("turma_id", turmaBrasilIds);
 
         setStats({

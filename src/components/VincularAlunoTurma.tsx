@@ -38,7 +38,7 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
     "brigadeiro", "coronel", "capitao_mar_guerra", "tenente_coronel",
     "capitao_fragata", "major", "capitao_tenente", "capitao",
     "primeiro_tenente", "tenente", "segundo_tenente", "alferes",
-    "guarda_marinha", "aspirante", "subtenente", "sargento_mor", "sargento_chefe",
+    "guarda_marinha", "aspirante", "subtenente", "primeiro_cabo", "sargento_mor", "sargento_chefe",
     "sargento_ajudante", "primeiro_sargento", "segundo_sargento", "terceiro_sargento",
     "furriel", "primeiro_subsargento", "segundo_furriel", "suboficial",
     "subsargento", "cabo_secao", "cabo", "segundo_cabo", "segundo_marinheiro",
@@ -61,6 +61,7 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
     "guarda_marinha": "Guarda Marinha",
     "aspirante": "Aspirante",
     "subtenente": "Subtenente",
+    "primeiro_cabo": "Primeiro Cabo",
     "sargento_mor": "Sargento Mor",
     "sargento_chefe": "Sargento Chefe",
     "sargento_ajudante": "Sargento Ajudante",
@@ -136,6 +137,22 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
 
     setLoading(true);
     try {
+      // Check for duplicates before inserting
+      const { data: existingLink, error: checkError } = await supabase
+        .from("aluno_turma")
+        .select("id")
+        .eq("aluno_id", selectedAluno)
+        .eq("turma_id", turmaId)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      if (existingLink) {
+        toast.error("Aluno já vinculado a esta turma");
+        setLoading(false);
+        return;
+      }
+
       const { error } = await supabase
         .from("aluno_turma")
         .insert([{ aluno_id: selectedAluno, turma_id: turmaId, status: selectedStatus as any }]);
@@ -336,6 +353,7 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
                     <SelectItem value="Marinha do Brasil">Marinha do Brasil</SelectItem>
                     <SelectItem value="Exercito">Exército</SelectItem>
                     <SelectItem value="Bombeiro">Bombeiro</SelectItem>
+                    <SelectItem value="Civil">Civil</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

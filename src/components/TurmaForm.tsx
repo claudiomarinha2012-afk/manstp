@@ -194,6 +194,7 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
                   <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
                   <SelectItem value="Exercito">Exército</SelectItem>
                   <SelectItem value="Bombeiro">Bombeiro</SelectItem>
+                  <SelectItem value="Civil">Civil</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -278,6 +278,7 @@ export default function Turmas() {
                           turma.tipo_militar === "Fuzileiro Naval" ? "default" :
                           turma.tipo_militar === "Guarda Costeiro" ? "secondary" :
                           turma.tipo_militar === "Exercito" ? "outline" :
+                          turma.tipo_militar === "Civil" ? "default" :
                           "destructive"
                         }
                       >
@@ -399,21 +400,23 @@ export default function Turmas() {
               </div>
             ) : (
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Graduação</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>OM ONDE SERVE</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Contato</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {alunosTurma.map((aluno) => (
-                    <TableRow key={aluno.id}>
-                      <TableCell className="font-medium">{aluno.nome_completo}</TableCell>
+               <TableHeader>
+                <TableRow>
+                  <TableHead>#</TableHead>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Graduação</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>OM ONDE SERVE</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Contato</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {alunosTurma.map((aluno, index) => (
+                  <TableRow key={aluno.id}>
+                    <TableCell className="font-medium">{index + 1}</TableCell>
+                    <TableCell className="font-medium">{aluno.nome_completo}</TableCell>
                       <TableCell>{aluno.graduacao}</TableCell>
                       <TableCell>
                         <Badge
@@ -421,6 +424,7 @@ export default function Turmas() {
                             aluno.tipo_militar === "Fuzileiro Naval" ? "default" :
                             aluno.tipo_militar === "Guarda Costeiro" ? "secondary" :
                             aluno.tipo_militar === "Exercito" ? "outline" :
+                            aluno.tipo_militar === "Civil" ? "default" :
                             "destructive"
                           }
                         >

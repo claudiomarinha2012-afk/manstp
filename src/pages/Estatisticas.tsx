@@ -31,6 +31,7 @@ interface YearChartData {
   GCSTP_CONCLUIDOS: number;
   FUZILEIRO_CONCLUIDOS: number;
   EXERCITO_CONCLUIDOS: number;
+  CIVIL_CONCLUIDOS: number;
 }
 
 interface LocationChartData {
@@ -139,8 +140,8 @@ export default function Estatisticas() {
 
     setChartData(chartArray);
 
-    // Year chart data - group by year and categoria (Fuzileiro Naval, Guarda Costeiro, Exercito)
-    const yearMap = new Map<number, { TOTAL_INSCRITOS: number; GCSTP_CONCLUIDOS: number; FUZILEIRO_CONCLUIDOS: number; EXERCITO_CONCLUIDOS: number }>();
+    // Year chart data - group by year and categoria (Fuzileiro Naval, Guarda Costeiro, Exercito, Civil)
+    const yearMap = new Map<number, { TOTAL_INSCRITOS: number; GCSTP_CONCLUIDOS: number; FUZILEIRO_CONCLUIDOS: number; EXERCITO_CONCLUIDOS: number; CIVIL_CONCLUIDOS: number }>();
 
     filteredData.forEach((item: any) => {
       const ano = item.turmas.ano;
@@ -148,7 +149,7 @@ export default function Estatisticas() {
       const status = item.status || "Cursando";
 
       if (!yearMap.has(ano)) {
-        yearMap.set(ano, { TOTAL_INSCRITOS: 0, GCSTP_CONCLUIDOS: 0, FUZILEIRO_CONCLUIDOS: 0, EXERCITO_CONCLUIDOS: 0 });
+        yearMap.set(ano, { TOTAL_INSCRITOS: 0, GCSTP_CONCLUIDOS: 0, FUZILEIRO_CONCLUIDOS: 0, EXERCITO_CONCLUIDOS: 0, CIVIL_CONCLUIDOS: 0 });
       }
 
       const yearData = yearMap.get(ano)!;
@@ -164,6 +165,8 @@ export default function Estatisticas() {
           yearData.FUZILEIRO_CONCLUIDOS++;
         } else if (categoria === "Exercito") {
           yearData.EXERCITO_CONCLUIDOS++;
+        } else if (categoria === "Civil") {
+          yearData.CIVIL_CONCLUIDOS++;
         }
       }
     });
@@ -349,6 +352,7 @@ export default function Estatisticas() {
     GCSTP_CONCLUIDOS: { label: "Guarda Costeira (Concluídos)", color: "hsl(142, 76%, 36%)" },
     FUZILEIRO_CONCLUIDOS: { label: "Fuzileiros (Concluídos)", color: "hsl(25, 95%, 53%)" },
     EXERCITO_CONCLUIDOS: { label: "Exército (Concluídos)", color: "hsl(0, 84%, 60%)" },
+    CIVIL_CONCLUIDOS: { label: "Civis (Concluídos)", color: "hsl(280, 70%, 50%)" },
   };
 
   const locationChartConfig = {
@@ -448,6 +452,7 @@ export default function Estatisticas() {
                 <Bar dataKey="GCSTP_CONCLUIDOS" fill={yearChartConfig.GCSTP_CONCLUIDOS.color} label={{ position: 'top', fontSize: 10 }} />
                 <Bar dataKey="FUZILEIRO_CONCLUIDOS" fill={yearChartConfig.FUZILEIRO_CONCLUIDOS.color} label={{ position: 'top', fontSize: 10 }} />
                 <Bar dataKey="EXERCITO_CONCLUIDOS" fill={yearChartConfig.EXERCITO_CONCLUIDOS.color} label={{ position: 'top', fontSize: 10 }} />
+                <Bar dataKey="CIVIL_CONCLUIDOS" fill={yearChartConfig.CIVIL_CONCLUIDOS.color} label={{ position: 'top', fontSize: 10 }} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>

@@ -8,9 +8,16 @@ interface Stats {
   cursosEmAndamentoBrasil: number;
   cursosEmAndamentoSaoTome: number;
   turmasConcluidas: number;
-  militaresConcluidos: number;
-  militaresConcluidosSaoTome: number;
-  militaresConcluidosBrasil: number;
+  // Brasil - por tipo
+  fuzileirosBrasil: number;
+  guardaCosteiraBrasil: number;
+  exercitoBrasil: number;
+  civisBrasil: number;
+  // São Tomé - por tipo
+  fuzileirosSaoTome: number;
+  guardaCosteiraSaoTome: number;
+  exercitoSaoTome: number;
+  civisSaoTome: number;
   totalCursos: number;
 }
 
@@ -20,9 +27,14 @@ export default function Dashboard() {
     cursosEmAndamentoBrasil: 0,
     cursosEmAndamentoSaoTome: 0,
     turmasConcluidas: 0,
-    militaresConcluidos: 0,
-    militaresConcluidosSaoTome: 0,
-    militaresConcluidosBrasil: 0,
+    fuzileirosBrasil: 0,
+    guardaCosteiraBrasil: 0,
+    exercitoBrasil: 0,
+    civisBrasil: 0,
+    fuzileirosSaoTome: 0,
+    guardaCosteiraSaoTome: 0,
+    exercitoSaoTome: 0,
+    civisSaoTome: 0,
     totalCursos: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -64,23 +76,6 @@ export default function Dashboard() {
           .select("id", { count: "exact", head: true })
           .eq("situacao", "Concluído");
         
-        // Buscar alunos concluídos
-        const alunosConcluidos = await supabase.from("aluno_turma")
-          .select("aluno_id", { count: "exact", head: true })
-          .eq("status", "Concluído");
-        
-        // Buscar turmas de cursos em São Tomé e Príncipe
-        const { data: turmasSaoTome } = await supabase.from("turmas")
-          .select("id")
-          .in("curso_id", cursoSaoTomeIds);
-        
-        const turmaSaoTomeIds = turmasSaoTome?.map(t => t.id) || [];
-        
-        const alunosConcluidosSaoTome = await supabase.from("aluno_turma")
-          .select("aluno_id", { count: "exact", head: true })
-          .eq("status", "Concluído")
-          .in("turma_id", turmaSaoTomeIds);
-        
         // Buscar turmas de cursos no Brasil
         const { data: turmasBrasil } = await supabase.from("turmas")
           .select("id")
@@ -88,19 +83,58 @@ export default function Dashboard() {
         
         const turmaBrasilIds = turmasBrasil?.map(t => t.id) || [];
         
-        const alunosConcluidosBrasil = await supabase.from("aluno_turma")
-          .select("aluno_id", { count: "exact", head: true })
+        // Buscar alunos concluídos no Brasil por tipo militar
+        const { data: alunosConcluidosBrasil } = await supabase
+          .from("aluno_turma")
+          .select("aluno_id, alunos!inner(tipo_militar)")
           .eq("status", "Concluído")
           .in("turma_id", turmaBrasilIds);
+
+        let fuzileirosBrasil = 0, guardaCosteiraBrasil = 0, exercitoBrasil = 0, civisBrasil = 0;
+        alunosConcluidosBrasil?.forEach((item: any) => {
+          const tipo = item.alunos.tipo_militar;
+          if (tipo === "Fuzileiro Naval") fuzileirosBrasil++;
+          else if (tipo === "Guarda Costeiro") guardaCosteiraBrasil++;
+          else if (tipo === "Exercito") exercitoBrasil++;
+          else if (tipo === "Civil") civisBrasil++;
+        });
+
+        // Buscar turmas de cursos em São Tomé e Príncipe
+        const { data: turmasSaoTome } = await supabase.from("turmas")
+          .select("id")
+          .in("curso_id", cursoSaoTomeIds);
+        
+        const turmaSaoTomeIds = turmasSaoTome?.map(t => t.id) || [];
+        
+        // Buscar alunos concluídos em São Tomé por tipo militar
+        const { data: alunosConcluidosSaoTome } = await supabase
+          .from("aluno_turma")
+          .select("aluno_id, alunos!inner(tipo_militar)")
+          .eq("status", "Concluído")
+          .in("turma_id", turmaSaoTomeIds);
+
+        let fuzileirosSaoTome = 0, guardaCosteiraSaoTome = 0, exercitoSaoTome = 0, civisSaoTome = 0;
+        alunosConcluidosSaoTome?.forEach((item: any) => {
+          const tipo = item.alunos.tipo_militar;
+          if (tipo === "Fuzileiro Naval") fuzileirosSaoTome++;
+          else if (tipo === "Guarda Costeiro") guardaCosteiraSaoTome++;
+          else if (tipo === "Exercito") exercitoSaoTome++;
+          else if (tipo === "Civil") civisSaoTome++;
+        });
 
         setStats({
           totalCursos: cursosRes.count || 0,
           cursosEmAndamentoBrasil: turmasEmAndamentoBrasil.count || 0,
           cursosEmAndamentoSaoTome: turmasEmAndamentoSaoTome.count || 0,
           turmasConcluidas: turmasConcluidas.count || 0,
-          militaresConcluidos: alunosConcluidos.count || 0,
-          militaresConcluidosSaoTome: alunosConcluidosSaoTome.count || 0,
-          militaresConcluidosBrasil: alunosConcluidosBrasil.count || 0,
+          fuzileirosBrasil,
+          guardaCosteiraBrasil,
+          exercitoBrasil,
+          civisBrasil,
+          fuzileirosSaoTome,
+          guardaCosteiraSaoTome,
+          exercitoSaoTome,
+          civisSaoTome,
         });
       } catch (error) {
         console.error("Erro ao buscar estatísticas:", error);
@@ -143,15 +177,15 @@ export default function Dashboard() {
     },
     {
       title: "Militares com Cursos Concluídos - São Tomé",
-      value: stats.militaresConcluidosSaoTome,
+      value: stats.fuzileirosSaoTome + stats.guardaCosteiraSaoTome + stats.exercitoSaoTome + stats.civisSaoTome,
       icon: Award,
-      description: "Militares formados em São Tomé e Príncipe",
+      description: `Fuzileiros: ${stats.fuzileirosSaoTome} | Guarda Costeira: ${stats.guardaCosteiraSaoTome} | Exército: ${stats.exercitoSaoTome} | Civis: ${stats.civisSaoTome}`,
     },
     {
       title: "Militares com Cursos Concluídos - Brasil",
-      value: stats.militaresConcluidosBrasil,
+      value: stats.fuzileirosBrasil + stats.guardaCosteiraBrasil + stats.exercitoBrasil + stats.civisBrasil,
       icon: Users,
-      description: "Militares formados no Brasil",
+      description: `Fuzileiros: ${stats.fuzileirosBrasil} | Guarda Costeira: ${stats.guardaCosteiraBrasil} | Exército: ${stats.exercitoBrasil} | Civis: ${stats.civisBrasil}`,
     },
     {
       title: "Total de Cursos Cadastrados",

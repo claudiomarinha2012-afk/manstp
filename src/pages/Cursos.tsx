@@ -36,7 +36,7 @@ export default function Cursos() {
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<"alfabetica" | "tipo">("alfabetica");
+  const [sortBy, setSortBy] = useState<"alfabetica" | "tipo" | "instituicao" | "local">("alfabetica");
 
   useEffect(() => {
     fetchCursos();
@@ -67,11 +67,20 @@ export default function Cursos() {
     .sort((a, b) => {
       if (sortBy === "alfabetica") {
         return a.nome.localeCompare(b.nome);
-      } else {
+      } else if (sortBy === "tipo") {
         const tipoA = a.tipo_curso || "";
         const tipoB = b.tipo_curso || "";
         return tipoA.localeCompare(tipoB);
+      } else if (sortBy === "instituicao") {
+        const instA = a.instituicao || "";
+        const instB = b.instituicao || "";
+        return instA.localeCompare(instB);
+      } else if (sortBy === "local") {
+        const localA = a.local_realizacao || "";
+        const localB = b.local_realizacao || "";
+        return localA.localeCompare(localB);
       }
+      return 0;
     });
 
   return (
@@ -96,13 +105,15 @@ export default function Cursos() {
                 className="pl-9 text-sm"
               />
             </div>
-            <Select value={sortBy} onValueChange={(value: "alfabetica" | "tipo") => setSortBy(value)}>
+            <Select value={sortBy} onValueChange={(value: "alfabetica" | "tipo" | "instituicao" | "local") => setSortBy(value)}>
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
               <SelectContent className="bg-background">
                 <SelectItem value="alfabetica">A-Z</SelectItem>
                 <SelectItem value="tipo">Tipo de Curso</SelectItem>
+                <SelectItem value="instituicao">Instituição</SelectItem>
+                <SelectItem value="local">Local</SelectItem>
               </SelectContent>
             </Select>
           </div>

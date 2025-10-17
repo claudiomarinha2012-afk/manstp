@@ -178,6 +178,7 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
                   <SelectItem value="Marinha do Brasil">Marinha do Brasil</SelectItem>
                   <SelectItem value="Exercito">Exército</SelectItem>
                   <SelectItem value="Bombeiro">Bombeiro</SelectItem>
+                  <SelectItem value="Civil">Civil</SelectItem>
                 </SelectContent>
               </Select>
             </div>

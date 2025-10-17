@@ -36,9 +36,9 @@ interface YearChartData {
 
 interface LocationChartData {
   ano: number;
-  CIABA: number;
-  CIAGA: number;
-  TOTAL: number;
+  TOTAL_INSCRITOS: number;
+  CIAGA_CONCLUIDOS: number;
+  CIABA_CONCLUIDOS: number;
 }
 
 interface CourseTypeChartData {
@@ -178,23 +178,29 @@ export default function Estatisticas() {
     setYearChartData(yearArray);
 
     // Location chart data - group by year and location (CIABA/CIAGA)
-    const locationMap = new Map<number, { CIABA: number; CIAGA: number; TOTAL: number }>();
+    const locationMap = new Map<number, { TOTAL_INSCRITOS: number; CIAGA_CONCLUIDOS: number; CIABA_CONCLUIDOS: number }>();
 
     filteredData.forEach((item: any) => {
       const ano = item.turmas.ano;
       const local = item.turmas.cursos.local_realizacao;
+      const status = item.status || "Cursando";
 
       if (!locationMap.has(ano)) {
-        locationMap.set(ano, { CIABA: 0, CIAGA: 0, TOTAL: 0 });
+        locationMap.set(ano, { TOTAL_INSCRITOS: 0, CIAGA_CONCLUIDOS: 0, CIABA_CONCLUIDOS: 0 });
       }
 
       const locationData = locationMap.get(ano)!;
-      locationData.TOTAL++;
       
-      if (local === "São Tomé e Príncipe") {
-        locationData.CIABA++;
-      } else if (local === "Brasil") {
-        locationData.CIAGA++;
+      // Conta total de inscritos
+      locationData.TOTAL_INSCRITOS++;
+      
+      // Conta apenas alunos com status "Concluído" por local
+      if (status === "Concluído") {
+        if (local === "São Tomé e Príncipe") {
+          locationData.CIABA_CONCLUIDOS++;
+        } else if (local === "Brasil") {
+          locationData.CIAGA_CONCLUIDOS++;
+        }
       }
     });
 
@@ -356,9 +362,9 @@ export default function Estatisticas() {
   };
 
   const locationChartConfig = {
-    TOTAL: { label: "TOTAL", color: "hsl(142, 76%, 36%)" },
-    CIABA: { label: "CIABA (São Tomé e Príncipe)", color: "hsl(210, 100%, 50%)" },
-    CIAGA: { label: "CIAGA (Brasil)", color: "hsl(25, 95%, 53%)" },
+    TOTAL_INSCRITOS: { label: "Total de Inscritos", color: "hsl(200, 80%, 45%)" },
+    CIAGA_CONCLUIDOS: { label: "Concluídos CIAGA (Brasil)", color: "hsl(160, 70%, 45%)" },
+    CIABA_CONCLUIDOS: { label: "Concluídos CIABA (São Tomé e Príncipe)", color: "hsl(40, 90%, 55%)" },
   };
 
   const courseTypeChartConfig = {
@@ -473,9 +479,9 @@ export default function Estatisticas() {
                 <YAxis tick={{ fontSize: 12 }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Legend wrapperStyle={{ fontSize: '12px' }} />
-                <Bar dataKey="TOTAL" fill={locationChartConfig.TOTAL.color} label={{ position: 'top', fontSize: 10 }} />
-                <Bar dataKey="CIABA" fill={locationChartConfig.CIABA.color} label={{ position: 'top', fontSize: 10 }} />
-                <Bar dataKey="CIAGA" fill={locationChartConfig.CIAGA.color} label={{ position: 'top', fontSize: 10 }} />
+                <Bar dataKey="TOTAL_INSCRITOS" fill={locationChartConfig.TOTAL_INSCRITOS.color} label={{ position: 'top', fontSize: 10 }} />
+                <Bar dataKey="CIAGA_CONCLUIDOS" fill={locationChartConfig.CIAGA_CONCLUIDOS.color} label={{ position: 'top', fontSize: 10 }} />
+                <Bar dataKey="CIABA_CONCLUIDOS" fill={locationChartConfig.CIABA_CONCLUIDOS.color} label={{ position: 'top', fontSize: 10 }} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>

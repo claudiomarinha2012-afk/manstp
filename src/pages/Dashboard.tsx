@@ -158,16 +158,16 @@ export default function Dashboard() {
 
   const statCards = [
     {
-      title: "Cursos em Andamento - Brasil",
+      title: "Turmas em Andamento - Brasil",
       value: stats.cursosEmAndamentoBrasil,
       icon: BookOpen,
-      description: "Cursos ativos no Brasil",
+      description: "Turmas ativas no Brasil",
     },
     {
-      title: "Cursos em Andamento - São Tomé e Príncipe",
+      title: "Turmas em Andamento - São Tomé e Príncipe",
       value: stats.cursosEmAndamentoSaoTome,
       icon: BookOpen,
-      description: "Cursos ativos em São Tomé e Príncipe",
+      description: "Turmas ativas em São Tomé e Príncipe",
     },
     {
       title: "Total de Turmas Concluídas",

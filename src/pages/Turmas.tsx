@@ -22,6 +22,7 @@ import { DeleteDialog } from "@/components/DeleteDialog";
 import { VincularAlunoTurma } from "@/components/VincularAlunoTurma";
 import { VincularInstrutorTurma } from "@/components/VincularInstrutorTurma";
 import { ImportarAlunos } from "@/components/ImportarAlunos";
+import { EditAlunoDialog } from "@/components/EditAlunoDialog";
 import { toast } from "sonner";
 
 interface Turma {
@@ -305,29 +306,6 @@ export default function Turmas() {
                           <GraduationCap className="h-4 w-4" />
                           Ver Instrutores
                         </Button>
-                        {isCoordenador && (
-                          <>
-                            <VincularAlunoTurma
-                              turmaId={turma.id}
-                              turmaNome={turma.nome}
-                              onSuccess={() => {
-                                fetchTurmas();
-                                if (selectedTurma?.id === turma.id) {
-                                  fetchAlunosTurma(turma.id);
-                                }
-                              }}
-                            />
-                            <VincularInstrutorTurma
-                              turmaId={turma.id}
-                              onSuccess={() => {
-                                fetchTurmas();
-                                if (selectedTurma?.id === turma.id) {
-                                  fetchInstrutoresTurma(turma.id);
-                                }
-                              }}
-                            />
-                          </>
-                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
@@ -360,7 +338,7 @@ export default function Turmas() {
           </DialogHeader>
           
           {viewType === 'alunos' && isCoordenador && (
-            <div className="flex gap-2 pb-4 border-b">
+            <div className="flex gap-2 pb-4 border-b flex-wrap">
               <VincularAlunoTurma
                 turmaId={selectedTurma?.id || ""}
                 turmaNome={selectedTurma?.nome || ""}
@@ -385,6 +363,46 @@ export default function Turmas() {
                     Importar Lista
                   </Button>
                 }
+              />
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={async () => {
+                  if (!selectedTurma?.id) return;
+                  if (!confirm("Tem certeza que deseja desvincular TODOS os alunos desta turma?")) return;
+                  
+                  try {
+                    const { error } = await supabase
+                      .from("aluno_turma")
+                      .delete()
+                      .eq("turma_id", selectedTurma.id);
+                    
+                    if (error) throw error;
+                    
+                    toast.success("Todos os alunos foram desvinculados da turma");
+                    fetchTurmas();
+                    fetchAlunosTurma(selectedTurma.id);
+                  } catch (error) {
+                    toast.error("Erro ao desvincular alunos");
+                  }
+                }}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Limpar Todos
+              </Button>
+            </div>
+          )}
+          
+          {viewType === 'instrutores' && isCoordenador && (
+            <div className="flex gap-2 pb-4 border-b">
+              <VincularInstrutorTurma
+                turmaId={selectedTurma?.id || ""}
+                onSuccess={() => {
+                  fetchTurmas();
+                  if (selectedTurma?.id) {
+                    fetchInstrutoresTurma(selectedTurma.id);
+                  }
+                }}
               />
             </div>
           )}
@@ -457,15 +475,26 @@ export default function Turmas() {
                       </TableCell>
                       <TableCell className="text-right">
                         {isCoordenador && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDesvincular(aluno.vinculo_id!)}
-                            className="gap-2"
-                          >
-                            <X className="h-4 w-4" />
-                            Desvincular
-                          </Button>
+                          <div className="flex gap-2 justify-end">
+                            <EditAlunoDialog
+                              aluno={aluno}
+                              onSuccess={() => {
+                                fetchTurmas();
+                                if (selectedTurma?.id) {
+                                  fetchAlunosTurma(selectedTurma.id);
+                                }
+                              }}
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDesvincular(aluno.vinculo_id!)}
+                              className="gap-2"
+                            >
+                              <X className="h-4 w-4" />
+                              Desvincular
+                            </Button>
+                          </div>
                         )}
                       </TableCell>
                     </TableRow>

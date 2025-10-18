@@ -37,9 +37,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session?.user ?? null);
         setLoading(false);
 
+        // Only navigate on explicit sign out, not on token refresh errors
         if (event === "SIGNED_OUT") {
           navigate("/auth");
-        } else if (event === "SIGNED_IN") {
+        } else if (event === "SIGNED_IN" && !user) {
+          // Only navigate to home on initial sign in, not on token refresh
           navigate("/");
         }
       }
@@ -53,7 +55,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, user]);
 
   return (
     <AuthContext.Provider value={{ user, session, loading }}>

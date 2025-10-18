@@ -86,51 +86,87 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
 
     setImporting(true);
     let sucessos = 0;
+    let existentes = 0;
     let erros = 0;
+    const alunosExistentesNomes: string[] = [];
 
     try {
       for (const aluno of alunos) {
         try {
-          // Criar aluno
-          const { data: novoAluno, error: createError } = await supabase
+          // Verificar se o aluno já existe pelo nome completo
+          const { data: alunoExistente } = await supabase
             .from("alunos")
-            .insert([{
-              nome_completo: aluno.nome_completo,
-              graduacao: aluno.graduacao as any,
-              tipo_militar: aluno.tipo_militar as any,
-              local_servico: aluno.local_servico,
-              user_id: user.id
-            }])
-            .select()
-            .single();
+            .select("id, nome_completo")
+            .eq("nome_completo", aluno.nome_completo)
+            .maybeSingle();
 
-          if (createError) throw createError;
+          let alunoId: string;
 
-          // Vincular à turma se turmaId foi fornecido
-          if (turmaId && novoAluno) {
-            const { error: vincularError } = await supabase
-              .from("aluno_turma")
+          if (alunoExistente) {
+            // Aluno já existe
+            alunoId = alunoExistente.id;
+            alunosExistentesNomes.push(aluno.nome_completo);
+            existentes++;
+          } else {
+            // Criar novo aluno
+            const { data: novoAluno, error: createError } = await supabase
+              .from("alunos")
               .insert([{
-                aluno_id: novoAluno.id,
-                turma_id: turmaId,
-                status: aluno.status as any
-              }]);
+                nome_completo: aluno.nome_completo,
+                graduacao: aluno.graduacao as any,
+                tipo_militar: aluno.tipo_militar as any,
+                local_servico: aluno.local_servico,
+                user_id: user.id
+              }])
+              .select()
+              .single();
 
-            if (vincularError) throw vincularError;
+            if (createError) throw createError;
+            alunoId = novoAluno.id;
+            sucessos++;
           }
 
-          sucessos++;
+          // Vincular à turma se turmaId foi fornecido
+          if (turmaId && alunoId) {
+            // Verificar se já está vinculado à turma
+            const { data: vinculoExistente } = await supabase
+              .from("aluno_turma")
+              .select("id")
+              .eq("aluno_id", alunoId)
+              .eq("turma_id", turmaId)
+              .maybeSingle();
+
+            if (!vinculoExistente) {
+              const { error: vincularError } = await supabase
+                .from("aluno_turma")
+                .insert([{
+                  aluno_id: alunoId,
+                  turma_id: turmaId,
+                  status: aluno.status as any
+                }]);
+
+              if (vincularError) throw vincularError;
+            }
+          }
         } catch (error) {
-          console.error("Erro ao importar aluno:", aluno.nome_completo, error);
           erros++;
         }
       }
 
-      toast.success(`Importação concluída! ${sucessos} aluno(s) importado(s), ${erros} erro(s)`);
+      // Mensagem de sucesso com informações detalhadas
+      if (alunosExistentesNomes.length > 0) {
+        toast.info(
+          `${existentes} aluno(s) já cadastrado(s): ${alunosExistentesNomes.slice(0, 3).join(", ")}${alunosExistentesNomes.length > 3 ? "..." : ""}`
+        );
+      }
+      
+      toast.success(
+        `Importação concluída! ${sucessos} novo(s) aluno(s) cadastrado(s)${existentes > 0 ? `, ${existentes} já existente(s)` : ""}${erros > 0 ? `, ${erros} erro(s)` : ""}`
+      );
+      
       setOpen(false);
       onSuccess();
     } catch (error) {
-      console.error("Erro na importação:", error);
       toast.error("Erro ao importar alunos");
     } finally {
       setImporting(false);

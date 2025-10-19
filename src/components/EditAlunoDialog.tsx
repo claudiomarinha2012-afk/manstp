@@ -5,31 +5,37 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { alunoSchema } from "@/lib/validations";
-import { useTranslation } from "react-i18next";
 
 interface Aluno {
   id: string;
   nome_completo: string;
   graduacao: string;
   tipo_militar: string;
-  telefone: string | null;
-  email: string | null;
-  observacoes: string | null;
+  local_servico?: string;
+  observacoes?: string | null;
+  status?: string;
+  vinculo_id?: string;
 }
 
-interface AlunoFormProps {
-  aluno?: Aluno;
+interface EditAlunoDialogProps {
+  aluno: Aluno;
   onSuccess: () => void;
 }
 
-export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
-  const { user } = useAuth();
-  const { t } = useTranslation();
+export function EditAlunoDialog({ aluno, onSuccess }: EditAlunoDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    nome_completo: aluno.nome_completo,
+    graduacao: aluno.graduacao,
+    tipo_militar: aluno.tipo_militar,
+    local_servico: aluno.local_servico || "",
+    observacoes: aluno.observacoes || "",
+    status: aluno.status || "Cursando",
+  });
 
   const rankKeys = [
     "brigadeiro", "coronel", "capitao_mar_guerra", "tenente_coronel",
@@ -39,74 +45,82 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
     "sargento_ajudante", "primeiro_sargento", "segundo_sargento", "terceiro_sargento",
     "furriel", "primeiro_subsargento", "segundo_furriel", "suboficial",
     "subsargento", "cabo_secao", "cabo", "segundo_cabo", "segundo_marinheiro",
-    "marinheiro", "soldado", "grumete", "civil", "armada"
+    "marinheiro", "soldado", "grumete", "civil"
   ];
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<{
-    nome_completo: string;
-    graduacao: string;
-    tipo_militar: string;
-    local_servico: string;
-    telefone: string;
-    email: string;
-    observacoes: string;
-  }>({
-    nome_completo: aluno?.nome_completo || "",
-    graduacao: aluno?.graduacao || "",
-    tipo_militar: aluno?.tipo_militar || "",
-    local_servico: (aluno as any)?.local_servico || "",
-    telefone: aluno?.telefone || "",
-    email: aluno?.email || "",
-    observacoes: aluno?.observacoes || "",
-  });
+
+  const rankMap: { [key: string]: string } = {
+    "Brigadeiro": "Brigadeiro",
+    "Coronel": "Coronel",
+    "Capitão de Mar e Guerra": "Capitão de Mar e Guerra",
+    "Tenente Coronel": "Tenente Coronel",
+    "Capitão de Fragata": "Capitão de Fragata",
+    "Major": "Major",
+    "Capitão Tenente": "Capitão Tenente",
+    "Capitão": "Capitão",
+    "Primeiro Tenente": "Primeiro Tenente",
+    "Tenente": "Tenente",
+    "Segundo Tenente": "Segundo Tenente",
+    "Alferes": "Alferes",
+    "Guarda Marinha": "Guarda Marinha",
+    "Aspirante": "Aspirante",
+    "Subtenente": "Subtenente",
+    "Primeiro Cabo": "Primeiro Cabo",
+    "Sargento Mor": "Sargento Mor",
+    "Sargento Chefe": "Sargento Chefe",
+    "Sargento Ajudante": "Sargento Ajudante",
+    "Primeiro Sargento": "Primeiro Sargento",
+    "Segundo Sargento": "Segundo Sargento",
+    "Terceiro Sargento": "Terceiro Sargento",
+    "Furriel": "Furriel",
+    "Primeiro Subsargento": "Primeiro Subsargento",
+    "Segundo Furriel": "Segundo Furriel",
+    "Suboficial": "Suboficial",
+    "Subsargento": "Subsargento",
+    "Cabo de Seção": "Cabo de Seção",
+    "Cabo": "Cabo",
+    "Segundo Cabo": "Segundo Cabo",
+    "Segundo Marinheiro": "Segundo Marinheiro",
+    "Marinheiro": "Marinheiro",
+    "Soldado": "Soldado",
+    "Grumete": "Grumete",
+    "Civil": "Civil"
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
-
-    const validation = alunoSchema.safeParse(formData);
-    if (!validation.success) {
-      const firstError = validation.error.errors[0];
-      toast.error(firstError.message);
-      return;
-    }
-
     setLoading(true);
+    
     try {
-      if (aluno) {
-        const { error } = await supabase
-          .from("alunos")
-          .update(formData as any)
-          .eq("id", aluno.id);
+      // Update aluno data
+      const { error: alunoError } = await supabase
+        .from("alunos")
+        .update({
+          nome_completo: formData.nome_completo,
+          graduacao: formData.graduacao as any,
+          tipo_militar: formData.tipo_militar as any,
+          local_servico: formData.local_servico,
+          observacoes: formData.observacoes,
+        })
+        .eq("id", aluno.id);
 
-        if (error) throw error;
-        toast.success(t("studentUpdatedSuccess"));
-      } else {
-        const { error } = await supabase
-          .from("alunos")
-          .insert([{ ...formData, user_id: user.id } as any]);
+      if (alunoError) throw alunoError;
 
-        if (error) throw error;
-        toast.success(t("studentRegisteredSuccess"));
+      // Update status in aluno_turma
+      if (aluno.vinculo_id) {
+        const { error: statusError } = await supabase
+          .from("aluno_turma")
+          .update({ status: formData.status as any })
+          .eq("id", aluno.vinculo_id);
+
+        if (statusError) throw statusError;
       }
 
+      toast.success("Aluno atualizado com sucesso!");
       setOpen(false);
       onSuccess();
-      if (!aluno) {
-        setFormData({
-          nome_completo: "",
-          graduacao: "",
-          tipo_militar: "",
-          local_servico: "",
-          telefone: "",
-          email: "",
-          observacoes: "",
-        });
-      }
     } catch (error) {
-      console.error("Erro ao salvar aluno:", error);
-      toast.error(t("errorSavingStudent"));
+      console.error("Erro ao atualizar aluno:", error);
+      toast.error("Erro ao atualizar aluno");
     } finally {
       setLoading(false);
     }
@@ -115,27 +129,19 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {aluno ? (
-          <Button variant="ghost" size="icon">
-            <Pencil className="h-4 w-4" />
-          </Button>
-        ) : (
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            {t("newStudent")}
-          </Button>
-        )}
+        <Button variant="ghost" size="icon">
+          <Pencil className="h-4 w-4" />
+        </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{aluno ? t("editStudent") : t("newStudent")}</DialogTitle>
+          <DialogTitle>Editar Aluno</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="nome_completo">{t("fullName")} *</Label>
+            <div className="space-y-2 md:col-span-2">
+              <Label>Nome Completo *</Label>
               <Input
-                id="nome_completo"
                 required
                 value={formData.nome_completo}
                 onChange={(e) => setFormData({ ...formData, nome_completo: e.target.value })}
@@ -143,7 +149,7 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="graduacao">{t("rank")} *</Label>
+              <Label>Posto / Graduação *</Label>
               <Select
                 required
                 value={formData.graduacao}
@@ -151,12 +157,12 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
                 disabled={formData.tipo_militar === "Civil"}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={t("selectRank")} />
+                  <SelectValue placeholder="Selecione o posto" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px] overflow-y-auto bg-background">
-                  {rankKeys.map((key) => (
-                    <SelectItem key={key} value={t(`ranks.${key}`)}>
-                      {t(`ranks.${key}`)}
+                  {Object.entries(rankMap).map(([key, value]) => (
+                    <SelectItem key={key} value={key}>
+                      {value}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -164,7 +170,7 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tipo_militar">{t("militaryType")} *</Label>
+              <Label>Tipo Militar *</Label>
               <Select
                 required
                 value={formData.tipo_militar}
@@ -172,13 +178,13 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
                   setFormData({ 
                     ...formData, 
                     tipo_militar: value,
-                    graduacao: value === "Civil" ? t("ranks.civil") : formData.graduacao,
+                    graduacao: value === "Civil" ? "Civil" : formData.graduacao,
                     local_servico: value === "Civil" ? "Nenhuma" : formData.local_servico
                   });
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={t("selectType")} />
+                  <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent className="bg-background">
                   <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
@@ -191,10 +197,9 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="local_servico">OM ONDE SERVE *</Label>
+            <div className="space-y-2 md:col-span-2">
+              <Label>OM ONDE SERVE</Label>
               <Select
-                required
                 value={formData.local_servico}
                 onValueChange={(value) => setFormData({ ...formData, local_servico: value })}
                 disabled={formData.tipo_militar === "Civil"}
@@ -210,36 +215,32 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
                   <SelectItem value="Palácio do Governo">Palácio do Governo</SelectItem>
                   <SelectItem value="Bombeiros">Bombeiros</SelectItem>
                   <SelectItem value="Polícia">Polícia</SelectItem>
-                  <SelectItem value="Ministério da Defesa">Ministério da Defesa</SelectItem>
-                  <SelectItem value="Missão UPDE">Missão UPDE</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="telefone">{t("phone")}</Label>
-              <Input
-                id="telefone"
-                type="tel"
-                value={formData.telefone}
-                onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-              />
+            <div className="space-y-2 md:col-span-2">
+              <Label>Status na Turma</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => setFormData({ ...formData, status: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Cursando">Cursando</SelectItem>
+                  <SelectItem value="Concluído">Concluído</SelectItem>
+                  <SelectItem value="Reprovado">Reprovado</SelectItem>
+                  <SelectItem value="Desligado">Desligado</SelectItem>
+                  <SelectItem value="Desertor">Desertor</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="email">{t("email")}</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="observacoes">{t("observations")}</Label>
+              <Label>Observações</Label>
               <Textarea
-                id="observacoes"
                 value={formData.observacoes}
                 onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
                 rows={3}
@@ -249,10 +250,10 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              {t("cancel")}
+              Cancelar
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? t("saving") : t("save")}
+              {loading ? "Salvando..." : "Salvar"}
             </Button>
           </div>
         </form>

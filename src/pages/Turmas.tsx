@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -22,6 +23,8 @@ import { DeleteDialog } from "@/components/DeleteDialog";
 import { VincularAlunoTurma } from "@/components/VincularAlunoTurma";
 import { VincularInstrutorTurma } from "@/components/VincularInstrutorTurma";
 import { ImportarAlunos } from "@/components/ImportarAlunos";
+import { BulkStatusUpdate } from "@/components/BulkStatusUpdate";
+import { EditAlunoDialog } from "@/components/EditAlunoDialog";
 import { toast } from "sonner";
 
 interface Turma {
@@ -70,6 +73,7 @@ export default function Turmas() {
   const [loadingAlunos, setLoadingAlunos] = useState(false);
   const [loadingInstrutores, setLoadingInstrutores] = useState(false);
   const [viewType, setViewType] = useState<'alunos' | 'instrutores'>('alunos');
+  const [statusFilter, setStatusFilter] = useState<string>("todos");
 
   useEffect(() => {
     fetchTurmas();
@@ -360,7 +364,7 @@ export default function Turmas() {
           </DialogHeader>
           
           {viewType === 'alunos' && isCoordenador && (
-            <div className="flex gap-2 pb-4 border-b">
+            <div className="flex flex-wrap gap-2 pb-4 border-b">
               <VincularAlunoTurma
                 turmaId={selectedTurma?.id || ""}
                 turmaNome={selectedTurma?.nome || ""}
@@ -386,20 +390,50 @@ export default function Turmas() {
                   </Button>
                 }
               />
+              <BulkStatusUpdate
+                turmaId={selectedTurma?.id || ""}
+                turmaNome={selectedTurma?.nome || ""}
+                onSuccess={() => {
+                  if (selectedTurma?.id) {
+                    fetchAlunosTurma(selectedTurma.id);
+                  }
+                }}
+              />
             </div>
           )}
           
           {viewType === 'alunos' ? (
-            loadingAlunos ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            <>
+              <div className="flex gap-2 mb-4 items-center">
+                <Label className="text-sm font-medium">Filtrar por Status:</Label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="Cursando">Cursando</SelectItem>
+                    <SelectItem value="Concluído">Concluído</SelectItem>
+                    <SelectItem value="Reprovado">Reprovado</SelectItem>
+                    <SelectItem value="Desligado">Desligado</SelectItem>
+                    <SelectItem value="Desertor">Desertor</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            ) : alunosTurma.length === 0 ? (
-              <div className="py-12 text-center">
-                <p className="text-muted-foreground">Nenhum aluno vinculado a esta turma</p>
-              </div>
-            ) : (
-              <Table>
+              {loadingAlunos ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                </div>
+              ) : alunosTurma.filter(aluno => statusFilter === "todos" || aluno.status === statusFilter).length === 0 ? (
+                <div className="py-12 text-center">
+                  <p className="text-muted-foreground">
+                    {statusFilter === "todos" 
+                      ? "Nenhum aluno vinculado a esta turma" 
+                      : `Nenhum aluno com status "${statusFilter}"`}
+                  </p>
+                </div>
+              ) : (
+                <Table>
                <TableHeader>
                 <TableRow>
                   <TableHead>#</TableHead>
@@ -412,8 +446,8 @@ export default function Turmas() {
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
-                {alunosTurma.map((aluno, index) => (
+               <TableBody>
+                {alunosTurma.filter(aluno => statusFilter === "todos" || aluno.status === statusFilter).map((aluno, index) => (
                   <TableRow key={aluno.id}>
                     <TableCell className="font-medium">{index + 1}</TableCell>
                     <TableCell className="font-medium">{aluno.nome_completo}</TableCell>
@@ -457,22 +491,33 @@ export default function Turmas() {
                       </TableCell>
                       <TableCell className="text-right">
                         {isCoordenador && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDesvincular(aluno.vinculo_id!)}
-                            className="gap-2"
-                          >
-                            <X className="h-4 w-4" />
-                            Desvincular
-                          </Button>
+                          <div className="flex gap-1 justify-end">
+                            <EditAlunoDialog
+                              aluno={aluno}
+                              onSuccess={() => {
+                                if (selectedTurma?.id) {
+                                  fetchAlunosTurma(selectedTurma.id);
+                                }
+                              }}
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDesvincular(aluno.vinculo_id!)}
+                              className="gap-2"
+                            >
+                              <X className="h-4 w-4" />
+                              Desvincular
+                            </Button>
+                          </div>
                         )}
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-            )
+              )}
+            </>
           ) : (
             loadingInstrutores ? (
               <div className="flex items-center justify-center py-12">

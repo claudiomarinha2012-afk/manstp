@@ -136,6 +136,7 @@
     "cabo": "Corporal",
     "segundo_cabo": "Lance Corporal",
     "segundo_marinheiro": "Seaman",
+    "marinheiro": "Seaman",
     "soldado": "Private",
     "grumete": "Seaman Recruit",
     "civil": "Civilian",

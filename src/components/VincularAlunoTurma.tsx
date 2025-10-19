@@ -42,7 +42,7 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
     "sargento_ajudante", "primeiro_sargento", "segundo_sargento", "terceiro_sargento",
     "furriel", "primeiro_subsargento", "segundo_furriel", "suboficial",
     "subsargento", "cabo_secao", "cabo", "segundo_cabo", "segundo_marinheiro",
-    "soldado", "grumete"
+    "marinheiro", "soldado", "grumete"
   ];
   
   const rankMap: { [key: string]: string } = {
@@ -77,6 +77,7 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
     "cabo": "Cabo",
     "segundo_cabo": "Segundo Cabo",
     "segundo_marinheiro": "Segundo Marinheiro",
+    "marinheiro": "Marinheiro",
     "soldado": "Soldado",
     "grumete": "Grumete"
   };
@@ -323,6 +324,7 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
                   required
                   value={newAlunoData.graduacao}
                   onValueChange={(value) => setNewAlunoData({ ...newAlunoData, graduacao: value })}
+                  disabled={newAlunoData.tipo_militar === "Civil"}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o posto" />
@@ -342,7 +344,14 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
                 <Select
                   required
                   value={newAlunoData.tipo_militar}
-                  onValueChange={(value) => setNewAlunoData({ ...newAlunoData, tipo_militar: value })}
+                  onValueChange={(value) => {
+                    setNewAlunoData({ 
+                      ...newAlunoData, 
+                      tipo_militar: value,
+                      graduacao: value === "Civil" ? "civil" : newAlunoData.graduacao,
+                      local_servico: value === "Civil" ? "Nenhuma" : newAlunoData.local_servico
+                    });
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o tipo" />
@@ -364,11 +373,13 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
                   required
                   value={newAlunoData.local_servico}
                   onValueChange={(value) => setNewAlunoData({ ...newAlunoData, local_servico: value })}
+                  disabled={newAlunoData.tipo_militar === "Civil"}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a OM" />
                   </SelectTrigger>
                   <SelectContent className="bg-background">
+                    <SelectItem value="Nenhuma">Nenhuma</SelectItem>
                     <SelectItem value="Guarda Costeira">Guarda Costeira</SelectItem>
                     <SelectItem value="Quartel de Fuzileiros">Quartel de Fuzileiros</SelectItem>
                     <SelectItem value="Exército">Exército</SelectItem>

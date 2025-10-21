@@ -299,7 +299,7 @@ export default function Turmas() {
                           className="gap-2"
                         >
                           <Users className="h-4 w-4" />
-                          Ver Alunos
+                          Gerenciar Alunos
                         </Button>
                         <Button
                           variant="outline"
@@ -308,31 +308,8 @@ export default function Turmas() {
                           className="gap-2"
                         >
                           <GraduationCap className="h-4 w-4" />
-                          Ver Instrutores
+                          Gerenciar Instrutores
                         </Button>
-                        {isCoordenador && (
-                          <>
-                            <VincularAlunoTurma
-                              turmaId={turma.id}
-                              turmaNome={turma.nome}
-                              onSuccess={() => {
-                                fetchTurmas();
-                                if (selectedTurma?.id === turma.id) {
-                                  fetchAlunosTurma(turma.id);
-                                }
-                              }}
-                            />
-                            <VincularInstrutorTurma
-                              turmaId={turma.id}
-                              onSuccess={() => {
-                                fetchTurmas();
-                                if (selectedTurma?.id === turma.id) {
-                                  fetchInstrutoresTurma(turma.id);
-                                }
-                              }}
-                            />
-                          </>
-                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
@@ -538,68 +515,83 @@ export default function Turmas() {
               )}
             </>
           ) : (
-            loadingInstrutores ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-              </div>
-            ) : instrutoresTurma.length === 0 ? (
-              <div className="py-12 text-center">
-                <p className="text-muted-foreground">Nenhum instrutor vinculado a esta turma</p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Graduação</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Especialidade</TableHead>
-                    <TableHead>Contato</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {instrutoresTurma.map((instrutor) => (
-                    <TableRow key={instrutor.id}>
-                      <TableCell className="font-medium">{instrutor.nome_completo}</TableCell>
-                      <TableCell>{instrutor.graduacao}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            instrutor.tipo_militar === "Fuzileiro Naval" ? "default" :
-                            instrutor.tipo_militar === "Guarda Costeiro" ? "secondary" :
-                            instrutor.tipo_militar === "Exercito" ? "outline" :
-                            "destructive"
-                          }
-                        >
-                          {instrutor.tipo_militar}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{instrutor.especialidade || "-"}</TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {instrutor.email && <div>{instrutor.email}</div>}
-                          {instrutor.telefone && <div className="text-muted-foreground">{instrutor.telefone}</div>}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {isCoordenador && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDesvincularInstrutor(instrutor.vinculo_id!)}
-                            className="gap-2"
-                          >
-                            <X className="h-4 w-4" />
-                            Desvincular
-                          </Button>
-                        )}
-                      </TableCell>
+            <>
+              {isCoordenador && (
+                <div className="flex gap-2 pb-4 border-b">
+                  <VincularInstrutorTurma
+                    turmaId={selectedTurma?.id || ""}
+                    onSuccess={() => {
+                      fetchTurmas();
+                      if (selectedTurma?.id) {
+                        fetchInstrutoresTurma(selectedTurma.id);
+                      }
+                    }}
+                  />
+                </div>
+              )}
+              {loadingInstrutores ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                </div>
+              ) : instrutoresTurma.length === 0 ? (
+                <div className="py-12 text-center">
+                  <p className="text-muted-foreground">Nenhum instrutor vinculado a esta turma</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Graduação</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Especialidade</TableHead>
+                      <TableHead>Contato</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )
+                  </TableHeader>
+                  <TableBody>
+                    {instrutoresTurma.map((instrutor) => (
+                      <TableRow key={instrutor.id}>
+                        <TableCell className="font-medium">{instrutor.nome_completo}</TableCell>
+                        <TableCell>{instrutor.graduacao}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              instrutor.tipo_militar === "Fuzileiro Naval" ? "default" :
+                              instrutor.tipo_militar === "Guarda Costeiro" ? "secondary" :
+                              instrutor.tipo_militar === "Exercito" ? "outline" :
+                              "destructive"
+                            }
+                          >
+                            {instrutor.tipo_militar}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{instrutor.especialidade || "-"}</TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {instrutor.email && <div>{instrutor.email}</div>}
+                            {instrutor.telefone && <div className="text-muted-foreground">{instrutor.telefone}</div>}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {isCoordenador && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDesvincularInstrutor(instrutor.vinculo_id!)}
+                              className="gap-2"
+                            >
+                              <X className="h-4 w-4" />
+                              Desvincular
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </>
           )}
         </DialogContent>
       </Dialog>

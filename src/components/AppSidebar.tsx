@@ -24,7 +24,6 @@ export function AppSidebar() {
 
   const menuItems = [
     { title: t("dashboard"), url: "/", icon: Home },
-    { title: t("students"), url: "/alunos", icon: Users },
     { title: t("instructors"), url: "/instrutores", icon: GraduationCap },
     { title: t("courses"), url: "/cursos", icon: BookOpen },
     { title: t("classes"), url: "/turmas", icon: School },

@@ -9,7 +9,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import MainLayout from "./components/MainLayout";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
-import Alunos from "./pages/Alunos";
+
 import Cursos from "./pages/Cursos";
 import Turmas from "./pages/Turmas";
 import Instrutores from "./pages/Instrutores";
@@ -36,16 +36,6 @@ const App = () => (
                 <ProtectedRoute>
                   <MainLayout>
                     <Dashboard />
-                  </MainLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/alunos"
-              element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <Alunos />
                   </MainLayout>
                 </ProtectedRoute>
               }

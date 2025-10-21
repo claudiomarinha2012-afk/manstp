@@ -55,6 +55,8 @@ export type Database = {
           aluno_id: string
           created_at: string | null
           id: string
+          local_curso: string | null
+          sigla_curso: string | null
           status: Database["public"]["Enums"]["status_aluno"] | null
           turma_id: string
         }
@@ -62,6 +64,8 @@ export type Database = {
           aluno_id: string
           created_at?: string | null
           id?: string
+          local_curso?: string | null
+          sigla_curso?: string | null
           status?: Database["public"]["Enums"]["status_aluno"] | null
           turma_id: string
         }
@@ -69,6 +73,8 @@ export type Database = {
           aluno_id?: string
           created_at?: string | null
           id?: string
+          local_curso?: string | null
+          sigla_curso?: string | null
           status?: Database["public"]["Enums"]["status_aluno"] | null
           turma_id?: string
         }
@@ -521,6 +527,7 @@ export type Database = {
         | "Civil"
         | "Marinha do Brasil"
         | "ENAPORT"
+        | "Marinheiro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -707,6 +714,7 @@ export const Constants = {
         "Civil",
         "Marinha do Brasil",
         "ENAPORT",
+        "Marinheiro",
       ],
     },
   },

@@ -173,7 +173,7 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
                   setFormData({ 
                     ...formData, 
                     tipo_militar: value,
-                    graduacao: value === "Civil" ? t("ranks.civil") : formData.graduacao,
+                    graduacao: value === "Civil" ? t("ranks.nenhuma") : formData.graduacao,
                     local_servico: value === "Civil" ? "Nenhuma" : formData.local_servico
                   });
                 }}
@@ -183,11 +183,11 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
                 </SelectTrigger>
                 <SelectContent className="bg-background">
                   <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
-                  <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
+                  <SelectItem value="Marinheiro">Marinheiro</SelectItem>
                   <SelectItem value="Marinha do Brasil">Marinha do Brasil</SelectItem>
                   <SelectItem value="Exercito">Exército</SelectItem>
                   <SelectItem value="Bombeiro">Bombeiro</SelectItem>
-                  <SelectItem value="ENAPORT">ENAPORT</SelectItem>
+                  <SelectItem value="EMAP">EMAP</SelectItem>
                   <SelectItem value="Civil">Civil</SelectItem>
                 </SelectContent>
               </Select>

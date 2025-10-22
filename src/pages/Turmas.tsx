@@ -49,6 +49,9 @@ interface Aluno {
   vinculo_id?: string;
   email: string | null;
   telefone: string | null;
+  local_curso?: string | null;
+  sigla_curso?: string | null;
+  data_duracao_curso?: string | null;
 }
 
 interface Instrutor {
@@ -114,12 +117,12 @@ export default function Turmas() {
     try {
       const { data, error } = await supabase
         .from("aluno_turma")
-        .select("id, aluno_id, status, alunos(id, nome_completo, graduacao, tipo_militar, local_servico, email, telefone, matricula)")
+        .select("id, aluno_id, status, local_curso, sigla_curso, data_duracao_curso, alunos(id, nome_completo, graduacao, tipo_militar, local_servico, email, telefone, matricula)")
         .eq("turma_id", turmaId)
         .order("alunos(matricula)", { ascending: true });
 
       if (error) throw error;
-      setAlunosTurma(data?.map((item: any) => ({...item.alunos, vinculo_id: item.id, status: item.status})) || []);
+      setAlunosTurma(data?.map((item: any) => ({...item.alunos, vinculo_id: item.id, status: item.status, local_curso: item.local_curso, sigla_curso: item.sigla_curso, data_duracao_curso: item.data_duracao_curso})) || []);
     } catch (error) {
       console.error("Erro ao buscar alunos da turma:", error);
     } finally {
@@ -281,7 +284,7 @@ export default function Turmas() {
                       <Badge
                         variant={
                           turma.tipo_militar === "Fuzileiro Naval" ? "default" :
-                          turma.tipo_militar === "Guarda Costeiro" ? "secondary" :
+                          turma.tipo_militar === "Marinheiro" ? "secondary" :
                           turma.tipo_militar === "Exercito" ? "outline" :
                           turma.tipo_militar === "Civil" ? "default" :
                           "destructive"
@@ -421,8 +424,10 @@ export default function Turmas() {
                   <TableHead>#</TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead>Graduação</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>OM ONDE SERVE</TableHead>
+                  <TableHead>Corpo/Quadro</TableHead>
+                  <TableHead>OM de Registro</TableHead>
+                  <TableHead>Local</TableHead>
+                  <TableHead>Sigla do Curso</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Contato</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -448,7 +453,7 @@ export default function Turmas() {
                         <Badge
                           variant={
                             aluno.tipo_militar === "Fuzileiro Naval" ? "default" :
-                            aluno.tipo_militar === "Guarda Costeiro" ? "secondary" :
+                            aluno.tipo_militar === "Marinheiro" ? "secondary" :
                             aluno.tipo_militar === "Exercito" ? "outline" :
                             aluno.tipo_militar === "Civil" ? "default" :
                             "destructive"
@@ -458,6 +463,8 @@ export default function Turmas() {
                         </Badge>
                       </TableCell>
                       <TableCell>{aluno.local_servico || "-"}</TableCell>
+                      <TableCell>{aluno.local_curso || "-"}</TableCell>
+                      <TableCell>{aluno.sigla_curso || "-"}</TableCell>
                       <TableCell>
                         <Select
                           value={aluno.status || "Aguardando"}
@@ -558,7 +565,7 @@ export default function Turmas() {
                           <Badge
                             variant={
                               instrutor.tipo_militar === "Fuzileiro Naval" ? "default" :
-                              instrutor.tipo_militar === "Guarda Costeiro" ? "secondary" :
+                              instrutor.tipo_militar === "Marinheiro" ? "secondary" :
                               instrutor.tipo_militar === "Exercito" ? "outline" :
                               "destructive"
                             }

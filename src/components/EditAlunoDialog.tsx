@@ -19,6 +19,8 @@ interface Aluno {
   observacoes?: string | null;
   status?: string;
   vinculo_id?: string;
+  local_curso?: string | null;
+  sigla_curso?: string | null;
 }
 
 interface EditAlunoDialogProps {
@@ -36,6 +38,8 @@ export function EditAlunoDialog({ aluno, onSuccess }: EditAlunoDialogProps) {
     local_servico: aluno.local_servico || "",
     observacoes: aluno.observacoes || "",
     status: aluno.status || "Aguardando",
+    local_curso: aluno.local_curso || "",
+    sigla_curso: aluno.sigla_curso || "",
   });
 
   const rankKeys = [
@@ -110,7 +114,11 @@ export function EditAlunoDialog({ aluno, onSuccess }: EditAlunoDialogProps) {
       if (aluno.vinculo_id) {
         const { error: statusError } = await supabase
           .from("aluno_turma")
-          .update({ status: formData.status as Database['public']['Enums']['status_aluno'] })
+          .update({ 
+            status: formData.status as Database['public']['Enums']['status_aluno'],
+            local_curso: formData.local_curso || null,
+            sigla_curso: formData.sigla_curso || null
+          })
           .eq("id", aluno.vinculo_id);
 
         if (statusError) throw statusError;
@@ -189,18 +197,18 @@ export function EditAlunoDialog({ aluno, onSuccess }: EditAlunoDialogProps) {
                 </SelectTrigger>
                 <SelectContent className="bg-background">
                   <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
-                  <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
+                  <SelectItem value="Marinheiro">Marinheiro</SelectItem>
                   <SelectItem value="Marinha do Brasil">Marinha do Brasil</SelectItem>
                   <SelectItem value="Exercito">Exército</SelectItem>
                   <SelectItem value="Bombeiro">Bombeiro</SelectItem>
-                  <SelectItem value="ENAPORT">ENAPORT</SelectItem>
+                  <SelectItem value="EMAP">EMAP</SelectItem>
                   <SelectItem value="Civil">Civil</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label>OM ONDE SERVE</Label>
+              <Label>OM de Registro</Label>
               <Select
                 value={formData.local_servico}
                 onValueChange={(value) => setFormData({ ...formData, local_servico: value })}
@@ -242,6 +250,31 @@ export function EditAlunoDialog({ aluno, onSuccess }: EditAlunoDialogProps) {
                   <SelectItem value="Desertor">Desertor</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Local</Label>
+              <Select
+                value={formData.local_curso}
+                onValueChange={(value) => setFormData({ ...formData, local_curso: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o local" />
+                </SelectTrigger>
+                <SelectContent className="bg-background">
+                  <SelectItem value="BRASIL">BRASIL</SelectItem>
+                  <SelectItem value="SÃO TOMÉ E PRÍNCIPE">SÃO TOMÉ E PRÍNCIPE</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Sigla do Curso</Label>
+              <Input
+                value={formData.sigla_curso}
+                onChange={(e) => setFormData({ ...formData, sigla_curso: e.target.value })}
+                placeholder="Digite a sigla do curso"
+              />
             </div>
 
             <div className="space-y-2 md:col-span-2">

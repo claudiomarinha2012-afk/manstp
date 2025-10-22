@@ -94,7 +94,7 @@ export default function Dashboard() {
         alunosConcluidosBrasil?.forEach((item: any) => {
           const tipo = item.alunos.tipo_militar;
           if (tipo === "Fuzileiro Naval") fuzileirosBrasil++;
-          else if (tipo === "Guarda Costeiro") guardaCosteiraBrasil++;
+          else if (tipo === "Marinheiro") guardaCosteiraBrasil++;
           else if (tipo === "Exercito") exercitoBrasil++;
           else if (tipo === "Civil") civisBrasil++;
         });
@@ -117,7 +117,7 @@ export default function Dashboard() {
         alunosConcluidosSaoTome?.forEach((item: any) => {
           const tipo = item.alunos.tipo_militar;
           if (tipo === "Fuzileiro Naval") fuzileirosSaoTome++;
-          else if (tipo === "Guarda Costeiro") guardaCosteiraSaoTome++;
+          else if (tipo === "Marinheiro") guardaCosteiraSaoTome++;
           else if (tipo === "Exercito") exercitoSaoTome++;
           else if (tipo === "Civil") civisSaoTome++;
         });

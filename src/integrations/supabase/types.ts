@@ -54,6 +54,7 @@ export type Database = {
         Row: {
           aluno_id: string
           created_at: string | null
+          data_duracao_curso: string | null
           id: string
           local_curso: string | null
           sigla_curso: string | null
@@ -63,6 +64,7 @@ export type Database = {
         Insert: {
           aluno_id: string
           created_at?: string | null
+          data_duracao_curso?: string | null
           id?: string
           local_curso?: string | null
           sigla_curso?: string | null
@@ -72,6 +74,7 @@ export type Database = {
         Update: {
           aluno_id?: string
           created_at?: string | null
+          data_duracao_curso?: string | null
           id?: string
           local_curso?: string | null
           sigla_curso?: string | null

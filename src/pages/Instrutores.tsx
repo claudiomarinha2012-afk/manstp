@@ -251,7 +251,7 @@ export default function Instrutores() {
                       className="text-xs"
                       variant={
                         instrutor.tipo_militar === "Fuzileiro Naval" ? "default" :
-                        instrutor.tipo_militar === "Guarda Costeiro" ? "secondary" :
+                        instrutor.tipo_militar === "Marinheiro" ? "secondary" :
                         instrutor.tipo_militar === "Marinha do Brasil" ? "secondary" :
                         instrutor.tipo_militar === "Exercito" ? "outline" :
                         "destructive"

@@ -134,7 +134,7 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
           </SelectTrigger>
           <SelectContent className="bg-background">
             <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
-            <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
+            <SelectItem value="Marinheiro">Marinheiro</SelectItem>
             <SelectItem value="Marinha do Brasil">Marinha do Brasil</SelectItem>
             <SelectItem value="Exercito">Exército</SelectItem>
             <SelectItem value="Bombeiro">Bombeiro</SelectItem>

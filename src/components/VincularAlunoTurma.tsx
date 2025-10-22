@@ -88,6 +88,8 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
     graduacao: "",
     tipo_militar: "",
     local_servico: "",
+    local_curso: "",
+    sigla_curso: "",
   });
 
   useEffect(() => {
@@ -157,7 +159,11 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
 
       const { error } = await supabase
         .from("aluno_turma")
-        .insert([{ aluno_id: selectedAluno, turma_id: turmaId, status: selectedStatus as Database['public']['Enums']['status_aluno'] }]);
+        .insert([{ 
+          aluno_id: selectedAluno, 
+          turma_id: turmaId, 
+          status: selectedStatus as Database['public']['Enums']['status_aluno']
+        }]);
 
       if (error) throw error;
 
@@ -213,7 +219,13 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
       // Vincular à turma
       const { error: vincularError } = await supabase
         .from("aluno_turma")
-        .insert([{ aluno_id: novoAluno.id, turma_id: turmaId, status: selectedStatus as Database['public']['Enums']['status_aluno'] }]);
+        .insert([{ 
+          aluno_id: novoAluno.id, 
+          turma_id: turmaId, 
+          status: selectedStatus as Database['public']['Enums']['status_aluno'],
+          local_curso: newAlunoData.local_curso || null,
+          sigla_curso: newAlunoData.sigla_curso || null
+        }]);
 
       if (vincularError) throw vincularError;
 
@@ -223,6 +235,8 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
         graduacao: "",
         tipo_militar: "",
         local_servico: "",
+        local_curso: "",
+        sigla_curso: "",
       });
       setSelectedStatus("Aguardando");
       setActiveTab("existing");
@@ -363,18 +377,18 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
                   </SelectTrigger>
                   <SelectContent className="bg-background">
                     <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
-                    <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
+                    <SelectItem value="Marinheiro">Marinheiro</SelectItem>
                     <SelectItem value="Marinha do Brasil">Marinha do Brasil</SelectItem>
                     <SelectItem value="Exercito">Exército</SelectItem>
                     <SelectItem value="Bombeiro">Bombeiro</SelectItem>
-                    <SelectItem value="ENAPORT">ENAPORT</SelectItem>
+                    <SelectItem value="EMAP">EMAP</SelectItem>
                     <SelectItem value="Civil">Civil</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               
               <div className="space-y-2 md:col-span-2">
-                <Label>OM ONDE SERVE *</Label>
+                <Label>OM de Registro *</Label>
                 <Select
                   required
                   value={newAlunoData.local_servico}
@@ -397,7 +411,7 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
               </div>
               
               <div className="space-y-2 md:col-span-2">
-                <Label>Status Inicial</Label>
+                <Label>Situação do Curso</Label>
                 <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                   <SelectTrigger>
                     <SelectValue />
@@ -414,6 +428,31 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
                     <SelectItem value="Desertor">Desertor</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Local</Label>
+                <Select
+                  value={newAlunoData.local_curso}
+                  onValueChange={(value) => setNewAlunoData({ ...newAlunoData, local_curso: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o local" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background">
+                    <SelectItem value="BRASIL">BRASIL</SelectItem>
+                    <SelectItem value="SÃO TOMÉ E PRÍNCIPE">SÃO TOMÉ E PRÍNCIPE</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Sigla do Curso</Label>
+                <Input
+                  value={newAlunoData.sigla_curso}
+                  onChange={(e) => setNewAlunoData({ ...newAlunoData, sigla_curso: e.target.value })}
+                  placeholder="Digite a sigla do curso"
+                />
               </div>
             </div>
             

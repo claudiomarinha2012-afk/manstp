@@ -241,7 +241,7 @@ export default function Alunos() {
                         className="text-xs"
                         variant={
                           aluno.tipo_militar === "Fuzileiro Naval" ? "default" :
-                          aluno.tipo_militar === "Guarda Costeiro" ? "secondary" :
+                          aluno.tipo_militar === "Marinheiro" ? "secondary" :
                           aluno.tipo_militar === "Exercito" ? "outline" :
                           "destructive"
                         }

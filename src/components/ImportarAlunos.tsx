@@ -205,7 +205,7 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
-                  <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
+                  <SelectItem value="Marinheiro">Marinheiro</SelectItem>
                   <SelectItem value="Marinha do Brasil">Marinha do Brasil</SelectItem>
                   <SelectItem value="Exercito">Exército</SelectItem>
                   <SelectItem value="Bombeiro">Bombeiro</SelectItem>

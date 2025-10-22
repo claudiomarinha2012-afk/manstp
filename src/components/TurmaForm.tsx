@@ -192,7 +192,7 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
                 </SelectTrigger>
                 <SelectContent className="bg-background">
                   <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
-                  <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
+                  <SelectItem value="Marinheiro">Marinheiro</SelectItem>
                   <SelectItem value="Exercito">Exército</SelectItem>
                   <SelectItem value="Bombeiro">Bombeiro</SelectItem>
                   <SelectItem value="Civil">Civil</SelectItem>

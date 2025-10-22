@@ -85,7 +85,7 @@ export default function Relatorios() {
         turma.aluno_turma?.forEach((at: any) => {
           if (at.alunos?.tipo_militar === "Fuzileiro Naval") {
             statsByYear[year].fuzileiros += 1;
-          } else if (at.alunos?.tipo_militar === "Guarda Costeiro") {
+          } else if (at.alunos?.tipo_militar === "Marinheiro") {
             statsByYear[year].guardaCosteira += 1;
           }
         });
@@ -178,7 +178,7 @@ export default function Relatorios() {
 
       if (incluirAlunos) {
         let query = supabase.from("alunos").select("*");
-        if (selectedTipo && selectedTipo !== "all") query = query.eq("tipo_militar", selectedTipo as "Fuzileiro Naval" | "Guarda Costeiro");
+        if (selectedTipo && selectedTipo !== "all") query = query.eq("tipo_militar", selectedTipo as "Fuzileiro Naval" | "Marinheiro");
         const { data: alunosData } = await query;
         if (alunosData && alunosData.length > 0) {
           data = [...data, ...alunosData];
@@ -359,7 +359,7 @@ export default function Relatorios() {
       let data: any[] = [];
       if (incluirAlunos) {
         let query = supabase.from("alunos").select("*");
-        if (selectedTipo && selectedTipo !== "all") query = query.eq("tipo_militar", selectedTipo as "Fuzileiro Naval" | "Guarda Costeiro");
+        if (selectedTipo && selectedTipo !== "all") query = query.eq("tipo_militar", selectedTipo as "Fuzileiro Naval" | "Marinheiro");
         const { data: alunosData } = await query;
         if (alunosData) data = [...data, ...alunosData];
       }
@@ -595,7 +595,7 @@ export default function Relatorios() {
                 <SelectContent>
                   <SelectItem value="all">Todos os tipos</SelectItem>
                   <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
-                  <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
+                  <SelectItem value="Marinheiro">Marinheiro</SelectItem>
                   <SelectItem value="Exercito">Exército</SelectItem>
                   <SelectItem value="Bombeiro">Bombeiro</SelectItem>
                 </SelectContent>

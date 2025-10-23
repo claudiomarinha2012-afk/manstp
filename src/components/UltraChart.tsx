@@ -78,9 +78,8 @@ export default function UltraChart() {
         const tipo = aluno.tipo_militar?.toLowerCase() || "civil";
         const concluido = status === "Concluído";
 
-        // Para Total: contar todos independente do status
+        // Para Total de cada ano: contar TODOS os alunos inscritos (sem exceção)
         dadosPorAno[ano].total++;
-        totalGeralTodos++;
 
         // Para categorias específicas: só contar se concluído
         if (tipo.includes("fuzileiro")) {
@@ -105,6 +104,9 @@ export default function UltraChart() {
           }
         }
       });
+
+      // Calcular Total Geral como soma de todas as colunas azuis (totais de cada ano)
+      totalGeralTodos = Object.values(dadosPorAno).reduce((sum, dados) => sum + dados.total, 0);
 
       // Converter para array e ordenar
       const resultado: YearData[] = Object.keys(dadosPorAno)

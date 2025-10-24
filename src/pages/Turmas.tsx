@@ -25,6 +25,7 @@ import { VincularInstrutorTurma } from "@/components/VincularInstrutorTurma";
 import { ImportarAlunos } from "@/components/ImportarAlunos";
 import type { Database } from "@/integrations/supabase/types";
 import { BulkStatusUpdate } from "@/components/BulkStatusUpdate";
+import { BulkCourseInfoUpdate } from "@/components/BulkCourseInfoUpdate";
 import { EditAlunoDialog } from "@/components/EditAlunoDialog";
 import { toast } from "sonner";
 
@@ -345,42 +346,57 @@ export default function Turmas() {
           </DialogHeader>
           
           {viewType === 'alunos' && isCoordenador && (
-            <div className="flex flex-wrap gap-2 pb-4 border-b">
-              <VincularAlunoTurma
-                turmaId={selectedTurma?.id || ""}
-                turmaNome={selectedTurma?.nome || ""}
-                onSuccess={() => {
-                  fetchTurmas();
-                  if (selectedTurma?.id) {
-                    fetchAlunosTurma(selectedTurma.id);
+            <>
+              <div className="flex flex-wrap gap-2 pb-4 border-b">
+                <VincularAlunoTurma
+                  turmaId={selectedTurma?.id || ""}
+                  turmaNome={selectedTurma?.nome || ""}
+                  onSuccess={() => {
+                    fetchTurmas();
+                    if (selectedTurma?.id) {
+                      fetchAlunosTurma(selectedTurma.id);
+                    }
+                  }}
+                />
+                <ImportarAlunos
+                  turmaId={selectedTurma?.id}
+                  onSuccess={() => {
+                    fetchTurmas();
+                    if (selectedTurma?.id) {
+                      fetchAlunosTurma(selectedTurma.id);
+                    }
+                  }}
+                  trigger={
+                    <Button variant="outline" size="sm">
+                      <Users className="h-4 w-4 mr-2" />
+                      Importar Lista
+                    </Button>
                   }
-                }}
-              />
-              <ImportarAlunos
-                turmaId={selectedTurma?.id}
-                onSuccess={() => {
-                  fetchTurmas();
-                  if (selectedTurma?.id) {
-                    fetchAlunosTurma(selectedTurma.id);
-                  }
-                }}
-                trigger={
-                  <Button variant="outline" size="sm">
-                    <Users className="h-4 w-4 mr-2" />
-                    Importar Lista
-                  </Button>
-                }
-              />
-              <BulkStatusUpdate
-                turmaId={selectedTurma?.id || ""}
-                turmaNome={selectedTurma?.nome || ""}
-                onSuccess={() => {
-                  if (selectedTurma?.id) {
-                    fetchAlunosTurma(selectedTurma.id);
-                  }
-                }}
-              />
-            </div>
+                />
+                <BulkStatusUpdate
+                  turmaId={selectedTurma?.id || ""}
+                  turmaNome={selectedTurma?.nome || ""}
+                  onSuccess={() => {
+                    if (selectedTurma?.id) {
+                      fetchAlunosTurma(selectedTurma.id);
+                    }
+                  }}
+                />
+              </div>
+              
+              <div className="mb-4">
+                <BulkCourseInfoUpdate
+                  turmaId={selectedTurma?.id || ""}
+                  turmaNome={selectedTurma?.nome || ""}
+                  totalAlunos={alunosTurma.length}
+                  onSuccess={() => {
+                    if (selectedTurma?.id) {
+                      fetchAlunosTurma(selectedTurma.id);
+                    }
+                  }}
+                />
+              </div>
+            </>
           )}
           
           {viewType === 'alunos' ? (

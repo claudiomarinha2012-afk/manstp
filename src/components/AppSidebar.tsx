@@ -1,4 +1,4 @@
-import { Home, Users, BookOpen, School, GraduationCap, BarChart3, FileText, Shield, LogOut } from "lucide-react";
+import { Home, Users, BookOpen, School, GraduationCap, BarChart3, FileText, Shield, LogOut, Award, ClipboardList, Calendar } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -27,6 +27,9 @@ export function AppSidebar() {
     { title: t("instructors"), url: "/instrutores", icon: GraduationCap },
     { title: t("courses"), url: "/cursos", icon: BookOpen },
     { title: t("classes"), url: "/turmas", icon: School },
+    { title: t("certificates") || "Certificados", url: "/certificados", icon: Award },
+    { title: t("grades") || "Notas", url: "/notas", icon: ClipboardList },
+    { title: t("weeklySchedule") || "Horários", url: "/horarios", icon: Calendar },
     { title: t("statistics"), url: "/estatisticas", icon: BarChart3 },
     { title: t("reports"), url: "/relatorios", icon: FileText },
     { title: t("users"), url: "/usuarios", icon: Shield },

@@ -1,0 +1,373 @@
+import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import jsPDF from "jspdf";
+import { FileDown, Plus, Image as ImageIcon, Type } from "lucide-react";
+
+interface Aluno {
+  id: string;
+  nome_completo: string;
+}
+
+interface DraggableElement {
+  id: string;
+  type: "image" | "text";
+  content: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  fontSize?: number;
+  fontFamily?: string;
+  color?: string;
+  textAlign?: string;
+}
+
+interface EditorProps {
+  elements: DraggableElement[];
+  onElementsChange: (elements: DraggableElement[]) => void;
+  editorId: string;
+}
+
+const CertificateEditor = ({ elements, onElementsChange, editorId }: EditorProps) => {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  const handleMouseDown = (e: React.MouseEvent, id: string) => {
+    const element = elements.find(el => el.id === id);
+    if (element) {
+      setDraggedId(id);
+      setSelectedId(id);
+      setDragOffset({
+        x: e.clientX - element.x,
+        y: e.clientY - element.y
+      });
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (draggedId) {
+      const newElements = elements.map(el =>
+        el.id === draggedId
+          ? { ...el, x: e.clientX - dragOffset.x, y: e.clientY - dragOffset.y }
+          : el
+      );
+      onElementsChange(newElements);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setDraggedId(null);
+  };
+
+  return (
+    <div
+      className="relative w-full h-[600px] border-4 border-primary rounded-lg bg-background overflow-hidden"
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+    >
+      {elements.map((element) => (
+        <div
+          key={element.id}
+          className={`absolute cursor-move border-2 ${
+            selectedId === element.id ? "border-destructive" : "border-dashed border-primary"
+          } p-1`}
+          style={{
+            left: element.x,
+            top: element.y,
+            width: element.width,
+            height: element.height,
+          }}
+          onMouseDown={(e) => handleMouseDown(e, element.id)}
+        >
+          {element.type === "image" ? (
+            <img src={element.content} alt="" className="w-full h-full object-contain" />
+          ) : (
+            <div
+              contentEditable
+              suppressContentEditableWarning
+              style={{
+                fontSize: element.fontSize,
+                fontFamily: element.fontFamily,
+                color: element.color,
+                textAlign: element.textAlign as any,
+              }}
+              className="w-full h-full outline-none"
+              onBlur={(e) => {
+                const newElements = elements.map(el =>
+                  el.id === element.id
+                    ? { ...el, content: e.currentTarget.textContent || "" }
+                    : el
+                );
+                onElementsChange(newElements);
+              }}
+            >
+              {element.content}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default function Certificados() {
+  const { t } = useTranslation();
+  const [alunos, setAlunos] = useState<Aluno[]>([]);
+  const [selectedAluno, setSelectedAluno] = useState("");
+  const [titulo, setTitulo] = useState("");
+  const [elementosFrente, setElementosFrente] = useState<DraggableElement[]>([]);
+  const [elementosVerso, setElementosVerso] = useState<DraggableElement[]>([]);
+  const [fontSize, setFontSize] = useState(14);
+  const [fontColor, setFontColor] = useState("#000000");
+  const [fontFamily, setFontFamily] = useState("Arial");
+  const [textAlign, setTextAlign] = useState("left");
+  const fileInputFrente = useRef<HTMLInputElement>(null);
+  const fileInputVerso = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetchAlunos();
+  }, []);
+
+  const fetchAlunos = async () => {
+    const { data, error } = await supabase.from("alunos").select("id, nome_completo");
+    if (error) {
+      toast.error("Erro ao carregar alunos");
+      return;
+    }
+    setAlunos(data || []);
+  };
+
+  const adicionarTexto = (editor: "frente" | "verso") => {
+    const novoElemento: DraggableElement = {
+      id: `txt-${Date.now()}`,
+      type: "text",
+      content: "Digite aqui",
+      x: 100,
+      y: 100,
+      width: 200,
+      height: 50,
+      fontSize: 14,
+      fontFamily: "Arial",
+      color: "#000000",
+      textAlign: "left",
+    };
+
+    if (editor === "frente") {
+      setElementosFrente([...elementosFrente, novoElemento]);
+    } else {
+      setElementosVerso([...elementosVerso, novoElemento]);
+    }
+  };
+
+  const adicionarImagem = (file: File, editor: "frente" | "verso") => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const novoElemento: DraggableElement = {
+        id: `img-${Date.now()}`,
+        type: "image",
+        content: reader.result as string,
+        x: 50,
+        y: 50,
+        width: 150,
+        height: 150,
+      };
+
+      if (editor === "frente") {
+        setElementosFrente([...elementosFrente, novoElemento]);
+      } else {
+        setElementosVerso([...elementosVerso, novoElemento]);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const aplicarEstilo = () => {
+    const updateElements = (elements: DraggableElement[]) =>
+      elements.map((el) => {
+        const selected = elementosFrente.concat(elementosVerso).find(e => e.id === el.id);
+        if (el.type === "text" && selected) {
+          return { ...el, fontSize, fontFamily, color: fontColor, textAlign };
+        }
+        return el;
+      });
+
+    setElementosFrente(updateElements(elementosFrente));
+    setElementosVerso(updateElements(elementosVerso));
+  };
+
+  const gerarPDF = () => {
+    const aluno = alunos.find(a => a.id === selectedAluno);
+    if (!aluno) {
+      toast.error("Selecione um aluno");
+      return;
+    }
+
+    const doc = new jsPDF("landscape", "pt", "a4");
+    
+    // Frente
+    doc.setFontSize(22);
+    doc.text(titulo, 400, 50, { align: "center" });
+    
+    elementosFrente.forEach((el) => {
+      if (el.type === "text") {
+        doc.setFontSize(el.fontSize || 14);
+        doc.setFont(el.fontFamily || "helvetica");
+        doc.text(el.content, el.x, el.y + (el.fontSize || 14));
+      }
+    });
+
+    // Verso
+    doc.addPage();
+    doc.setFontSize(18);
+    doc.text("Verso do Certificado", 400, 50, { align: "center" });
+    
+    elementosVerso.forEach((el) => {
+      if (el.type === "text") {
+        doc.setFontSize(el.fontSize || 14);
+        doc.setFont(el.fontFamily || "helvetica");
+        doc.text(el.content, el.x, el.y + (el.fontSize || 14));
+      }
+    });
+
+    doc.save(`${aluno.nome_completo}_certificado.pdf`);
+    toast.success("Certificado gerado com sucesso!");
+  };
+
+  return (
+    <div className="p-6 space-y-6">
+      <h1 className="text-3xl font-bold">{t("certificates") || "Certificados"}</h1>
+
+      <Card className="p-6 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Selecionar Aluno</Label>
+            <Select value={selectedAluno} onValueChange={setSelectedAluno}>
+              <SelectTrigger>
+                <SelectValue placeholder="Escolha um aluno" />
+              </SelectTrigger>
+              <SelectContent>
+                {alunos.map((aluno) => (
+                  <SelectItem key={aluno.id} value={aluno.id}>
+                    {aluno.nome_completo}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Título do Certificado</Label>
+            <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ex: Certificado de Conclusão" />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => adicionarTexto("frente")} variant="outline" size="sm">
+            <Type className="w-4 h-4 mr-2" />
+            Texto Frente
+          </Button>
+          <Button onClick={() => adicionarTexto("verso")} variant="outline" size="sm">
+            <Type className="w-4 h-4 mr-2" />
+            Texto Verso
+          </Button>
+          <Button onClick={() => fileInputFrente.current?.click()} variant="outline" size="sm">
+            <ImageIcon className="w-4 h-4 mr-2" />
+            Imagem Frente
+          </Button>
+          <Button onClick={() => fileInputVerso.current?.click()} variant="outline" size="sm">
+            <ImageIcon className="w-4 h-4 mr-2" />
+            Imagem Verso
+          </Button>
+        </div>
+
+        <input
+          ref={fileInputFrente}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => e.target.files?.[0] && adicionarImagem(e.target.files[0], "frente")}
+        />
+        <input
+          ref={fileInputVerso}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => e.target.files?.[0] && adicionarImagem(e.target.files[0], "verso")}
+        />
+
+        <div className="space-y-4 border-t pt-4">
+          <h3 className="font-semibold">Personalizar Texto</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <Label>Fonte</Label>
+              <Select value={fontFamily} onValueChange={setFontFamily}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Arial">Arial</SelectItem>
+                  <SelectItem value="Courier">Courier</SelectItem>
+                  <SelectItem value="Times">Times New Roman</SelectItem>
+                  <SelectItem value="Verdana">Verdana</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Tamanho</Label>
+              <Input type="number" value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))} min="8" max="72" />
+            </div>
+            <div className="space-y-2">
+              <Label>Cor</Label>
+              <Input type="color" value={fontColor} onChange={(e) => setFontColor(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Alinhamento</Label>
+              <Select value={textAlign} onValueChange={setTextAlign}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Esquerda</SelectItem>
+                  <SelectItem value="center">Centro</SelectItem>
+                  <SelectItem value="right">Direita</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <Button onClick={aplicarEstilo} size="sm">Aplicar Estilo</Button>
+        </div>
+      </Card>
+
+      <Card className="p-6 space-y-4">
+        <h3 className="font-semibold text-lg">Editor - Frente</h3>
+        <CertificateEditor
+          elements={elementosFrente}
+          onElementsChange={setElementosFrente}
+          editorId="frente"
+        />
+      </Card>
+
+      <Card className="p-6 space-y-4">
+        <h3 className="font-semibold text-lg">Editor - Verso</h3>
+        <CertificateEditor
+          elements={elementosVerso}
+          onElementsChange={setElementosVerso}
+          editorId="verso"
+        />
+      </Card>
+
+      <Button onClick={gerarPDF} className="w-full" size="lg">
+        <FileDown className="w-4 h-4 mr-2" />
+        Gerar Certificado PDF
+      </Button>
+    </div>
+  );
+}

@@ -9,10 +9,12 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import MainLayout from "./components/MainLayout";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
-
 import Cursos from "./pages/Cursos";
 import Turmas from "./pages/Turmas";
 import Instrutores from "./pages/Instrutores";
+import Certificados from "./pages/Certificados";
+import Notas from "./pages/Notas";
+import Horarios from "./pages/Horarios";
 import Estatisticas from "./pages/Estatisticas";
 import Relatorios from "./pages/Relatorios";
 import Usuarios from "./pages/Usuarios";
@@ -66,6 +68,36 @@ const App = () => (
                 <ProtectedRoute>
                   <MainLayout>
                     <Instrutores />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/certificados"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Certificados />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notas"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Notas />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/horarios"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Horarios />
                   </MainLayout>
                 </ProtectedRoute>
               }

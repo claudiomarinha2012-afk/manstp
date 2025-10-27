@@ -393,6 +393,87 @@ export default function Relatorios() {
     }
   };
 
+  const gerarPDFGeralTurmas = async () => {
+    try {
+      const { data: turmasData } = await supabase
+        .from("turmas")
+        .select("id, nome, ano, tipo_militar, situacao, cursos(nome)")
+        .order("ano", { ascending: false });
+
+      if (!turmasData || turmasData.length === 0) {
+        toast.error("Nenhuma turma encontrada");
+        return;
+      }
+
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      let yPosition = 20;
+
+      // Título
+      pdf.setFontSize(18);
+      pdf.text("Relatório Geral de Turmas e Alunos", pageWidth / 2, yPosition, { align: "center" });
+      yPosition += 10;
+
+      pdf.setFontSize(10);
+      pdf.text(`Gerado em: ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}`, pageWidth / 2, yPosition, { align: "center" });
+      yPosition += 15;
+
+      // Para cada turma, buscar alunos
+      for (const turma of turmasData) {
+        const { data: alunosData } = await supabase
+          .from("aluno_turma")
+          .select("status, alunos(nome_completo, graduacao, tipo_militar)")
+          .eq("turma_id", turma.id)
+          .order("alunos(nome_completo)");
+
+        if (yPosition > pdf.internal.pageSize.getHeight() - 40) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+
+        // Informações da turma
+        pdf.setFontSize(14);
+        pdf.setFont("helvetica", "bold");
+        pdf.text(`Turma: ${turma.nome}`, 14, yPosition);
+        yPosition += 7;
+
+        pdf.setFontSize(10);
+        pdf.setFont("helvetica", "normal");
+        pdf.text(`Curso: ${turma.cursos?.nome || "Não informado"} | Ano: ${turma.ano} | Tipo: ${turma.tipo_militar}`, 14, yPosition);
+        yPosition += 7;
+        pdf.text(`Situação: ${turma.situacao || "Não informada"} | Total de alunos: ${alunosData?.length || 0}`, 14, yPosition);
+        yPosition += 10;
+
+        // Lista de alunos
+        if (alunosData && alunosData.length > 0) {
+          pdf.setFontSize(9);
+          alunosData.forEach((item: any, index: number) => {
+            if (yPosition > pdf.internal.pageSize.getHeight() - 20) {
+              pdf.addPage();
+              yPosition = 20;
+            }
+
+            const aluno = item.alunos;
+            const status = item.status || "Cursando";
+            pdf.text(`  ${index + 1}. ${aluno.nome_completo} - ${aluno.graduacao} (${status})`, 14, yPosition);
+            yPosition += 5;
+          });
+          yPosition += 8;
+        } else {
+          pdf.setFontSize(9);
+          pdf.text("  Nenhum aluno vinculado", 14, yPosition);
+          yPosition += 10;
+        }
+      }
+
+      pdf.save(`relatorio_geral_turmas_${Date.now()}.pdf`);
+      toast.success("Relatório geral gerado com sucesso");
+    } catch (error) {
+      console.error("Erro ao gerar relatório geral:", error);
+      toast.error("Erro ao gerar relatório geral");
+    }
+  };
+
   const exportAlunoReport = async () => {
     if (!selectedAluno) {
       toast.error("Selecione um aluno para gerar o relatório individual");
@@ -513,6 +594,25 @@ export default function Relatorios() {
         <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Relatórios</h2>
         <p className="text-sm sm:text-base text-muted-foreground">Gere e exporte relatórios customizados com gráficos e análises</p>
       </div>
+
+      {/* Relatório Geral de Turmas */}
+      <Card className="shadow-card">
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <FileDown className="h-4 w-4 sm:h-5 sm:w-5" />
+            Relatório Geral de Turmas
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Gere um PDF completo com todas as turmas cadastradas e seus respectivos alunos
+          </p>
+          <Button onClick={gerarPDFGeralTurmas} className="gap-2 w-full sm:w-auto">
+            <FileDown className="h-4 w-4" />
+            <span className="text-sm">Gerar PDF Geral (Todas as Turmas)</span>
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Relatório Individual */}
       <Card className="shadow-card">

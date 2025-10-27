@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Users, X, GraduationCap } from "lucide-react";
+import { Search, Users, X, GraduationCap, FileDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import { BulkStatusUpdate } from "@/components/BulkStatusUpdate";
 import { BulkCourseInfoUpdate } from "@/components/BulkCourseInfoUpdate";
 import { EditAlunoDialog } from "@/components/EditAlunoDialog";
 import { toast } from "sonner";
+import jsPDF from "jspdf";
 
 interface Turma {
   id: string;
@@ -202,6 +203,61 @@ export default function Turmas() {
     } catch (error) {
       console.error("Erro ao desvincular instrutor:", error);
       toast.error("Erro ao desvincular instrutor");
+    }
+  };
+
+  const gerarCertificadosLote = async () => {
+    if (!selectedTurma) return;
+    
+    try {
+      const alunosCursando = alunosTurma.filter(a => a.status === "Cursando" || a.status === "Concluído");
+      
+      if (alunosCursando.length === 0) {
+        toast.error("Nenhum aluno cursando ou concluído nesta turma");
+        return;
+      }
+
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      alunosCursando.forEach((aluno, index) => {
+        if (index > 0) pdf.addPage();
+
+        // Certificado
+        pdf.setFontSize(24);
+        pdf.text("CERTIFICADO", pageWidth / 2, 40, { align: "center" });
+
+        pdf.setFontSize(12);
+        pdf.text("Certificamos que", pageWidth / 2, 70, { align: "center" });
+
+        pdf.setFontSize(18);
+        pdf.text(aluno.nome_completo, pageWidth / 2, 90, { align: "center" });
+
+        pdf.setFontSize(12);
+        pdf.text(`${aluno.graduacao} - ${aluno.tipo_militar}`, pageWidth / 2, 105, { align: "center" });
+
+        pdf.text(`concluiu com êxito o curso da turma ${selectedTurma.nome}`, pageWidth / 2, 130, { align: "center" });
+        pdf.text(`no ano de ${selectedTurma.ano}`, pageWidth / 2, 145, { align: "center" });
+
+        if (aluno.sigla_curso) {
+          pdf.text(`Curso: ${aluno.sigla_curso}`, pageWidth / 2, 165, { align: "center" });
+        }
+
+        if (aluno.local_curso) {
+          pdf.text(`Local: ${aluno.local_curso}`, pageWidth / 2, 180, { align: "center" });
+        }
+
+        // Data de emissão
+        pdf.setFontSize(10);
+        pdf.text(`Emitido em: ${new Date().toLocaleDateString("pt-BR")}`, pageWidth / 2, pageHeight - 30, { align: "center" });
+      });
+
+      pdf.save(`certificados_${selectedTurma.nome}_${Date.now()}.pdf`);
+      toast.success(`${alunosCursando.length} certificado(s) gerado(s) com sucesso`);
+    } catch (error) {
+      console.error("Erro ao gerar certificados:", error);
+      toast.error("Erro ao gerar certificados em lote");
     }
   };
 
@@ -382,6 +438,15 @@ export default function Turmas() {
                     }
                   }}
                 />
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  onClick={gerarCertificadosLote}
+                  className="gap-2"
+                >
+                  <FileDown className="h-4 w-4" />
+                  Gerar Certificados em Lote
+                </Button>
               </div>
               
               <div className="mb-4">

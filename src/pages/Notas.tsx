@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Upload, FileDown, TrendingUp } from "lucide-react";
+import { Plus, Upload, FileDown, TrendingUp, X } from "lucide-react";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import jsPDF from "jspdf";
@@ -128,6 +128,12 @@ export default function Notas() {
     setDisciplinas([...disciplinas, novaDisciplinaObj]);
     setNovaDisciplina("");
     toast.success("Disciplina adicionada!");
+  };
+
+  const removerDisciplina = (disciplinaId: string) => {
+    setDisciplinas(disciplinas.filter(d => d.id !== disciplinaId));
+    setNotas(notas.filter(n => n.disciplina_id !== disciplinaId));
+    toast.success("Disciplina removida!");
   };
 
   const atualizarNota = (alunoId: string, disciplinaId: string, valor: string) => {
@@ -391,7 +397,17 @@ export default function Notas() {
                         <TableHead className="min-w-[200px] font-bold">Aluno</TableHead>
                         {disciplinas.map((disc) => (
                           <TableHead key={disc.id} className="text-center min-w-[100px] font-bold">
-                            {disc.nome}
+                            <div className="flex items-center justify-center gap-2">
+                              <span>{disc.nome}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removerDisciplina(disc.id)}
+                                className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableHead>
                         ))}
                         <TableHead className="text-center font-bold min-w-[100px]">Média</TableHead>

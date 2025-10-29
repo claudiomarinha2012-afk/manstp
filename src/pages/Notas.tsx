@@ -185,7 +185,7 @@ export default function Notas() {
 
   const atualizarNota = async (alunoId: string, disciplinaId: string, valor: string) => {
     const nota = parseFloat(valor);
-    if (isNaN(nota) || nota < 0 || nota > 10) return;
+    if (isNaN(nota) || nota < 0 || nota > 20) return;
 
     if (!selectedTurma) return;
 
@@ -241,8 +241,8 @@ export default function Notas() {
   };
 
   const getNotaColor = (nota: number): string => {
-    if (nota < 5) return "bg-red-100 dark:bg-red-900/20 border-red-300";
-    if (nota < 7) return "bg-yellow-100 dark:bg-yellow-900/20 border-yellow-300";
+    if (nota < 10) return "bg-red-100 dark:bg-red-900/20 border-red-300";
+    if (nota < 14) return "bg-yellow-100 dark:bg-yellow-900/20 border-yellow-300";
     return "bg-green-100 dark:bg-green-900/20 border-green-300";
   };
 
@@ -306,7 +306,7 @@ export default function Notas() {
     alunos.forEach(aluno => {
       const media = parseFloat(calcularMedia(aluno.id));
       somaMedias += media;
-      if (media < 5) recuperacao++;
+      if (media < 10) recuperacao++;
     });
 
     return {
@@ -480,9 +480,9 @@ export default function Notas() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {alunos.map((aluno, index) => {
-                        const media = parseFloat(calcularMedia(aluno.id));
-                        const isRecuperacao = media < 5;
+                       {alunos.map((aluno, index) => {
+                         const media = parseFloat(calcularMedia(aluno.id));
+                         const isRecuperacao = media < 10;
                         
                         return (
                           <TableRow 
@@ -497,17 +497,17 @@ export default function Notas() {
                             {disciplinas.map((disc) => {
                               const nota = getNota(aluno.id, disc.id);
                               return (
-                                <TableCell key={disc.id} className="text-center p-2">
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    max="10"
-                                    step="0.1"
-                                    value={nota || ""}
-                                    onChange={(e) => atualizarNota(aluno.id, disc.id, e.target.value)}
-                                    className={`w-20 text-center font-semibold border-2 ${getNotaColor(nota)} transition-all focus:scale-105`}
-                                  />
-                                </TableCell>
+                                 <TableCell key={disc.id} className="text-center p-2">
+                                   <Input
+                                     type="number"
+                                     min="0"
+                                     max="20"
+                                     step="0.1"
+                                     value={nota || ""}
+                                     onChange={(e) => atualizarNota(aluno.id, disc.id, e.target.value)}
+                                     className={`w-20 text-center font-semibold border-2 ${getNotaColor(nota)} transition-all focus:scale-105`}
+                                   />
+                                 </TableCell>
                               );
                             })}
                             <TableCell className={`text-center font-bold text-lg ${isRecuperacao ? 'text-red-600' : 'text-green-600'}`}>
@@ -540,15 +540,15 @@ export default function Notas() {
                           position: 'bottom',
                         },
                       },
-                      scales: {
-                        y: {
-                          min: 0,
-                          max: 10,
-                          ticks: {
-                            stepSize: 1
-                          }
-                        }
-                      }
+                       scales: {
+                         y: {
+                           min: 0,
+                           max: 20,
+                           ticks: {
+                             stepSize: 2
+                           }
+                         }
+                       }
                     }}
                   />
                 </CardContent>
@@ -562,12 +562,12 @@ export default function Notas() {
                     <p className="text-sm text-muted-foreground">Média Geral da Turma</p>
                     <p className="text-3xl font-bold text-blue-600">{stats.mediaGeral}</p>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Alunos em Recuperação (&lt; 5.0)</p>
-                    <p className={`text-3xl font-bold ${stats.alunosRecuperacao > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                      {stats.alunosRecuperacao}
-                    </p>
-                  </div>
+                   <div className="space-y-1">
+                     <p className="text-sm text-muted-foreground">Alunos em Recuperação (&lt; 10.0)</p>
+                     <p className={`text-3xl font-bold ${stats.alunosRecuperacao > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                       {stats.alunosRecuperacao}
+                     </p>
+                   </div>
                 </div>
               </CardContent>
             </Card>

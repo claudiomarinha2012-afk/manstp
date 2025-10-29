@@ -251,6 +251,33 @@ export type Database = {
         }
         Relationships: []
       }
+      disciplinas: {
+        Row: {
+          carga_horaria: number | null
+          created_at: string | null
+          id: string
+          nome: string
+          turma_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          carga_horaria?: number | null
+          created_at?: string | null
+          id?: string
+          nome: string
+          turma_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          carga_horaria?: number | null
+          created_at?: string | null
+          id?: string
+          nome?: string
+          turma_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       documentos_curso: {
         Row: {
           created_at: string | null
@@ -282,6 +309,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      grade_aulas: {
+        Row: {
+          aula_numero: number
+          created_at: string | null
+          dia_semana: string
+          disciplina: string | null
+          id: string
+          observacao: string | null
+          professor: string | null
+          sala: string | null
+          turma_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          aula_numero: number
+          created_at?: string | null
+          dia_semana: string
+          disciplina?: string | null
+          id?: string
+          observacao?: string | null
+          professor?: string | null
+          sala?: string | null
+          turma_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          aula_numero?: number
+          created_at?: string | null
+          dia_semana?: string
+          disciplina?: string | null
+          id?: string
+          observacao?: string | null
+          professor?: string | null
+          sala?: string | null
+          turma_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       instrutor_turma: {
         Row: {

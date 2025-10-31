@@ -48,6 +48,8 @@ export default function Horarios() {
   const [alunos, setAlunos] = useState<any[]>([]);
   const [disciplinas, setDisciplinas] = useState<any[]>([]);
   const [grade, setGrade] = useState<HorarioCell[]>([]);
+  const [semanaAtual, setSemanaAtual] = useState(1);
+  const [dataInicioSemana, setDataInicioSemana] = useState<Date>(new Date());
 
   const [activeTurma, setActiveTurma] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -71,8 +73,16 @@ export default function Horarios() {
     if (activeTurma) {
       localStorage.setItem("lovable_last_turma", JSON.stringify(activeTurma));
       loadTurmaData(activeTurma.id);
+      calcularDataSemana(semanaAtual);
     }
   }, [activeTurma]);
+
+  useEffect(() => {
+    if (activeTurma) {
+      loadGradeSemana(activeTurma.id, semanaAtual);
+      calcularDataSemana(semanaAtual);
+    }
+  }, [semanaAtual]);
 
   async function loadAll() {
     setLoading(true);
@@ -116,10 +126,6 @@ export default function Horarios() {
 
       const { data: d } = await supabase.from("disciplinas").select("*").eq("turma_id", turmaId);
       setDisciplinas(d || []);
-
-      const { data: g } = await supabase.from("grade_aulas").select("*").eq("turma_id", turmaId);
-      const full = ensureFullGrade(turmaId, g || []);
-      setGrade(full as HorarioCell[]);
     } catch (err) {
       console.error(err);
       toast.error("Erro ao carregar turma");
@@ -128,26 +134,60 @@ export default function Horarios() {
     }
   }
 
-  function ensureFullGrade(turmaId: string, existingBlocks: any[]): HorarioCell[] {
-    const cells: HorarioCell[] = [];
-    for (const horario of HORARIOS) {
-      for (const dia of DIAS) {
-        const found = existingBlocks.find((b: any) => b.horario === horario && b.dia_semana === dia);
-        if (found) {
-          cells.push({
-            turma_id: found.turma_id,
-            dia_semana: found.dia_semana,
-            horario: found.horario,
-            disciplina: found.disciplina || "",
-            aula: found.aula || "",
-            instrutor: found.instrutor || "",
+  function calcularDataSemana(numeroSemana: number) {
+    const ano = new Date().getFullYear();
+    const inicioAno = startOfYear(new Date(ano, 0, 1));
+    const dataInicio = addDays(inicioAno, (numeroSemana - 1) * 7);
+    setDataInicioSemana(dataInicio);
+  }
+
+  async function loadGradeSemana(turmaId: string, semana: number) {
+    setLoading(true);
+    try {
+      const { data } = await supabase
+        .from("grade_semana")
+        .select("*")
+        .eq("turma_id", turmaId)
+        .eq("semana", semana)
+        .single();
+
+      if (data && data.dias) {
+        const cells: HorarioCell[] = [];
+        HORARIOS.forEach((horario, hIdx) => {
+          DIAS.forEach((dia, dIdx) => {
+            const diaData = data.dias[dIdx];
+            cells.push({
+              turma_id: turmaId,
+              dia_semana: dia,
+              horario: horario,
+              disciplina: diaData?.horarios?.[hIdx]?.disciplina || "",
+              aula: diaData?.horarios?.[hIdx]?.aula || "",
+              instrutor: diaData?.horarios?.[hIdx]?.instrutor || "",
+            });
           });
-        } else {
-          cells.push(defaultCell(turmaId, dia, horario));
-        }
+        });
+        setGrade(cells);
+      } else {
+        const cells: HorarioCell[] = [];
+        HORARIOS.forEach((horario) => {
+          DIAS.forEach((dia) => {
+            cells.push(defaultCell(turmaId, dia, horario));
+          });
+        });
+        setGrade(cells);
       }
+    } catch (err) {
+      console.error(err);
+      const cells: HorarioCell[] = [];
+      HORARIOS.forEach((horario) => {
+        DIAS.forEach((dia) => {
+          cells.push(defaultCell(turmaId, dia, horario));
+        });
+      });
+      setGrade(cells);
+    } finally {
+      setLoading(false);
     }
-    return cells;
   }
 
 
@@ -245,26 +285,39 @@ export default function Horarios() {
     toast.success("Disciplina criada ✅");
   }
 
-  async function salvarCell(cell: HorarioCell) {
-    const payload = {
-      turma_id: cell.turma_id,
-      dia_semana: cell.dia_semana,
-      horario: cell.horario,
-      disciplina: cell.disciplina,
-      aula: cell.aula,
-      instrutor: cell.instrutor,
-    };
+  async function salvarGradeSemana() {
+    if (!activeTurma) return;
+
+    const diasData = DIAS.map((dia, dIdx) => {
+      const horariosData = HORARIOS.map((horario) => {
+        const cell = grade.find(c => c.dia_semana === dia && c.horario === horario);
+        return {
+          disciplina: cell?.disciplina || "",
+          aula: cell?.aula || "",
+          instrutor: cell?.instrutor || "",
+        };
+      });
+
+      return {
+        dia: addDays(dataInicioSemana, dIdx),
+        horarios: horariosData,
+      };
+    });
 
     const { error } = await supabase
-      .from("grade_aulas")
-      .upsert(payload, { onConflict: "turma_id,dia_semana,horario" });
+      .from("grade_semana")
+      .upsert([{
+        turma_id: activeTurma.id,
+        semana: semanaAtual,
+        dias: diasData as any,
+      }], { onConflict: "turma_id,semana" });
 
     if (error) {
       console.error(error);
       toast.error("Erro ao salvar");
       return;
     }
-    toast.success("✅ Salvo automaticamente");
+    toast.success("✅ Semana salva automaticamente");
   }
 
   function onChangeCell(index: number, field: keyof HorarioCell, value: string) {
@@ -274,10 +327,14 @@ export default function Horarios() {
   }
 
   async function onBlurCell(index: number) {
-    const cell = grade[index];
-    if (!activeTurma) return;
-    cell.turma_id = activeTurma.id;
-    await salvarCell(cell);
+    await salvarGradeSemana();
+  }
+
+  function mudarSemana(direcao: number) {
+    const novaSemana = semanaAtual + direcao;
+    if (novaSemana >= 1 && novaSemana <= 52) {
+      setSemanaAtual(novaSemana);
+    }
   }
 
   function getCellIndex(horario: string, dia: string): number {
@@ -391,7 +448,32 @@ export default function Horarios() {
             </Card>
 
             <Card className="p-4">
-              <h2 className="font-semibold mb-4">Grade de Horários Semanal</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold">Grade de Horários - Semana {semanaAtual} de 52</h2>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground">
+                    {format(dataInicioSemana, "dd/MM/yyyy")} - {format(addDays(dataInicioSemana, 4), "dd/MM/yyyy")}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => mudarSemana(-1)}
+                      disabled={semanaAtual === 1}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => mudarSemana(1)}
+                      disabled={semanaAtual === 52}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse border border-border">
                   <thead>

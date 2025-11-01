@@ -23,6 +23,9 @@ const HORARIOS = [
   "15:00 - 15:50"
 ];
 
+// Keywords for filtering turmas display
+const TURMA_FILTER_KEYWORDS = ["FMN", "FSD", "FSG", "GAT", "Expedito", "Exp"];
+
 interface HorarioCell {
   turma_id: string;
   dia_semana: string;
@@ -57,6 +60,16 @@ export default function Horarios() {
   const [novaTurmaNome, setNovaTurmaNome] = useState("");
   const [novoAlunoNome, setNovoAlunoNome] = useState("");
   const [novaDisciplinaNome, setNovaDisciplinaNome] = useState("");
+  const [showAllTurmas, setShowAllTurmas] = useState(false);
+
+  // Filter turmas based on keywords
+  const filteredTurmas = showAllTurmas 
+    ? turmas 
+    : turmas.filter(t => 
+        TURMA_FILTER_KEYWORDS.some(keyword => 
+          (t.nome || "").toLowerCase().includes(keyword.toLowerCase())
+        )
+      );
 
   useEffect(() => {
     const last = localStorage.getItem("lovable_last_turma");
@@ -349,8 +362,28 @@ export default function Horarios() {
           <h2 className="text-lg font-semibold">Turmas</h2>
         </div>
 
-        <div className="space-y-2">
-          {turmas.map(t => (
+        {!showAllTurmas && (
+          <div className="mb-3 p-2 bg-primary/10 border border-primary/20 rounded text-xs">
+            <p className="font-medium mb-1">Filtro ativo</p>
+            <p className="text-muted-foreground">
+              Mostrando apenas turmas com: {TURMA_FILTER_KEYWORDS.join(", ")}
+            </p>
+          </div>
+        )}
+
+        <div className="mb-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAllTurmas(!showAllTurmas)}
+            className="w-full"
+          >
+            {showAllTurmas ? "Mostrar Filtradas" : "Mostrar Todas"}
+          </Button>
+        </div>
+
+        <div className="space-y-2 max-h-[calc(100vh-400px)] overflow-y-auto">
+          {filteredTurmas.map(t => (
             <button
               key={t.id}
               onClick={() => openTurma(t)}
@@ -364,6 +397,11 @@ export default function Horarios() {
               <span className="text-sm text-muted-foreground">{t.ano}</span>
             </button>
           ))}
+          {filteredTurmas.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Nenhuma turma encontrada com os filtros ativos
+            </p>
+          )}
         </div>
 
         <div className="mt-6">

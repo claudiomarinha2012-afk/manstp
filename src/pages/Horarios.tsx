@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, User, Calendar, ChevronLeft, ChevronRight, Save, BookOpen } from "lucide-react";
+import { Plus, User, Calendar, ChevronLeft, ChevronRight, Save, BookOpen, Download } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { startOfYear, addDays, format } from "date-fns";
+import { saveAs } from "file-saver";
+import { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, TextRun } from "docx";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -384,6 +386,79 @@ export default function Horarios() {
     return grade.findIndex(c => c.horario === horario && c.dia_semana === dia);
   }
 
+  async function exportToWord() {
+    if (!activeTurma) return;
+    
+    try {
+      const turmaInfo = `${activeTurma.nome} - Semana ${semanaAtual}`;
+      const dateRange = `${format(dataInicioSemana, "dd/MM/yyyy")} - ${format(addDays(dataInicioSemana, 4), "dd/MM/yyyy")}`;
+      
+      const doc = new Document({
+        sections: [
+          {
+            properties: {
+              page: {
+                size: {
+                  orientation: "landscape" as const,
+                },
+              },
+            },
+            children: [
+              new Paragraph({
+                children: [
+                  new TextRun({ text: `Turma: ${turmaInfo}`, bold: true, size: 28 }),
+                ],
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({ text: `Período: ${dateRange}`, size: 24 }),
+                ],
+                spacing: { after: 200 },
+              }),
+              new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                rows: [
+                  new TableRow({
+                    children: [
+                      new TableCell({ children: [new Paragraph({ text: "HORÁRIO", alignment: "center" })] }),
+                      ...DIAS.map(dia => new TableCell({ 
+                        children: [new Paragraph({ text: dia, alignment: "center" })] 
+                      })),
+                    ],
+                  }),
+                  ...HORARIOS.map(horario => 
+                    new TableRow({
+                      children: [
+                        new TableCell({ children: [new Paragraph(horario)] }),
+                        ...DIAS.map(dia => {
+                          const cellIndex = getCellIndex(horario, dia);
+                          const cell = grade[cellIndex];
+                          const content = cell ? 
+                            `${cell.disciplina || ""}${cell.disciplina && cell.aula ? "\n" : ""}${cell.aula || ""}${(cell.disciplina || cell.aula) && cell.instrutor ? "\n" : ""}${cell.instrutor || ""}` 
+                            : "";
+                          return new TableCell({ 
+                            children: [new Paragraph({ text: content, spacing: { before: 100, after: 100 } })] 
+                          });
+                        }),
+                      ],
+                    })
+                  ),
+                ],
+              }),
+            ],
+          },
+        ],
+      });
+
+      const blob = await Packer.toBlob(doc);
+      saveAs(blob, `Grade_${activeTurma.nome}_Semana_${semanaAtual}.docx`);
+      toast.success("Grade exportada com sucesso!");
+    } catch (error) {
+      console.error("Erro ao exportar:", error);
+      toast.error("Erro ao exportar para Word");
+    }
+  }
+
   return (
     <div className="min-h-screen flex bg-background">
       <aside className="w-72 bg-card border-r p-4">
@@ -522,6 +597,15 @@ export default function Horarios() {
                   <span className="text-sm text-muted-foreground">
                     {format(dataInicioSemana, "dd/MM/yyyy")} - {format(addDays(dataInicioSemana, 4), "dd/MM/yyyy")}
                   </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={exportToWord}
+                    className="gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Exportar Word
+                  </Button>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
@@ -569,13 +653,25 @@ export default function Horarios() {
                           return (
                             <td key={dia} className="border border-border p-1">
                               <div className="space-y-1">
-                                <Input
-                                  placeholder="Disciplina"
+                                <Select
                                   value={cell.disciplina}
-                                  onChange={e => onChangeCell(cellIndex, "disciplina", e.target.value)}
-                                  onBlur={() => onBlurCell(cellIndex)}
-                                  className="text-xs h-7 border-0 bg-transparent focus:bg-background"
-                                />
+                                  onValueChange={(value) => {
+                                    onChangeCell(cellIndex, "disciplina", value);
+                                    onBlurCell(cellIndex);
+                                  }}
+                                >
+                                  <SelectTrigger className="text-xs h-7 border-0 bg-transparent focus:bg-background">
+                                    <SelectValue placeholder="Disciplina" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="">-- Selecione --</SelectItem>
+                                    {disciplinas.map(d => (
+                                      <SelectItem key={d.id} value={d.nome}>
+                                        {d.nome}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
                                 <Input
                                   placeholder="Aula"
                                   value={cell.aula}

@@ -153,6 +153,19 @@ export default function Dashboard() {
       
       setLastUpdate(`${dateStr} ${timeStr}`);
 
+      // Count Copaaznav students
+      let copaaznavTotal = 0;
+      vinculos.forEach((vinculo: any) => {
+        const curso = vinculo.turmas?.cursos;
+        const nomeCurso = curso?.nome?.toLowerCase() || '';
+        const siglaCurso = vinculo.sigla_curso?.toLowerCase() || '';
+        const status = vinculo.status?.toLowerCase();
+        if ((nomeCurso.includes('copaaznav') || siglaCurso.includes('copaaznav')) && 
+            (status === 'cursando' || status === 'aguardando')) {
+          copaaznavTotal++;
+        }
+      });
+
       const newCards: DashboardCard[] = [
         {
           titulo: "Total Geral de Alunos",
@@ -160,6 +173,12 @@ export default function Dashboard() {
           subtitulo: `Atualizado: ${timeStr}`,
           cor: "border-l-blue-400"
         },
+        ...(copaaznavTotal > 0 ? [{
+          titulo: "Alunos no curso Copaaznav",
+          valor: copaaznavTotal,
+          subtitulo: `Cursando ou Aguardando`,
+          cor: "border-l-teal-500"
+        }] : []),
         {
           titulo: "Cursos a Distância (EAD)",
           valor: eadTotal,

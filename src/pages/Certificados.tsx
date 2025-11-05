@@ -7,47 +7,45 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Eye, Save } from "lucide-react";
-import { Canvas as FabricCanvas, Textbox, FabricImage, util } from "fabric";
+import { v4 as uuidv4 } from "uuid";
 import diplomaTemplate from "@/assets/diploma-template.jpg";
 import { CertificateTemplateSelector } from "@/components/certificados/CertificateTemplateSelector";
 import { CertificateGeneralSettings } from "@/components/certificados/CertificateGeneralSettings";
 import { CertificateElementToolbar } from "@/components/certificados/CertificateElementToolbar";
-import { CertificateCanvas } from "@/components/certificados/CertificateCanvas";
+import { CertificateKonvaCanvas } from "@/components/certificados/CertificateKonvaCanvas";
 
-interface Aluno {
+interface Element {
   id: string;
-  nome_completo: string;
+  type: "text" | "image";
+  x: number;
+  y: number;
+  [key: string]: any;
 }
 
 interface Template {
   id: string;
   name: string;
   thumbnail?: string;
-  data: any;
+  data: {
+    elements: Element[];
+    orientation: "landscape" | "portrait";
+    backgroundImage: string;
+  };
 }
 
 export default function Certificados() {
   const { t } = useTranslation();
-  const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [orientation, setOrientation] = useState<"landscape" | "portrait">("landscape");
   const [backgroundImage, setBackgroundImage] = useState<string>("");
-  const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
+  const [elements, setElements] = useState<Element[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [templateName, setTemplateName] = useState("");
+  const [stageRef, setStageRef] = useState<any>(null);
 
   useEffect(() => {
-    fetchAlunos();
     setBackgroundImage(diplomaTemplate);
   }, []);
-
-  const fetchAlunos = async () => {
-    const { data, error } = await supabase.from("alunos").select("id, nome_completo");
-    if (error) {
-      toast.error("Erro ao carregar alunos");
-      return;
-    }
-    setAlunos(data || []);
-  };
 
   const handleBackgroundChange = (file: File | null) => {
     if (!file) {
@@ -62,123 +60,136 @@ export default function Certificados() {
     reader.readAsDataURL(file);
   };
 
-  const handleCanvasReady = (canvas: FabricCanvas) => {
-    setFabricCanvas(canvas);
-  };
-
   const addText = () => {
-    if (!fabricCanvas) return;
-
-    const text = new Textbox("Digite seu texto", {
-      left: 100,
-      top: 100,
-      width: 300,
+    const newElement: Element = {
+      id: uuidv4(),
+      type: "text",
+      x: 100,
+      y: 100,
+      text: "Digite seu texto",
       fontSize: 20,
       fontFamily: "Arial",
       fill: "#000000",
-    });
-
-    fabricCanvas.add(text);
-    fabricCanvas.setActiveObject(text);
-    fabricCanvas.renderAll();
+    };
+    setElements([...elements, newElement]);
     toast.success("Texto adicionado");
   };
 
   const addCourseName = () => {
-    if (!fabricCanvas) return;
-
-    const text = new Textbox("Nome do Curso", {
-      left: 100,
-      top: 200,
-      width: 400,
+    const newElement: Element = {
+      id: uuidv4(),
+      type: "text",
+      x: 100,
+      y: 200,
+      text: "Nome do Curso",
       fontSize: 24,
       fontFamily: "Arial",
       fontWeight: "bold",
       fill: "#000000",
       textAlign: "center",
-    });
-
-    fabricCanvas.add(text);
-    fabricCanvas.setActiveObject(text);
-    fabricCanvas.renderAll();
+    };
+    setElements([...elements, newElement]);
     toast.success("Campo de nome do curso adicionado");
   };
 
   const addStudentName = () => {
-    if (!fabricCanvas) return;
-
-    const text = new Textbox("Nome do Aluno", {
-      left: 100,
-      top: 150,
-      width: 400,
+    const newElement: Element = {
+      id: uuidv4(),
+      type: "text",
+      x: 100,
+      y: 150,
+      text: "Nome do Aluno",
       fontSize: 28,
       fontFamily: "Arial",
       fontWeight: "bold",
       fill: "#000000",
       textAlign: "center",
-    });
-
-    fabricCanvas.add(text);
-    fabricCanvas.setActiveObject(text);
-    fabricCanvas.renderAll();
+    };
+    setElements([...elements, newElement]);
     toast.success("Campo de nome do aluno adicionado");
   };
 
   const addInstructor = () => {
-    if (!fabricCanvas) return;
-
-    const text = new Textbox("Instrutor", {
-      left: 100,
-      top: 250,
-      width: 300,
+    const newElement: Element = {
+      id: uuidv4(),
+      type: "text",
+      x: 100,
+      y: 250,
+      text: "Instrutor",
       fontSize: 18,
       fontFamily: "Arial",
       fill: "#000000",
-    });
-
-    fabricCanvas.add(text);
-    fabricCanvas.setActiveObject(text);
-    fabricCanvas.renderAll();
+    };
+    setElements([...elements, newElement]);
     toast.success("Campo de instrutor adicionado");
   };
 
   const addImage = (file: File) => {
-    if (!fabricCanvas) return;
-
     const reader = new FileReader();
     reader.onload = () => {
-      util.loadImage(reader.result as string, { crossOrigin: "anonymous" }).then((img) => {
-        const fabricImg = new FabricImage(img, {
-          left: 50,
-          top: 50,
-          scaleX: 0.3,
-          scaleY: 0.3,
-        });
-
-        fabricCanvas.add(fabricImg);
-        fabricCanvas.setActiveObject(fabricImg);
-        fabricCanvas.renderAll();
-        toast.success("Imagem adicionada");
-      });
+      const newElement: Element = {
+        id: uuidv4(),
+        type: "image",
+        src: reader.result as string,
+        x: 50,
+        y: 50,
+        width: 100,
+        height: 100,
+        opacity: 1,
+      };
+      setElements([...elements, newElement]);
+      toast.success("Imagem adicionada");
     };
     reader.readAsDataURL(file);
   };
 
+  const updateElement = (updated: Element) => {
+    setElements(elements.map((el) => (el.id === updated.id ? updated : el)));
+  };
+
+  const moveLayer = (direction: "front" | "back") => {
+    if (!selectedId) return;
+
+    const index = elements.findIndex((el) => el.id === selectedId);
+    if (index === -1) return;
+
+    const newElements = [...elements];
+    if (direction === "front" && index < elements.length - 1) {
+      [newElements[index], newElements[index + 1]] = [
+        newElements[index + 1],
+        newElements[index],
+      ];
+    } else if (direction === "back" && index > 0) {
+      [newElements[index], newElements[index - 1]] = [
+        newElements[index - 1],
+        newElements[index],
+      ];
+    }
+    setElements(newElements);
+    toast.success("Camada alterada");
+  };
+
+  const deleteElement = () => {
+    if (!selectedId) return;
+    setElements(elements.filter((el) => el.id !== selectedId));
+    setSelectedId(null);
+    toast.success("Elemento excluído");
+  };
+
   const saveTemplate = () => {
-    if (!fabricCanvas) return;
+    if (!stageRef) return;
     if (!templateName.trim()) {
       toast.error("Digite um nome para o template");
       return;
     }
 
-    const json = fabricCanvas.toJSON();
-    const thumbnail = fabricCanvas.toDataURL({ multiplier: 0.5, format: "png", quality: 0.5 });
+    const thumbnail = stageRef.toDataURL({ pixelRatio: 0.5 });
 
     const newTemplate: Template = {
       id: Date.now().toString(),
       name: templateName,
       thumbnail,
-      data: { json, orientation, backgroundImage },
+      data: { elements, orientation, backgroundImage },
     };
 
     const saved = localStorage.getItem("certificate_templates");
@@ -193,30 +204,22 @@ export default function Certificados() {
   const handleSelectTemplate = (template: Template | null) => {
     if (!template) {
       setSelectedTemplate(null);
-      if (fabricCanvas) {
-        fabricCanvas.clear();
-        fabricCanvas.backgroundColor = "#ffffff";
-        fabricCanvas.renderAll();
-      }
+      setElements([]);
+      setSelectedId(null);
       return;
     }
 
     setSelectedTemplate(template);
     setOrientation(template.data.orientation);
     setBackgroundImage(template.data.backgroundImage);
-
-    if (fabricCanvas) {
-      fabricCanvas.loadFromJSON(template.data.json).then(() => {
-        fabricCanvas.renderAll();
-        toast.success("Template carregado");
-      });
-    }
+    setElements(template.data.elements);
+    toast.success("Template carregado");
   };
 
   const handlePreview = () => {
-    if (!fabricCanvas) return;
+    if (!stageRef) return;
 
-    const dataUrl = fabricCanvas.toDataURL({ multiplier: 2, format: "png", quality: 1.0 });
+    const dataUrl = stageRef.toDataURL({ pixelRatio: 2 });
     const win = window.open();
     if (win) {
       win.document.write(`<img src="${dataUrl}" style="width:100%;"/>`);
@@ -227,11 +230,11 @@ export default function Certificados() {
     <div className="min-h-screen bg-background">
       <div className="border-b bg-muted/30">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Certificate Builder</h1>
+          <h1 className="text-2xl font-bold">Editor de Certificados</h1>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handlePreview}>
               <Eye className="w-4 h-4 mr-2" />
-              Preview
+              Visualizar
             </Button>
             <Button onClick={saveTemplate}>
               <Save className="w-4 h-4 mr-2" />
@@ -263,6 +266,9 @@ export default function Certificados() {
             onAddStudentName={addStudentName}
             onAddImage={addImage}
             onAddInstructor={addInstructor}
+            selectedId={selectedId}
+            onMoveLayer={moveLayer}
+            onDelete={deleteElement}
           />
 
           <div className="space-y-2 pt-4 border-t">
@@ -275,10 +281,14 @@ export default function Certificados() {
           </div>
         </Card>
 
-        <CertificateCanvas
+        <CertificateKonvaCanvas
           orientation={orientation}
           backgroundImage={backgroundImage}
-          onCanvasReady={handleCanvasReady}
+          elements={elements}
+          selectedId={selectedId}
+          onSelectElement={setSelectedId}
+          onUpdateElement={updateElement}
+          onStageReady={setStageRef}
         />
       </div>
     </div>

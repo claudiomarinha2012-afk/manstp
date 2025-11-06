@@ -14,6 +14,8 @@ import { CertificateElementToolbar } from "@/components/certificados/Certificate
 import { CertificateKonvaCanvas } from "@/components/certificados/CertificateKonvaCanvas";
 import { FontSelector } from "@/components/certificados/FontSelector";
 import { TurmaAssociation } from "@/components/certificados/TurmaAssociation";
+import { StudentCertificatesList } from "@/components/certificados/StudentCertificatesList";
+import { useCertificateTemplates } from "@/hooks/useCertificateTemplates";
 
 interface Element {
   id: string;
@@ -36,6 +38,7 @@ interface Template {
 }
 
 export default function Certificados() {
+  const { saveTemplate: saveTemplateToDb, updateTemplate } = useCertificateTemplates();
   const [orientation, setOrientation] = useState<"landscape" | "portrait">("landscape");
   const [backgroundImage, setBackgroundImage] = useState<string>("");
   const [elements, setElements] = useState<Element[]>([]);
@@ -179,7 +182,7 @@ export default function Certificados() {
     toast.success("Elemento excluído");
   };
 
-  const saveTemplate = () => {
+  const saveTemplate = async () => {
     if (!stageRef) return;
     if (!templateName.trim()) {
       toast.error("Digite um nome para o template");
@@ -188,20 +191,39 @@ export default function Certificados() {
 
     const thumbnail = stageRef.toDataURL({ pixelRatio: 0.5 });
 
-    const newTemplate: Template = {
-      id: Date.now().toString(),
-      name: templateName,
-      thumbnail,
-      turmaId: selectedTurmaId,
-      data: { elements, orientation, backgroundImage },
-    };
+    if (selectedTemplate?.id && selectedTemplate.id !== "new") {
+      // Atualizar template existente
+      await updateTemplate(
+        selectedTemplate.id,
+        templateName,
+        thumbnail,
+        selectedTurmaId,
+        orientation,
+        backgroundImage,
+        elements
+      );
+    } else {
+      // Criar novo template
+      const newId = await saveTemplateToDb(
+        templateName,
+        thumbnail,
+        selectedTurmaId,
+        orientation,
+        backgroundImage,
+        elements
+      );
 
-    const saved = localStorage.getItem("certificate_templates");
-    const templates: Template[] = saved ? JSON.parse(saved) : [];
-    templates.push(newTemplate);
-    localStorage.setItem("certificate_templates", JSON.stringify(templates));
+      if (newId) {
+        setSelectedTemplate({
+          id: newId,
+          name: templateName,
+          thumbnail,
+          turmaId: selectedTurmaId,
+          data: { elements, orientation, backgroundImage },
+        });
+      }
+    }
 
-    toast.success("Template salvo com sucesso!");
     setTemplateName("");
   };
 
@@ -211,6 +233,7 @@ export default function Certificados() {
       setElements([]);
       setSelectedId(null);
       setSelectedTurmaId(null);
+      setTemplateName("");
       return;
     }
 
@@ -219,6 +242,7 @@ export default function Certificados() {
     setBackgroundImage(template.data.backgroundImage);
     setElements(template.data.elements);
     setSelectedTurmaId(template.turmaId || null);
+    setTemplateName(template.name);
     toast.success("Template carregado");
   };
 
@@ -249,6 +273,21 @@ export default function Certificados() {
       toast.success("PDF exportado com sucesso!");
     };
     img.src = dataUrl;
+  };
+
+  const handleGenerateCertificate = (studentName: string) => {
+    // Atualizar elementos com o nome do aluno
+    const updatedElements = elements.map((el) => {
+      if (el.type === "text") {
+        let text = el.text;
+        if (text.includes("Nome do Aluno") || text.toLowerCase().includes("aluno")) {
+          text = studentName;
+        }
+        return { ...el, text };
+      }
+      return el;
+    });
+    setElements(updatedElements);
   };
 
   return (
@@ -330,6 +369,17 @@ export default function Certificados() {
           onUpdateElement={updateElement}
           onStageReady={setStageRef}
         />
+
+        {selectedTurmaId && selectedTemplate?.id && selectedTemplate.id !== "new" && (
+          <StudentCertificatesList
+            turmaId={selectedTurmaId}
+            templateId={selectedTemplate.id}
+            stageRef={stageRef}
+            orientation={orientation}
+            elements={elements}
+            onGenerateCertificate={handleGenerateCertificate}
+          />
+        )}
       </div>
     </div>
   );

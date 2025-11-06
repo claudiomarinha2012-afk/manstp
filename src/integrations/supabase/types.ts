@@ -206,6 +206,53 @@ export type Database = {
         }
         Relationships: []
       }
+      certificate_templates: {
+        Row: {
+          background_image: string | null
+          created_at: string | null
+          elements: Json
+          id: string
+          name: string
+          orientation: string
+          thumbnail: string | null
+          turma_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          background_image?: string | null
+          created_at?: string | null
+          elements?: Json
+          id?: string
+          name: string
+          orientation?: string
+          thumbnail?: string | null
+          turma_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          background_image?: string | null
+          created_at?: string | null
+          elements?: Json
+          id?: string
+          name?: string
+          orientation?: string
+          thumbnail?: string | null
+          turma_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificate_templates_turma_id_fkey"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "turmas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cursos: {
         Row: {
           categoria: string | null
@@ -537,6 +584,58 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      student_certificates: {
+        Row: {
+          aluno_id: string
+          generated_at: string | null
+          id: string
+          pdf_url: string | null
+          template_id: string
+          turma_id: string
+          user_id: string
+        }
+        Insert: {
+          aluno_id: string
+          generated_at?: string | null
+          id?: string
+          pdf_url?: string | null
+          template_id: string
+          turma_id: string
+          user_id: string
+        }
+        Update: {
+          aluno_id?: string
+          generated_at?: string | null
+          id?: string
+          pdf_url?: string | null
+          template_id?: string
+          turma_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_certificates_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_certificates_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "certificate_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_certificates_turma_id_fkey"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "turmas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       turmas: {
         Row: {

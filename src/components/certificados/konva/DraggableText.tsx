@@ -12,6 +12,7 @@ interface DraggableTextProps {
     fill?: string;
     fontWeight?: string;
     textAlign?: string;
+    fontStyle?: string;
   };
   isSelected: boolean;
   onSelect: () => void;
@@ -50,7 +51,7 @@ export const DraggableText = ({
         fontSize={element.fontSize}
         fontFamily={element.fontFamily || "Arial"}
         fill={element.fill || "#000000"}
-        fontStyle={element.fontWeight === "bold" ? "bold" : "normal"}
+        fontStyle={`${element.fontWeight === "bold" ? "bold " : ""}${element.fontStyle === "italic" ? "italic" : ""}`.trim() || "normal"}
         align={element.textAlign || "left"}
         draggable
         onClick={onSelect}

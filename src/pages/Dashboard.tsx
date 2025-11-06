@@ -17,6 +17,7 @@ interface AlunoAndamento {
   curso: string;
   local: string;
   turmaAno: string;
+  status: string;
 }
 
 export default function Dashboard() {
@@ -80,14 +81,15 @@ export default function Dashboard() {
 
         totalGeral++;
         
-        // Adicionar à tabela se estiver em andamento
-        if (isAndamento) {
-          cursosAndamentoBrasil++;
+        // Adicionar à tabela se estiver em andamento ou aguardando
+        if (isAndamento || isAguardando) {
+          if (isAndamento) cursosAndamentoBrasil++;
           alunosArray.push({
             nome: vinculo.alunos?.nome_completo || "N/A",
             curso: vinculo.sigla_curso || curso.nome || "N/A",
             local: vinculo.local_curso || curso.local_realizacao || "N/A",
-            turmaAno: `${turma.ano}/${turma.nome}` || "N/A"
+            turmaAno: `${turma.ano}/${turma.nome}` || "N/A",
+            status: isAndamento ? "Em Andamento" : "Aguardando"
           });
         }
 
@@ -317,7 +319,7 @@ export default function Dashboard() {
       {alunosAndamento.length > 0 && (
         <Card className="shadow-card">
           <CardContent className="p-6">
-            <h2 className="text-lg font-semibold mb-4">Alunos com cursos em andamento (por curso)</h2>
+            <h2 className="text-lg font-semibold mb-4">Alunos com cursos em andamento ou aguardando (por curso)</h2>
             <div className="overflow-auto">
               <Table>
                 <TableHeader>
@@ -326,6 +328,7 @@ export default function Dashboard() {
                     <TableHead>Curso</TableHead>
                     <TableHead>Local</TableHead>
                     <TableHead>Turma/Ano</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -335,6 +338,15 @@ export default function Dashboard() {
                       <TableCell>{aluno.curso}</TableCell>
                       <TableCell>{aluno.local}</TableCell>
                       <TableCell>{aluno.turmaAno}</TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          aluno.status === "Em Andamento" 
+                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" 
+                            : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                        }`}>
+                          {aluno.status}
+                        </span>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

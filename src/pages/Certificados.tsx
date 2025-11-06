@@ -1,18 +1,19 @@
 import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, Save } from "lucide-react";
+import { Eye, Save, Download } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
+import jsPDF from "jspdf";
 import diplomaTemplate from "@/assets/diploma-template.jpg";
 import { CertificateTemplateSelector } from "@/components/certificados/CertificateTemplateSelector";
 import { CertificateGeneralSettings } from "@/components/certificados/CertificateGeneralSettings";
 import { CertificateElementToolbar } from "@/components/certificados/CertificateElementToolbar";
 import { CertificateKonvaCanvas } from "@/components/certificados/CertificateKonvaCanvas";
+import { FontSelector } from "@/components/certificados/FontSelector";
+import { TurmaAssociation } from "@/components/certificados/TurmaAssociation";
 
 interface Element {
   id: string;
@@ -26,6 +27,7 @@ interface Template {
   id: string;
   name: string;
   thumbnail?: string;
+  turmaId?: string | null;
   data: {
     elements: Element[];
     orientation: "landscape" | "portrait";
@@ -34,7 +36,6 @@ interface Template {
 }
 
 export default function Certificados() {
-  const { t } = useTranslation();
   const [orientation, setOrientation] = useState<"landscape" | "portrait">("landscape");
   const [backgroundImage, setBackgroundImage] = useState<string>("");
   const [elements, setElements] = useState<Element[]>([]);
@@ -42,6 +43,8 @@ export default function Certificados() {
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [templateName, setTemplateName] = useState("");
   const [stageRef, setStageRef] = useState<any>(null);
+  const [currentFont, setCurrentFont] = useState<string>("Arial");
+  const [selectedTurmaId, setSelectedTurmaId] = useState<string | null>(null);
 
   useEffect(() => {
     setBackgroundImage(diplomaTemplate);
@@ -68,7 +71,7 @@ export default function Certificados() {
       y: 100,
       text: "Digite seu texto",
       fontSize: 20,
-      fontFamily: "Arial",
+      fontFamily: currentFont,
       fill: "#000000",
     };
     setElements([...elements, newElement]);
@@ -83,7 +86,7 @@ export default function Certificados() {
       y: 200,
       text: "Nome do Curso",
       fontSize: 24,
-      fontFamily: "Arial",
+      fontFamily: currentFont,
       fontWeight: "bold",
       fill: "#000000",
       textAlign: "center",
@@ -100,7 +103,7 @@ export default function Certificados() {
       y: 150,
       text: "Nome do Aluno",
       fontSize: 28,
-      fontFamily: "Arial",
+      fontFamily: currentFont,
       fontWeight: "bold",
       fill: "#000000",
       textAlign: "center",
@@ -117,7 +120,7 @@ export default function Certificados() {
       y: 250,
       text: "Instrutor",
       fontSize: 18,
-      fontFamily: "Arial",
+      fontFamily: currentFont,
       fill: "#000000",
     };
     setElements([...elements, newElement]);
@@ -189,6 +192,7 @@ export default function Certificados() {
       id: Date.now().toString(),
       name: templateName,
       thumbnail,
+      turmaId: selectedTurmaId,
       data: { elements, orientation, backgroundImage },
     };
 
@@ -206,6 +210,7 @@ export default function Certificados() {
       setSelectedTemplate(null);
       setElements([]);
       setSelectedId(null);
+      setSelectedTurmaId(null);
       return;
     }
 
@@ -213,6 +218,7 @@ export default function Certificados() {
     setOrientation(template.data.orientation);
     setBackgroundImage(template.data.backgroundImage);
     setElements(template.data.elements);
+    setSelectedTurmaId(template.turmaId || null);
     toast.success("Template carregado");
   };
 
@@ -226,6 +232,25 @@ export default function Certificados() {
     }
   };
 
+  const exportToPDF = () => {
+    if (!stageRef) return;
+
+    const dataUrl = stageRef.toDataURL({ pixelRatio: 2 });
+    const pdf = new jsPDF({
+      orientation: orientation === "landscape" ? "landscape" : "portrait",
+      unit: "px",
+      format: orientation === "landscape" ? [900, 600] : [600, 900],
+    });
+
+    const img = new Image();
+    img.onload = () => {
+      pdf.addImage(dataUrl, "PNG", 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight());
+      pdf.save(`certificado-${Date.now()}.pdf`);
+      toast.success("PDF exportado com sucesso!");
+    };
+    img.src = dataUrl;
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b bg-muted/30">
@@ -235,6 +260,10 @@ export default function Certificados() {
             <Button variant="outline" onClick={handlePreview}>
               <Eye className="w-4 h-4 mr-2" />
               Visualizar
+            </Button>
+            <Button variant="outline" onClick={exportToPDF}>
+              <Download className="w-4 h-4 mr-2" />
+              Exportar PDF
             </Button>
             <Button onClick={saveTemplate}>
               <Save className="w-4 h-4 mr-2" />
@@ -260,6 +289,10 @@ export default function Certificados() {
             onBackgroundChange={handleBackgroundChange}
           />
 
+          <div className="border-t pt-4">
+            <FontSelector value={currentFont} onChange={setCurrentFont} />
+          </div>
+
           <CertificateElementToolbar
             onAddText={addText}
             onAddCourseName={addCourseName}
@@ -270,6 +303,13 @@ export default function Certificados() {
             onMoveLayer={moveLayer}
             onDelete={deleteElement}
           />
+
+          <div className="border-t pt-4">
+            <TurmaAssociation 
+              selectedTurmaId={selectedTurmaId}
+              onSelectTurma={setSelectedTurmaId}
+            />
+          </div>
 
           <div className="space-y-2 pt-4 border-t">
             <Label>Nome do Template (para salvar)</Label>

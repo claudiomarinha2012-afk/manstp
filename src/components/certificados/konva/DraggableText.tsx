@@ -13,6 +13,7 @@ interface DraggableTextProps {
     fontWeight?: string;
     textAlign?: string;
     fontStyle?: string;
+    width?: number;
   };
   isSelected: boolean;
   onSelect: () => void;
@@ -53,6 +54,7 @@ export const DraggableText = ({
         fill={element.fill || "#000000"}
         fontStyle={`${element.fontWeight === "bold" ? "bold " : ""}${element.fontStyle === "italic" ? "italic" : ""}`.trim() || "normal"}
         align={element.textAlign || "left"}
+        width={element.width}
         draggable
         onClick={onSelect}
         onTap={onSelect}
@@ -63,11 +65,15 @@ export const DraggableText = ({
         onDblClick={handleDblClick}
         onTransformEnd={(e) => {
           const node = textRef.current;
+          const scaleX = node.scaleX();
+          const scaleY = node.scaleY();
+          
           onChange({
             ...element,
             x: node.x(),
             y: node.y(),
-            fontSize: node.fontSize() * node.scaleY(),
+            width: Math.max(node.width() * scaleX, 30),
+            fontSize: Math.max(node.fontSize() * scaleY, 8),
           });
           node.scaleX(1);
           node.scaleY(1);
@@ -76,7 +82,7 @@ export const DraggableText = ({
       {isSelected && (
         <Transformer
           ref={trRef}
-          enabledAnchors={["middle-left", "middle-right"]}
+          enabledAnchors={["middle-left", "middle-right", "top-center", "bottom-center"]}
           boundBoxFunc={(oldBox, newBox) => {
             newBox.width = Math.max(30, newBox.width);
             return newBox;

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Type, ImageIcon, User, BookOpen, UserCircle, ArrowUp, ArrowDown, Trash2 } from "lucide-react";
+import { Type, ImageIcon, User, BookOpen, UserCircle, ArrowUp, ArrowDown, Trash2, Stamp, Replace } from "lucide-react";
 import { useRef } from "react";
 
 interface CertificateElementToolbarProps {
@@ -8,9 +8,12 @@ interface CertificateElementToolbarProps {
   onAddStudentName: () => void;
   onAddImage: (file: File) => void;
   onAddInstructor: () => void;
+  onAddStamp: () => void;
   selectedId: string | null;
+  selectedElement: any;
   onMoveLayer: (direction: "front" | "back") => void;
   onDelete: () => void;
+  onReplaceImage: (file: File) => void;
 }
 
 export const CertificateElementToolbar = ({
@@ -19,16 +22,27 @@ export const CertificateElementToolbar = ({
   onAddStudentName,
   onAddImage,
   onAddInstructor,
+  onAddStamp,
   selectedId,
+  selectedElement,
   onMoveLayer,
   onDelete,
+  onReplaceImage,
 }: CertificateElementToolbarProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       onAddImage(file);
+    }
+  };
+
+  const handleReplaceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onReplaceImage(file);
     }
   };
 
@@ -61,13 +75,27 @@ export const CertificateElementToolbar = ({
             <UserCircle className="w-4 h-4 mr-2" />
             Instrutor
           </Button>
+          <Button variant="outline" size="sm" onClick={onAddStamp}>
+            <Stamp className="w-4 h-4 mr-2" />
+            Carimbo
+          </Button>
         </div>
       </div>
 
       {selectedId && (
         <div className="space-y-3 pt-3 border-t">
           <h3 className="text-sm font-medium text-muted-foreground">Elemento selecionado</h3>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            {selectedElement?.type === "image" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => replaceInputRef.current?.click()}
+              >
+                <Replace className="w-4 h-4 mr-2" />
+                Substituir imagem
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={() => onMoveLayer("front")}>
               <ArrowUp className="w-4 h-4 mr-2" />
               Trazer para frente
@@ -90,6 +118,13 @@ export const CertificateElementToolbar = ({
         accept="image/*"
         className="hidden"
         onChange={handleFileChange}
+      />
+      <input
+        ref={replaceInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleReplaceChange}
       />
     </div>
   );

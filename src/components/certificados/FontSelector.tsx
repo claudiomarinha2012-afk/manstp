@@ -8,6 +8,8 @@ interface FontSelectorProps {
 
 const AVAILABLE_FONTS = [
   { name: "Arial", value: "Arial" },
+  { name: "Calibri", value: "Calibri" },
+  { name: "Carlito", value: "Carlito" },
   { name: "Times New Roman", value: "Times New Roman" },
   { name: "Courier New", value: "Courier New" },
   { name: "Georgia", value: "Georgia" },

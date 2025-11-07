@@ -15,6 +15,7 @@ import { CertificateKonvaCanvas } from "@/components/certificados/CertificateKon
 import { FontSelector } from "@/components/certificados/FontSelector";
 import { TurmaAssociation } from "@/components/certificados/TurmaAssociation";
 import { StudentCertificatesList } from "@/components/certificados/StudentCertificatesList";
+import { TextFormattingControls } from "@/components/certificados/TextFormattingControls";
 import { useCertificateTemplates } from "@/hooks/useCertificateTemplates";
 
 interface Element {
@@ -130,6 +131,54 @@ export default function Certificados() {
     toast.success("Campo de instrutor adicionado");
   };
 
+  const addStamp = () => {
+    const stampId = uuidv4();
+    const baseX = 100;
+    const baseY = 400;
+    
+    const stampElements: Element[] = [
+      {
+        id: uuidv4(),
+        type: "text",
+        x: baseX,
+        y: baseY,
+        text: "Nome Completo",
+        fontSize: 12,
+        fontFamily: currentFont,
+        fill: "#000000",
+        textAlign: "center",
+        width: 200,
+      },
+      {
+        id: uuidv4(),
+        type: "text",
+        x: baseX,
+        y: baseY + 20,
+        text: "Posto/Graduação",
+        fontSize: 12,
+        fontFamily: currentFont,
+        fill: "#000000",
+        textAlign: "center",
+        width: 200,
+      },
+      {
+        id: uuidv4(),
+        type: "text",
+        x: baseX,
+        y: baseY + 40,
+        text: "Função",
+        fontSize: 12,
+        fontFamily: currentFont,
+        fill: "#000000",
+        textAlign: "center",
+        width: 200,
+      },
+    ];
+    
+    setElements([...elements, ...stampElements]);
+    toast.success("Carimbo adicionado com 3 linhas");
+  };
+
   const addImage = (file: File) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -151,6 +200,27 @@ export default function Certificados() {
 
   const updateElement = (updated: Element) => {
     setElements(elements.map((el) => (el.id === updated.id ? updated : el)));
+  };
+
+  const replaceImage = (file: File) => {
+    if (!selectedId) return;
+    
+    const selectedElement = elements.find((el) => el.id === selectedId);
+    if (!selectedElement || selectedElement.type !== "image") {
+      toast.error("Selecione uma imagem para substituir");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const updatedElement = {
+        ...selectedElement,
+        src: reader.result as string,
+      };
+      updateElement(updatedElement);
+      toast.success("Imagem substituída");
+    };
+    reader.readAsDataURL(file);
   };
 
   const moveLayer = (direction: "front" | "back") => {
@@ -290,6 +360,8 @@ export default function Certificados() {
     setElements(updatedElements);
   };
 
+  const selectedElement = elements.find((el) => el.id === selectedId);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b bg-muted/30">
@@ -312,74 +384,90 @@ export default function Certificados() {
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-6 space-y-6">
-        <Card className="p-6">
+      <div className="container mx-auto px-6 py-6">
+        <Card className="p-6 mb-6">
           <CertificateTemplateSelector
             onSelectTemplate={handleSelectTemplate}
             selectedTemplateId={selectedTemplate?.id || "new"}
           />
         </Card>
 
-        <Card className="p-6 space-y-6">
-          <CertificateGeneralSettings
-            orientation={orientation}
-            onOrientationChange={setOrientation}
-            backgroundImage={backgroundImage}
-            onBackgroundChange={handleBackgroundChange}
-          />
-
-          <div className="border-t pt-4">
-            <FontSelector value={currentFont} onChange={setCurrentFont} />
-          </div>
-
-          <CertificateElementToolbar
-            onAddText={addText}
-            onAddCourseName={addCourseName}
-            onAddStudentName={addStudentName}
-            onAddImage={addImage}
-            onAddInstructor={addInstructor}
-            selectedId={selectedId}
-            onMoveLayer={moveLayer}
-            onDelete={deleteElement}
-          />
-
-          <div className="border-t pt-4">
-            <TurmaAssociation 
-              selectedTurmaId={selectedTurmaId}
-              onSelectTurma={setSelectedTurmaId}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <CertificateKonvaCanvas
+              orientation={orientation}
+              backgroundImage={backgroundImage}
+              elements={elements}
+              selectedId={selectedId}
+              onSelectElement={setSelectedId}
+              onUpdateElement={updateElement}
+              onStageReady={setStageRef}
             />
           </div>
 
-          <div className="space-y-2 pt-4 border-t">
-            <Label>Nome do Template (para salvar)</Label>
-            <Input
-              value={templateName}
-              onChange={(e) => setTemplateName(e.target.value)}
-              placeholder="Digite o nome do template..."
-            />
+          <div className="space-y-6">
+            <Card className="p-6 space-y-6">
+              <CertificateGeneralSettings
+                orientation={orientation}
+                onOrientationChange={setOrientation}
+                backgroundImage={backgroundImage}
+                onBackgroundChange={handleBackgroundChange}
+              />
+
+              <div className="border-t pt-4">
+                <FontSelector value={currentFont} onChange={setCurrentFont} />
+              </div>
+
+              <CertificateElementToolbar
+                onAddText={addText}
+                onAddCourseName={addCourseName}
+                onAddStudentName={addStudentName}
+                onAddImage={addImage}
+                onAddInstructor={addInstructor}
+                onAddStamp={addStamp}
+                selectedId={selectedId}
+                selectedElement={selectedElement}
+                onMoveLayer={moveLayer}
+                onDelete={deleteElement}
+                onReplaceImage={replaceImage}
+              />
+
+              <div className="border-t pt-4">
+                <TurmaAssociation 
+                  selectedTurmaId={selectedTurmaId}
+                  onSelectTurma={setSelectedTurmaId}
+                />
+              </div>
+
+              <div className="space-y-2 pt-4 border-t">
+                <Label>Nome do Template (para salvar)</Label>
+                <Input
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  placeholder="Digite o nome do template..."
+                />
+              </div>
+            </Card>
+
+            {selectedElement && selectedElement.type === "text" && (
+              <TextFormattingControls
+                selectedElement={selectedElement}
+                onUpdateElement={updateElement}
+              />
+            )}
+
+            {selectedTurmaId && selectedTemplate?.id && selectedTemplate.id !== "new" && (
+              <StudentCertificatesList
+                turmaId={selectedTurmaId}
+                templateId={selectedTemplate.id}
+                stageRef={stageRef}
+                orientation={orientation}
+                elements={elements}
+                onGenerateCertificate={handleGenerateCertificate}
+              />
+            )}
           </div>
-        </Card>
-
-        <CertificateKonvaCanvas
-          orientation={orientation}
-          backgroundImage={backgroundImage}
-          elements={elements}
-          selectedId={selectedId}
-          onSelectElement={setSelectedId}
-          onUpdateElement={updateElement}
-          onStageReady={setStageRef}
-        />
-
-        {selectedTurmaId && selectedTemplate?.id && selectedTemplate.id !== "new" && (
-          <StudentCertificatesList
-            turmaId={selectedTurmaId}
-            templateId={selectedTemplate.id}
-            stageRef={stageRef}
-            orientation={orientation}
-            elements={elements}
-            onGenerateCertificate={handleGenerateCertificate}
-          />
-        )}
+        </div>
       </div>
     </div>
   );

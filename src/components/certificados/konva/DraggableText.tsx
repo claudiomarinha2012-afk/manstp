@@ -1,5 +1,5 @@
-import { useRef, useEffect } from "react";
-import { Text, Transformer } from "react-konva";
+import { useRef, useEffect, useState } from "react";
+import { Text, Transformer, Rect } from "react-konva";
 
 interface DraggableTextProps {
   element: {
@@ -28,6 +28,8 @@ export const DraggableText = ({
 }: DraggableTextProps) => {
   const textRef = useRef<any>();
   const trRef = useRef<any>();
+  const [cursorPosition, setCursorPosition] = useState(0);
+  const [showCursor, setShowCursor] = useState(false);
 
   useEffect(() => {
     if (isSelected && trRef.current && textRef.current) {
@@ -36,43 +38,163 @@ export const DraggableText = ({
     }
   }, [isSelected]);
 
+  // Cursor piscante
+  useEffect(() => {
+    if (!isSelected) {
+      setShowCursor(false);
+      return;
+    }
+
+    setShowCursor(true);
+    const interval = setInterval(() => {
+      setShowCursor((prev) => !prev);
+    }, 530);
+
+    return () => clearInterval(interval);
+  }, [isSelected]);
+
   useEffect(() => {
     if (!isSelected) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Evita processar quando estão em inputs/textareas
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
 
-      // Backspace - apagar último caractere
+      const text = element.text;
+      let newCursorPos = cursorPosition;
+
       if (e.key === "Backspace") {
         e.preventDefault();
-        const newText = element.text.slice(0, -1);
+        if (cursorPosition > 0) {
+          const newText = text.slice(0, cursorPosition - 1) + text.slice(cursorPosition);
+          onChange({ ...element, text: newText });
+          newCursorPos = cursorPosition - 1;
+        }
+      } else if (e.key === "Delete") {
+        e.preventDefault();
+        if (cursorPosition < text.length) {
+          const newText = text.slice(0, cursorPosition) + text.slice(cursorPosition + 1);
+          onChange({ ...element, text: newText });
+        }
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const newText = text.slice(0, cursorPosition) + "\n" + text.slice(cursorPosition);
         onChange({ ...element, text: newText });
-      }
-      // Delete - apagar primeiro caractere (ou limpar se não houver seleção específica)
-      else if (e.key === "Delete") {
+        newCursorPos = cursorPosition + 1;
+      } else if (e.key === "ArrowLeft") {
         e.preventDefault();
-        onChange({ ...element, text: "" });
-      }
-      // Enter - adicionar quebra de linha
-      else if (e.key === "Enter") {
+        newCursorPos = Math.max(0, cursorPosition - 1);
+      } else if (e.key === "ArrowRight") {
         e.preventDefault();
-        onChange({ ...element, text: element.text + "\n" });
-      }
-      // Caracteres imprimíveis
-      else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        newCursorPos = Math.min(text.length, cursorPosition + 1);
+      } else if (e.key === "Home") {
         e.preventDefault();
-        onChange({ ...element, text: element.text + e.key });
+        const lines = text.slice(0, cursorPosition).split("\n");
+        const currentLineStart = cursorPosition - lines[lines.length - 1].length;
+        newCursorPos = currentLineStart;
+      } else if (e.key === "End") {
+        e.preventDefault();
+        const remainingText = text.slice(cursorPosition);
+        const nextNewline = remainingText.indexOf("\n");
+        newCursorPos = nextNewline === -1 ? text.length : cursorPosition + nextNewline;
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        const newText = text.slice(0, cursorPosition) + e.key + text.slice(cursorPosition);
+        onChange({ ...element, text: newText });
+        newCursorPos = cursorPosition + 1;
       }
+
+      setCursorPosition(newCursorPos);
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isSelected, element, onChange]);
+  }, [isSelected, element, onChange, cursorPosition]);
+
+  // Atualizar posição do cursor quando o texto muda externamente
+  useEffect(() => {
+    if (cursorPosition > element.text.length) {
+      setCursorPosition(element.text.length);
+    }
+  }, [element.text, cursorPosition]);
+
+  const handleTextClick = (e: any) => {
+    onSelect();
+    
+    if (!textRef.current) return;
+    
+    const stage = e.target.getStage();
+    const pointerPosition = stage.getPointerPosition();
+    const textNode = textRef.current;
+    
+    const relativeX = pointerPosition.x - textNode.x();
+    const relativeY = pointerPosition.y - textNode.y();
+    
+    const context = textNode.getContext();
+    context.font = `${element.fontWeight === "bold" ? "bold " : ""}${element.fontStyle === "italic" ? "italic " : ""}${element.fontSize}px ${element.fontFamily || "Arial"}`;
+    
+    const lines = element.text.split("\n");
+    const lineHeight = element.fontSize * 1.2;
+    const clickedLine = Math.floor(relativeY / lineHeight);
+    
+    if (clickedLine < 0) {
+      setCursorPosition(0);
+      return;
+    }
+    
+    if (clickedLine >= lines.length) {
+      setCursorPosition(element.text.length);
+      return;
+    }
+    
+    let charsSoFar = 0;
+    for (let i = 0; i < clickedLine; i++) {
+      charsSoFar += lines[i].length + 1;
+    }
+    
+    const lineText = lines[clickedLine];
+    let bestPos = charsSoFar;
+    let minDist = Infinity;
+    
+    for (let i = 0; i <= lineText.length; i++) {
+      const substr = lineText.slice(0, i);
+      const width = context.measureText(substr).width;
+      const dist = Math.abs(width - relativeX);
+      
+      if (dist < minDist) {
+        minDist = dist;
+        bestPos = charsSoFar + i;
+      }
+    }
+    
+    setCursorPosition(bestPos);
+  };
+
+  const getCursorCoordinates = () => {
+    if (!textRef.current) return { x: 0, y: 0 };
+    
+    const textNode = textRef.current;
+    const context = textNode.getContext();
+    context.font = `${element.fontWeight === "bold" ? "bold " : ""}${element.fontStyle === "italic" ? "italic " : ""}${element.fontSize}px ${element.fontFamily || "Arial"}`;
+    
+    const textBeforeCursor = element.text.slice(0, cursorPosition);
+    const lines = element.text.split("\n");
+    const linesBeforeCursor = textBeforeCursor.split("\n");
+    
+    const lineHeight = element.fontSize * 1.2;
+    const currentLine = linesBeforeCursor.length - 1;
+    const y = currentLine * lineHeight;
+    
+    const currentLineText = linesBeforeCursor[linesBeforeCursor.length - 1];
+    const x = context.measureText(currentLineText).width;
+    
+    return { x, y };
+  };
+
+  const cursorCoords = getCursorCoordinates();
 
   return (
     <>
@@ -87,8 +209,8 @@ export const DraggableText = ({
         align={element.textAlign || "left"}
         width={element.width}
         draggable
-        onClick={onSelect}
-        onTap={onSelect}
+        onClick={handleTextClick}
+        onTap={handleTextClick}
         ref={textRef}
         onDragEnd={(e) =>
           onChange({ ...element, x: e.target.x(), y: e.target.y() })
@@ -109,6 +231,16 @@ export const DraggableText = ({
           node.scaleY(1);
         }}
       />
+      {isSelected && showCursor && (
+        <Rect
+          x={element.x + cursorCoords.x}
+          y={element.y + cursorCoords.y}
+          width={2}
+          height={element.fontSize}
+          fill={element.fill || "#000000"}
+          listening={false}
+        />
+      )}
       {isSelected && (
         <Transformer
           ref={trRef}

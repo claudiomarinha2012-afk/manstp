@@ -1,22 +1,18 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Eye, Save, Download } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import jsPDF from "jspdf";
 import diplomaTemplate from "@/assets/diploma-template.jpg";
 import { CertificateTemplateSelector } from "@/components/certificados/CertificateTemplateSelector";
-import { CertificateGeneralSettings } from "@/components/certificados/CertificateGeneralSettings";
-import { CertificateElementToolbar } from "@/components/certificados/CertificateElementToolbar";
 import { CertificateKonvaCanvas } from "@/components/certificados/CertificateKonvaCanvas";
-import { FontSelector } from "@/components/certificados/FontSelector";
 import { TurmaAssociation } from "@/components/certificados/TurmaAssociation";
 import { StudentCertificatesList } from "@/components/certificados/StudentCertificatesList";
-import { TextFormattingControls } from "@/components/certificados/TextFormattingControls";
+import { PowerPointToolbar } from "@/components/certificados/PowerPointToolbar";
 import { useCertificateTemplates } from "@/hooks/useCertificateTemplates";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Element {
   id: string;
@@ -179,6 +175,20 @@ export default function Certificados() {
     toast.success("Carimbo adicionado com 3 linhas");
   };
 
+  const addShape = (shape: "rectangle" | "circle" | "line") => {
+    const newElement: Element = {
+      id: uuidv4(),
+      type: "image",
+      x: 100,
+      y: 100,
+      width: 100,
+      height: 100,
+      shape: shape,
+    };
+    setElements([...elements, newElement]);
+    toast.success("Forma adicionada");
+  };
+
   const addImage = (file: File) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -196,6 +206,13 @@ export default function Certificados() {
       toast.success("Imagem adicionada");
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleBackgroundUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleBackgroundChange(file);
+    }
   };
 
   const updateElement = (updated: Element) => {
@@ -363,111 +380,202 @@ export default function Certificados() {
   const selectedElement = elements.find((el) => el.id === selectedId);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b bg-muted/30">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Editor de Certificados</h1>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handlePreview}>
-              <Eye className="w-4 h-4 mr-2" />
-              Visualizar
-            </Button>
-            <Button variant="outline" onClick={exportToPDF}>
-              <Download className="w-4 h-4 mr-2" />
-              Exportar PDF
-            </Button>
-            <Button onClick={saveTemplate}>
-              <Save className="w-4 h-4 mr-2" />
-              Salvar Template
-            </Button>
-          </div>
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Toolbar tipo PowerPoint */}
+      <PowerPointToolbar
+        selectedElement={selectedElement}
+        onUpdateElement={updateElement}
+        onAddText={addText}
+        onAddImage={addImage}
+        onAddShape={addShape}
+        onDelete={deleteElement}
+        onMoveLayer={moveLayer}
+        onSave={saveTemplate}
+        onPreview={handlePreview}
+        onExport={exportToPDF}
+        currentFont={currentFont}
+        onFontChange={setCurrentFont}
+        templateName={templateName}
+        onTemplateNameChange={setTemplateName}
+      />
+
+      {/* Conteúdo principal */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Painel lateral esquerdo - Templates e Configurações */}
+        <div className="w-80 border-r bg-muted/20">
+          <Tabs defaultValue="templates" className="h-full flex flex-col">
+            <TabsList className="w-full rounded-none border-b">
+              <TabsTrigger value="templates" className="flex-1">Templates</TabsTrigger>
+              <TabsTrigger value="elements" className="flex-1">Elementos</TabsTrigger>
+              <TabsTrigger value="settings" className="flex-1">Configurações</TabsTrigger>
+            </TabsList>
+
+            <ScrollArea className="flex-1">
+              <TabsContent value="templates" className="p-4 mt-0">
+                <CertificateTemplateSelector
+                  onSelectTemplate={handleSelectTemplate}
+                  selectedTemplateId={selectedTemplate?.id || "new"}
+                />
+              </TabsContent>
+
+              <TabsContent value="elements" className="p-4 mt-0 space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-3">Adicionar Elementos</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" onClick={addText} className="h-20 flex flex-col gap-2">
+                      <span className="text-2xl">T</span>
+                      <span className="text-xs">Texto Livre</span>
+                    </Button>
+                    <Button variant="outline" onClick={addStudentName} className="h-20 flex flex-col gap-2">
+                      <span className="text-2xl">👤</span>
+                      <span className="text-xs">Nome Aluno</span>
+                    </Button>
+                    <Button variant="outline" onClick={addCourseName} className="h-20 flex flex-col gap-2">
+                      <span className="text-2xl">📚</span>
+                      <span className="text-xs">Nome Curso</span>
+                    </Button>
+                    <Button variant="outline" onClick={addInstructor} className="h-20 flex flex-col gap-2">
+                      <span className="text-2xl">👨‍🏫</span>
+                      <span className="text-xs">Instrutor</span>
+                    </Button>
+                    <Button variant="outline" onClick={addStamp} className="h-20 flex flex-col gap-2">
+                      <span className="text-2xl">📌</span>
+                      <span className="text-xs">Carimbo</span>
+                    </Button>
+                    <Button variant="outline" className="h-20 flex flex-col gap-2" asChild>
+                      <label htmlFor="element-image" className="cursor-pointer">
+                        <span className="text-2xl">🖼️</span>
+                        <span className="text-xs">Imagem</span>
+                        <input
+                          id="element-image"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) addImage(file);
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+                    </Button>
+                  </div>
+                </div>
+
+                {selectedElement && (
+                  <div className="pt-4 border-t">
+                    <h3 className="font-semibold mb-3">Elemento Selecionado</h3>
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => moveLayer("front")}
+                          className="flex-1"
+                        >
+                          Trazer Frente
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => moveLayer("back")}
+                          className="flex-1"
+                        >
+                          Enviar Fundo
+                        </Button>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={deleteElement}
+                        className="w-full"
+                      >
+                        Excluir Elemento
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="settings" className="p-4 mt-0 space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-3">Orientação</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant={orientation === "landscape" ? "default" : "outline"}
+                      onClick={() => setOrientation("landscape")}
+                    >
+                      Paisagem
+                    </Button>
+                    <Button
+                      variant={orientation === "portrait" ? "default" : "outline"}
+                      onClick={() => setOrientation("portrait")}
+                    >
+                      Retrato
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-3">Imagem de Fundo</h3>
+                  <Button variant="outline" className="w-full" asChild>
+                    <label htmlFor="bg-upload" className="cursor-pointer">
+                      Carregar Fundo
+                      <input
+                        id="bg-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleBackgroundUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </Button>
+                </div>
+
+                <div className="border-t pt-4">
+                  <TurmaAssociation 
+                    selectedTurmaId={selectedTurmaId}
+                    onSelectTurma={setSelectedTurmaId}
+                  />
+                </div>
+              </TabsContent>
+            </ScrollArea>
+          </Tabs>
         </div>
-      </div>
 
-      <div className="container mx-auto px-6 py-6">
-        <Card className="p-6 mb-6">
-          <CertificateTemplateSelector
-            onSelectTemplate={handleSelectTemplate}
-            selectedTemplateId={selectedTemplate?.id || "new"}
-          />
-        </Card>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <CertificateKonvaCanvas
-              orientation={orientation}
-              backgroundImage={backgroundImage}
-              elements={elements}
-              selectedId={selectedId}
-              onSelectElement={setSelectedId}
-              onUpdateElement={updateElement}
-              onStageReady={setStageRef}
-            />
-          </div>
-
-          <div className="space-y-6">
-            <Card className="p-6 space-y-6">
-              <CertificateGeneralSettings
+        {/* Área central - Canvas */}
+        <div className="flex-1 flex flex-col bg-muted/30">
+          <ScrollArea className="flex-1">
+            <div className="flex items-center justify-center min-h-full p-8">
+              <CertificateKonvaCanvas
                 orientation={orientation}
-                onOrientationChange={setOrientation}
                 backgroundImage={backgroundImage}
-                onBackgroundChange={handleBackgroundChange}
-              />
-
-              <div className="border-t pt-4">
-                <FontSelector value={currentFont} onChange={setCurrentFont} />
-              </div>
-
-              <CertificateElementToolbar
-                onAddText={addText}
-                onAddCourseName={addCourseName}
-                onAddStudentName={addStudentName}
-                onAddImage={addImage}
-                onAddInstructor={addInstructor}
-                onAddStamp={addStamp}
-                selectedId={selectedId}
-                selectedElement={selectedElement}
-                onMoveLayer={moveLayer}
-                onDelete={deleteElement}
-                onReplaceImage={replaceImage}
-              />
-
-              <div className="border-t pt-4">
-                <TurmaAssociation 
-                  selectedTurmaId={selectedTurmaId}
-                  onSelectTurma={setSelectedTurmaId}
-                />
-              </div>
-
-              <div className="space-y-2 pt-4 border-t">
-                <Label>Nome do Template (para salvar)</Label>
-                <Input
-                  value={templateName}
-                  onChange={(e) => setTemplateName(e.target.value)}
-                  placeholder="Digite o nome do template..."
-                />
-              </div>
-            </Card>
-
-            {selectedElement && selectedElement.type === "text" && (
-              <TextFormattingControls
-                selectedElement={selectedElement}
-                onUpdateElement={updateElement}
-              />
-            )}
-
-            {selectedTurmaId && selectedTemplate?.id && selectedTemplate.id !== "new" && (
-              <StudentCertificatesList
-                turmaId={selectedTurmaId}
-                templateId={selectedTemplate.id}
-                stageRef={stageRef}
-                orientation={orientation}
                 elements={elements}
-                onGenerateCertificate={handleGenerateCertificate}
+                selectedId={selectedId}
+                onSelectElement={setSelectedId}
+                onUpdateElement={updateElement}
+                onStageReady={setStageRef}
               />
-            )}
-          </div>
+            </div>
+          </ScrollArea>
         </div>
+
+        {/* Painel lateral direito - Gerar certificados */}
+        {selectedTurmaId && selectedTemplate?.id && selectedTemplate.id !== "new" && (
+          <div className="w-80 border-l bg-muted/20">
+            <ScrollArea className="h-full">
+              <div className="p-4">
+                <StudentCertificatesList
+                  turmaId={selectedTurmaId}
+                  templateId={selectedTemplate.id}
+                  stageRef={stageRef}
+                  orientation={orientation}
+                  elements={elements}
+                  onGenerateCertificate={handleGenerateCertificate}
+                />
+              </div>
+            </ScrollArea>
+          </div>
+        )}
       </div>
     </div>
   );

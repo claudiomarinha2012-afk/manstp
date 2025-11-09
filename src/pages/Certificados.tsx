@@ -29,6 +29,8 @@ interface Slide {
   elements: Element[];
   orientation: "landscape" | "portrait";
   backgroundImage: string;
+  alunoId?: string;
+  alunoNome?: string;
 }
 
 interface Template {
@@ -425,6 +427,8 @@ export default function Certificados() {
       ...slideToDuplicate,
       id: uuidv4(),
       elements: slideToDuplicate.elements.map((el) => ({ ...el, id: uuidv4() })),
+      alunoId: undefined,
+      alunoNome: undefined,
     };
 
     const slideIndex = slides.findIndex((s) => s.id === slideId);
@@ -432,7 +436,7 @@ export default function Certificados() {
     newSlides.splice(slideIndex + 1, 0, duplicatedSlide);
     setSlides(newSlides);
     setActiveSlideId(duplicatedSlide.id);
-    toast.success("Slide duplicado");
+    toast.success("Slide duplicado - vincule a um aluno");
   };
 
   const handleDeleteSlide = (slideId: string) => {
@@ -461,8 +465,12 @@ export default function Certificados() {
     }
   };
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     if (!stageRef) return;
+
+    const fileName = activeSlide.alunoNome 
+      ? `certificado-${activeSlide.alunoNome.replace(/\s+/g, '_')}.pdf`
+      : `certificado-${Date.now()}.pdf`;
 
     const dataUrl = stageRef.toDataURL({ pixelRatio: 2 });
     const pdf = new jsPDF({
@@ -472,12 +480,101 @@ export default function Certificados() {
     });
 
     const img = new Image();
-    img.onload = () => {
+    img.onload = async () => {
       pdf.addImage(dataUrl, "PNG", 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight());
-      pdf.save(`certificado-${Date.now()}.pdf`);
-      toast.success("PDF exportado com sucesso!");
+      
+      // Usar File System Access API para escolher onde salvar
+      try {
+        const blob = pdf.output('blob');
+        
+        // Verificar se o navegador suporta File System Access API
+        if ('showSaveFilePicker' in window) {
+          const handle = await (window as any).showSaveFilePicker({
+            suggestedName: fileName,
+            types: [{
+              description: 'PDF Document',
+              accept: { 'application/pdf': ['.pdf'] },
+            }],
+          });
+          
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          toast.success("PDF salvo com sucesso!");
+        } else {
+          // Fallback para navegadores que não suportam
+          pdf.save(fileName);
+          toast.success("PDF exportado com sucesso!");
+        }
+      } catch (error: any) {
+        if (error.name !== 'AbortError') {
+          console.error('Erro ao salvar PDF:', error);
+          // Fallback em caso de erro
+          pdf.save(fileName);
+          toast.success("PDF exportado com sucesso!");
+        }
+      }
     };
     img.src = dataUrl;
+  };
+
+  const exportAllToPDF = async () => {
+    if (!stageRef) {
+      toast.error("Canvas não está pronto");
+      return;
+    }
+
+    try {
+      // Pedir ao usuário para escolher a pasta
+      let dirHandle;
+      if ('showDirectoryPicker' in window) {
+        dirHandle = await (window as any).showDirectoryPicker();
+      }
+
+      toast.info("Gerando certificados...");
+      
+      for (const slide of slides) {
+        if (!slide.alunoNome) continue;
+
+        // Temporariamente ativar o slide para renderizar
+        setActiveSlideId(slide.id);
+        await new Promise(resolve => setTimeout(resolve, 500)); // Aguardar renderização
+
+        const dataUrl = stageRef.toDataURL({ pixelRatio: 2 });
+        const pdf = new jsPDF({
+          orientation: slide.orientation === "landscape" ? "landscape" : "portrait",
+          unit: "px",
+          format: slide.orientation === "landscape" ? [900, 600] : [600, 900],
+        });
+
+        const img = new Image();
+        await new Promise((resolve) => {
+          img.onload = resolve;
+          img.src = dataUrl;
+        });
+
+        pdf.addImage(dataUrl, "PNG", 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight());
+        
+        const fileName = `certificado-${slide.alunoNome.replace(/\s+/g, '_')}.pdf`;
+        const blob = pdf.output('blob');
+
+        if (dirHandle) {
+          const fileHandle = await dirHandle.getFileHandle(fileName, { create: true });
+          const writable = await fileHandle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+        } else {
+          pdf.save(fileName);
+        }
+      }
+
+      toast.success("Todos os certificados foram exportados!");
+    } catch (error: any) {
+      if (error.name !== 'AbortError') {
+        console.error('Erro ao exportar certificados:', error);
+        toast.error("Erro ao exportar certificados");
+      }
+    }
   };
 
   const handleGenerateCertificate = (studentName: string) => {
@@ -511,6 +608,7 @@ export default function Certificados() {
         onSave={saveTemplate}
         onPreview={handlePreview}
         onExport={exportToPDF}
+        onExportAll={exportAllToPDF}
         currentFont={currentFont}
         onFontChange={setCurrentFont}
         templateName={templateName}
@@ -527,6 +625,13 @@ export default function Certificados() {
           onDuplicateSlide={handleDuplicateSlide}
           onDeleteSlide={handleDeleteSlide}
           onAddSlide={handleAddSlide}
+          turmaId={selectedTurmaId}
+          onLinkStudent={(slideId, alunoId, alunoNome) => {
+            setSlides(prev => prev.map(s => 
+              s.id === slideId ? { ...s, alunoId, alunoNome } : s
+            ));
+            toast.success(`Slide vinculado a ${alunoNome}`);
+          }}
         />
 
         {/* Painel lateral esquerdo - Templates e Configurações */}

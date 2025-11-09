@@ -55,6 +55,7 @@ interface PowerPointToolbarProps {
   onSave: () => void;
   onPreview: () => void;
   onExport: () => void;
+  onExportAll?: () => void;
   currentFont: string;
   onFontChange: (font: string) => void;
   templateName: string;
@@ -72,6 +73,7 @@ export const PowerPointToolbar = ({
   onSave,
   onPreview,
   onExport,
+  onExportAll,
   currentFont,
   onFontChange,
   templateName,
@@ -167,8 +169,14 @@ export const PowerPointToolbar = ({
           </Button>
           <Button variant="outline" size="sm" onClick={onExport}>
             <Download className="w-4 h-4 mr-2" />
-            Exportar
+            Exportar Slide
           </Button>
+          {onExportAll && (
+            <Button variant="outline" size="sm" onClick={onExportAll}>
+              <Download className="w-4 h-4 mr-2" />
+              Exportar Todos
+            </Button>
+          )}
           <Button size="sm" onClick={onSave}>
             <Save className="w-4 h-4 mr-2" />
             Salvar

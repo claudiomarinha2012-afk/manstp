@@ -76,7 +76,7 @@ export default function Certificados() {
         id: uuidv4(),
         elements: [],
         orientation: "landscape",
-        backgroundImage: diplomaTemplate,
+        backgroundImage: "",
         thumbnail: undefined,
       },
     ]);
@@ -381,7 +381,7 @@ export default function Certificados() {
           id: uuidv4(),
           elements: [],
           orientation: "landscape",
-          backgroundImage: diplomaTemplate,
+          backgroundImage: "",
           thumbnail: undefined,
         },
       ]);
@@ -412,7 +412,7 @@ export default function Certificados() {
       id: uuidv4(),
       elements: [],
       orientation: "landscape",
-      backgroundImage: diplomaTemplate,
+      backgroundImage: "",
       thumbnail: undefined,
     };
     setSlides([...slides, newSlide]);

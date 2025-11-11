@@ -1,867 +1,433 @@
-import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { FileDown, FileSpreadsheet, User } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect, useRef } from "react";
+import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
+import { FileText, Download, Printer } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import UltraChart from "@/components/UltraChart";
 import html2canvas from "html2canvas";
 
-export default function Relatorios() {
-  const [cursos, setCursos] = useState<any[]>([]);
-  const [turmas, setTurmas] = useState<any[]>([]);
-  const [alunos, setAlunos] = useState<any[]>([]);
-  const [selectedCurso, setSelectedCurso] = useState("");
-  const [selectedTurma, setSelectedTurma] = useState("");
-  const [selectedTipo, setSelectedTipo] = useState("");
-  const [selectedAluno, setSelectedAluno] = useState("");
-  const [incluirAlunos, setIncluirAlunos] = useState(true);
-  const [incluirCursos, setIncluirCursos] = useState(true);
-  const [incluirTurmas, setIncluirTurmas] = useState(true);
-  const [statsData, setStatsData] = useState<any>(null);
+interface Aluno {
+  id: string;
+  nome_completo: string;
+  graduacao: string;
+  matricula: number;
+}
+
+interface Turma {
+  id: string;
+  nome: string;
+  ano: number;
+  situacao: string;
+  data_inicio?: string;
+  data_fim?: string;
+  tipo_militar: string;
+}
+
+const Relatorios = () => {
+  const [turmas, setTurmas] = useState<Turma[]>([]);
+  const [selectedTurmaId, setSelectedTurmaId] = useState<string>("");
+  const [selectedTurma, setSelectedTurma] = useState<Turma | null>(null);
+  const [alunosTurma, setAlunosTurma] = useState<Aluno[]>([]);
+  const chartRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
-    fetchData();
+    fetchTurmas();
   }, []);
 
-  const fetchData = async () => {
-    const { data: cursosData } = await supabase.from("cursos").select("id, nome, coordenador").order("nome");
-    const { data: turmasData } = await supabase.from("turmas").select("id, nome").order("nome");
-    const { data: alunosData } = await supabase.from("alunos").select("id, nome_completo").order("nome_completo");
-    if (cursosData) setCursos(cursosData);
-    if (turmasData) setTurmas(turmasData);
-    if (alunosData) setAlunos(alunosData);
-    await fetchStats();
-  };
-
-  const fetchStats = async () => {
-    const { data: alunosData } = await supabase.from("alunos").select("graduacao, tipo_militar");
-    if (!alunosData) return;
-
-    const graduacaoCounts = alunosData.reduce((acc: any, aluno) => {
-      acc[aluno.graduacao] = (acc[aluno.graduacao] || 0) + 1;
-      return acc;
-    }, {});
-
-    const tipoCounts = alunosData.reduce((acc: any, aluno) => {
-      acc[aluno.tipo_militar] = (acc[aluno.tipo_militar] || 0) + 1;
-      return acc;
-    }, {});
-
-    setStatsData({
-      graduacaoData: Object.entries(graduacaoCounts).map(([name, value]) => ({ name, value })),
-      tipoData: Object.entries(tipoCounts).map(([name, value]) => ({ name, value })),
-    });
-  };
-
-  const fetchCursosStats = async () => {
-    const { data: cursosData } = await supabase
-      .from("cursos")
-      .select("id, nome, instituicao, coordenador, ano:data_inicio, turmas(tipo_militar, aluno_turma(aluno_id, alunos(tipo_militar)))");
-    
-    if (!cursosData) return null;
-
-    const statsByYear: any = {};
-    
-    cursosData.forEach((curso: any) => {
-      const year = curso.ano ? new Date(curso.ano).getFullYear() : 'Sem data';
-      if (!statsByYear[year]) {
-        statsByYear[year] = {
-          fuzileiros: 0,
-          guardaCosteira: 0,
-          ciaga: 0,
-          ciaba: 0,
-          total: 0
-        };
-      }
-
-      curso.turmas?.forEach((turma: any) => {
-        const alunosCount = turma.aluno_turma?.length || 0;
-        statsByYear[year].total += alunosCount;
-
-        turma.aluno_turma?.forEach((at: any) => {
-          if (at.alunos?.tipo_militar === "Fuzileiro Naval") {
-            statsByYear[year].fuzileiros += 1;
-          } else if (at.alunos?.tipo_militar === "Marinheiro") {
-            statsByYear[year].guardaCosteira += 1;
-          }
-        });
-      });
-
-      if (curso.instituicao?.toLowerCase().includes('ciaga')) {
-        statsByYear[year].ciaga += 1;
-      } else if (curso.instituicao?.toLowerCase().includes('ciaba')) {
-        statsByYear[year].ciaba += 1;
-      }
-    });
-
-    return statsByYear;
-  };
-
-  const fetchStatusStats = async () => {
-    const { data: statusData } = await supabase
-      .from("aluno_turma")
-      .select("status");
-    
-    if (!statusData) return null;
-
-    const statusCounts = {
-      aguardando: 0,
-      planejado: 0,
-      cursando: 0,
-      estagiando: 0,
-      concluido: 0,
-      cancelado: 0,
-      reprovado: 0,
-      desligado: 0,
-      desertor: 0,
-      total: 0
-    };
-
-    statusData.forEach((item: any) => {
-      statusCounts.total += 1;
-      const status = item.status?.toLowerCase() || 'cursando';
-      if (status === 'aguardando') statusCounts.aguardando += 1;
-      else if (status === 'planejado') statusCounts.planejado += 1;
-      else if (status === 'cursando') statusCounts.cursando += 1;
-      else if (status === 'estagiando') statusCounts.estagiando += 1;
-      else if (status === 'concluído' || status === 'concluido') statusCounts.concluido += 1;
-      else if (status === 'cancelado') statusCounts.cancelado += 1;
-      else if (status === 'reprovado') statusCounts.reprovado += 1;
-      else if (status === 'desligado') statusCounts.desligado += 1;
-      else if (status === 'desertor') statusCounts.desertor += 1;
-    });
-
-    return statusCounts;
-  };
-
-  const exportToCSV = async () => {
-    try {
-      let data: any[] = [];
-      let headers: string[] = [];
-
-      // Adicionar estatísticas de status dos alunos
-      const statusStats = await fetchStatusStats();
-      if (statusStats) {
-        data.push({
-          Tipo: "Status dos Alunos",
-          Aguardando: statusStats.aguardando,
-          Planejado: statusStats.planejado,
-          Cursando: statusStats.cursando,
-          Estagiando: statusStats.estagiando,
-          Concluído: statusStats.concluido,
-          Cancelado: statusStats.cancelado,
-          Reprovado: statusStats.reprovado,
-          Desligado: statusStats.desligado,
-          Desertor: statusStats.desertor,
-          Total: statusStats.total
-        });
-      }
-
-      // Adicionar estatísticas de cursos por ano
-      const cursosStats = await fetchCursosStats();
-      if (cursosStats) {
-        const statsRows = Object.entries(cursosStats).map(([year, stats]: [string, any]) => ({
-          Tipo: "Estatística por Ano",
-          Ano: year,
-          Fuzileiros: stats.fuzileiros,
-          "Guarda Costeira": stats.guardaCosteira,
-          CIAGA: stats.ciaga,
-          CIABA: stats.ciaba,
-          Total: stats.total
-        }));
-        data = [...data, ...statsRows];
-      }
-
-      if (incluirAlunos) {
-        let query = supabase.from("alunos").select("*");
-        if (selectedTipo && selectedTipo !== "all") query = query.eq("tipo_militar", selectedTipo as "Fuzileiro Naval" | "Marinheiro");
-        const { data: alunosData } = await query;
-        if (alunosData && alunosData.length > 0) {
-          data = [...data, ...alunosData];
-        }
-      }
-
-      if (incluirCursos) {
-        let query = supabase.from("cursos").select("nome, instituicao, coordenador, local_realizacao, tipo_curso, modalidade, categoria");
-        if (selectedCurso && selectedCurso !== "all") query = query.eq("id", selectedCurso);
-        const { data: cursosData } = await query;
-        if (cursosData) data = [...data, ...cursosData];
-      }
-
-      if (incluirTurmas) {
-        let query = supabase.from("turmas").select("*");
-        if (selectedTurma && selectedTurma !== "all") query = query.eq("id", selectedTurma);
-        const { data: turmasData } = await query;
-        if (turmasData) data = [...data, ...turmasData];
-      }
-
-      if (data.length === 0) {
-        toast.error("Nenhum dado para exportar");
-        return;
-      }
-
-      const csv = [
-        Object.keys(data[0]).join(","),
-        ...data.map((row) => Object.values(row).join(",")),
-      ].join("\n");
-
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `relatorio-${Date.now()}.csv`;
-      a.click();
-      toast.success("Relatório exportado com sucesso");
-    } catch (error) {
-      console.error("Erro ao exportar:", error);
-      toast.error("Erro ao exportar relatório");
+  useEffect(() => {
+    if (selectedTurmaId) {
+      fetchTurmaDetails();
+      fetchAlunosTurma();
     }
-  };
+  }, [selectedTurmaId]);
 
-  const exportToPDF = async () => {
+  const fetchTurmas = async () => {
     try {
-      const pdf = new jsPDF();
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      let yPosition = 20;
-
-      // Título
-      pdf.setFontSize(18);
-      pdf.text("Relatório do Sistema de Gestão", pageWidth / 2, yPosition, { align: "center" });
-      yPosition += 15;
-
-      // Data de geração
-      pdf.setFontSize(10);
-      pdf.text(`Gerado em: ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}`, pageWidth / 2, yPosition, { align: "center" });
-      yPosition += 15;
-
-      // Status dos Alunos
-      const statusStats = await fetchStatusStats();
-      if (statusStats) {
-        pdf.setFontSize(14);
-        pdf.text("Status dos Alunos", 14, yPosition);
-        yPosition += 10;
-
-        // Criar gráfico de barras simples para status
-        const barWidth = 20;
-        const barSpacing = 25;
-        const maxBarHeight = 40;
-        const maxValue = Math.max(
-          statusStats.aguardando, statusStats.planejado, statusStats.cursando, 
-          statusStats.estagiando, statusStats.concluido, statusStats.cancelado,
-          statusStats.reprovado, statusStats.desligado, statusStats.desertor
-        );
-        
-        const statuses = [
-          { label: 'Aguard.', value: statusStats.aguardando, color: [150, 150, 150] },
-          { label: 'Planej.', value: statusStats.planejado, color: [200, 200, 200] },
-          { label: 'Cursando', value: statusStats.cursando, color: [100, 150, 255] },
-          { label: 'Estag.', value: statusStats.estagiando, color: [100, 200, 255] },
-          { label: 'Concluído', value: statusStats.concluido, color: [50, 200, 100] },
-          { label: 'Cancel.', value: statusStats.cancelado, color: [255, 150, 50] },
-          { label: 'Reprov.', value: statusStats.reprovado, color: [255, 100, 100] },
-          { label: 'Deslig.', value: statusStats.desligado, color: [255, 200, 50] },
-          { label: 'Desertor', value: statusStats.desertor, color: [100, 100, 100] }
-        ];
-
-        statuses.forEach((status, index) => {
-          const x = 14 + (index * barSpacing);
-          const barHeight = maxValue > 0 ? (status.value / maxValue) * maxBarHeight : 0;
-          const y = yPosition + maxBarHeight - barHeight;
-          
-          // Desenhar barra
-          pdf.setFillColor(status.color[0], status.color[1], status.color[2]);
-          pdf.rect(x, y, barWidth, barHeight, 'F');
-          
-          // Valor acima da barra
-          pdf.setFontSize(8);
-          pdf.text(status.value.toString(), x + barWidth / 2, y - 2, { align: 'center' });
-          
-          // Label abaixo
-          pdf.setFontSize(7);
-          const labelLines = pdf.splitTextToSize(status.label, barWidth);
-          pdf.text(labelLines, x + barWidth / 2, yPosition + maxBarHeight + 5, { align: 'center' });
-        });
-
-        yPosition += maxBarHeight + 20;
-
-        // Texto com totais
-        pdf.setFontSize(10);
-        pdf.text(`Total de vínculos aluno-turma: ${statusStats.total}`, 14, yPosition);
-        yPosition += 7;
-        pdf.text(`Aguardando: ${statusStats.aguardando} | Planejado: ${statusStats.planejado} | Cursando: ${statusStats.cursando} | Estagiando: ${statusStats.estagiando}`, 14, yPosition);
-        yPosition += 7;
-        pdf.text(`Concluídos: ${statusStats.concluido} | Cancelados: ${statusStats.cancelado} | Reprovados: ${statusStats.reprovado}`, 14, yPosition);
-        yPosition += 7;
-        pdf.text(`Desligados: ${statusStats.desligado} | Desertores: ${statusStats.desertor}`, 14, yPosition);
-        yPosition += 15;
-      }
-
-      // Cursos por Ano e Tipo Militar
-      const cursosStats = await fetchCursosStats();
-      if (cursosStats) {
-        pdf.setFontSize(14);
-        pdf.text("Cursos por Ano - Distribuição", 14, yPosition);
-        yPosition += 10;
-
-        pdf.setFontSize(10);
-        Object.entries(cursosStats).forEach(([year, stats]: [string, any]) => {
-          if (yPosition > pdf.internal.pageSize.getHeight() - 30) {
-            pdf.addPage();
-            yPosition = 20;
-          }
-          
-          pdf.setFontSize(11);
-          pdf.text(`Ano: ${year}`, 14, yPosition);
-          yPosition += 7;
-          
-          pdf.setFontSize(9);
-          pdf.text(`  • Fuzileiros Navais: ${stats.fuzileiros}`, 14, yPosition);
-          yPosition += 6;
-          pdf.text(`  • Guarda Costeira: ${stats.guardaCosteira}`, 14, yPosition);
-          yPosition += 6;
-          pdf.text(`  • Cursos CIAGA: ${stats.ciaga}`, 14, yPosition);
-          yPosition += 6;
-          pdf.text(`  • Cursos CIABA: ${stats.ciaba}`, 14, yPosition);
-          yPosition += 6;
-          pdf.text(`  • Total de alunos: ${stats.total}`, 14, yPosition);
-          yPosition += 10;
-        });
-        yPosition += 5;
-      }
-
-      // Estatísticas gerais
-      if (statsData) {
-        if (yPosition > pdf.internal.pageSize.getHeight() - 40) {
-          pdf.addPage();
-          yPosition = 20;
-        }
-        
-        pdf.setFontSize(14);
-        pdf.text("Estatísticas Gerais", 14, yPosition);
-        yPosition += 10;
-
-        pdf.setFontSize(10);
-        statsData.tipoData.forEach((item: any) => {
-          pdf.text(`${item.name}: ${item.value} alunos`, 14, yPosition);
-          yPosition += 7;
-        });
-        yPosition += 5;
-      }
-
-      // Capturar gráficos se existirem (removido)
-
-
-      // Dados tabulares
-      let data: any[] = [];
-      if (incluirAlunos) {
-        let query = supabase.from("alunos").select("*");
-        if (selectedTipo && selectedTipo !== "all") query = query.eq("tipo_militar", selectedTipo as "Fuzileiro Naval" | "Marinheiro");
-        const { data: alunosData } = await query;
-        if (alunosData) data = [...data, ...alunosData];
-      }
-
-      if (data.length > 0) {
-        if (yPosition + 20 > pdf.internal.pageSize.getHeight()) {
-          pdf.addPage();
-          yPosition = 20;
-        }
-        
-        pdf.setFontSize(12);
-        pdf.text("Dados dos Alunos", 14, yPosition);
-        yPosition += 10;
-
-        pdf.setFontSize(8);
-        data.slice(0, 20).forEach((item: any) => {
-          if (yPosition > pdf.internal.pageSize.getHeight() - 20) {
-            pdf.addPage();
-            yPosition = 20;
-          }
-          pdf.text(`${item.nome_completo} - ${item.graduacao} - ${item.tipo_militar}`, 14, yPosition);
-          yPosition += 7;
-        });
-      }
-
-      pdf.save(`relatorio-${Date.now()}.pdf`);
-      toast.success("Relatório PDF exportado com sucesso");
-    } catch (error) {
-      console.error("Erro ao exportar PDF:", error);
-      toast.error("Erro ao exportar relatório PDF");
-    }
-  };
-
-  const gerarPDFGeralTurmas = async () => {
-    try {
-      const { data: turmasData } = await supabase
+      const { data, error } = await supabase
         .from("turmas")
-        .select("id, nome, ano, tipo_militar, situacao, cursos(nome)")
+        .select("*")
         .order("ano", { ascending: false });
 
-      if (!turmasData || turmasData.length === 0) {
-        toast.error("Nenhuma turma encontrada");
-        return;
-      }
-
-      const pdf = new jsPDF();
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      let yPosition = 20;
-
-      // Título
-      pdf.setFontSize(18);
-      pdf.text("Relatório Geral de Turmas e Alunos", pageWidth / 2, yPosition, { align: "center" });
-      yPosition += 10;
-
-      pdf.setFontSize(10);
-      pdf.text(`Gerado em: ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}`, pageWidth / 2, yPosition, { align: "center" });
-      yPosition += 15;
-
-      // Para cada turma, buscar alunos
-      for (const turma of turmasData) {
-        const { data: alunosData } = await supabase
-          .from("aluno_turma")
-          .select("status, alunos(nome_completo, graduacao, tipo_militar)")
-          .eq("turma_id", turma.id)
-          .order("alunos(nome_completo)");
-
-        if (yPosition > pdf.internal.pageSize.getHeight() - 40) {
-          pdf.addPage();
-          yPosition = 20;
-        }
-
-        // Informações da turma
-        pdf.setFontSize(14);
-        pdf.setFont("helvetica", "bold");
-        pdf.text(`Turma: ${turma.nome}`, 14, yPosition);
-        yPosition += 7;
-
-        pdf.setFontSize(10);
-        pdf.setFont("helvetica", "normal");
-        pdf.text(`Curso: ${turma.cursos?.nome || "Não informado"} | Ano: ${turma.ano} | Tipo: ${turma.tipo_militar}`, 14, yPosition);
-        yPosition += 7;
-        pdf.text(`Situação: ${turma.situacao || "Não informada"} | Total de alunos: ${alunosData?.length || 0}`, 14, yPosition);
-        yPosition += 10;
-
-        // Lista de alunos
-        if (alunosData && alunosData.length > 0) {
-          pdf.setFontSize(9);
-          alunosData.forEach((item: any, index: number) => {
-            if (yPosition > pdf.internal.pageSize.getHeight() - 20) {
-              pdf.addPage();
-              yPosition = 20;
-            }
-
-            const aluno = item.alunos;
-            const status = item.status || "Cursando";
-            pdf.text(`  ${index + 1}. ${aluno.nome_completo} - ${aluno.graduacao} (${status})`, 14, yPosition);
-            yPosition += 5;
-          });
-          yPosition += 8;
-        } else {
-          pdf.setFontSize(9);
-          pdf.text("  Nenhum aluno vinculado", 14, yPosition);
-          yPosition += 10;
-        }
-      }
-
-      pdf.save(`relatorio_geral_turmas_${Date.now()}.pdf`);
-      toast.success("Relatório geral gerado com sucesso");
+      if (error) throw error;
+      setTurmas(data || []);
     } catch (error) {
-      console.error("Erro ao gerar relatório geral:", error);
-      toast.error("Erro ao gerar relatório geral");
+      console.error("Erro ao buscar turmas:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar as turmas.",
+        variant: "destructive",
+      });
     }
   };
 
-  const exportAlunoReport = async () => {
-    if (!selectedAluno) {
-      toast.error("Selecione um aluno para gerar o relatório individual");
+  const fetchTurmaDetails = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("turmas")
+        .select("*")
+        .eq("id", selectedTurmaId)
+        .single();
+
+      if (error) throw error;
+      setSelectedTurma(data);
+    } catch (error) {
+      console.error("Erro ao buscar detalhes da turma:", error);
+    }
+  };
+
+  const fetchAlunosTurma = async () => {
+    try {
+      const { data: alunoTurmaData, error: alunoTurmaError } = await supabase
+        .from("aluno_turma")
+        .select("aluno_id")
+        .eq("turma_id", selectedTurmaId);
+
+      if (alunoTurmaError) throw alunoTurmaError;
+
+      const alunoIds = alunoTurmaData?.map((at) => at.aluno_id) || [];
+
+      if (alunoIds.length === 0) {
+        setAlunosTurma([]);
+        return;
+      }
+
+      const { data: alunosData, error: alunosError } = await supabase
+        .from("alunos")
+        .select("*")
+        .in("id", alunoIds)
+        .order("nome_completo");
+
+      if (alunosError) throw alunosError;
+      setAlunosTurma(alunosData || []);
+    } catch (error) {
+      console.error("Erro ao buscar alunos da turma:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os alunos da turma.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const exportTurmaReport = async () => {
+    if (!selectedTurma || alunosTurma.length === 0) {
+      toast({
+        title: "Aviso",
+        description: "Selecione uma turma com alunos cadastrados.",
+        variant: "destructive",
+      });
       return;
     }
 
     try {
-      const { data: alunoData } = await supabase
-        .from("alunos")
-        .select("*")
-        .eq("id", selectedAluno)
-        .single();
-
-      const { data: turmasData } = await supabase
-        .from("aluno_turma")
-        .select(`
-          status,
-          data_duracao_curso,
-          local_curso,
-          sigla_curso,
-          turmas(
-            nome, 
-            ano, 
-            data_inicio,
-            data_fim,
-            situacao,
-            cursos(
-              nome, 
-              modalidade, 
-              coordenador,
-              instituicao,
-              local_realizacao,
-              tipo_curso,
-              categoria
-            )
-          )
-        `)
-        .eq("aluno_id", selectedAluno);
-
-      if (!alunoData) {
-        toast.error("Aluno não encontrado");
-        return;
-      }
-
       const pdf = new jsPDF();
       const pageWidth = pdf.internal.pageSize.getWidth();
-      let yPosition = 20;
+      let yPos = 20;
 
-      // Cabeçalho
+      // Título
       pdf.setFontSize(18);
       pdf.setFont("helvetica", "bold");
-      pdf.text("Relatório Individual do Aluno", pageWidth / 2, yPosition, { align: "center" });
-      yPosition += 10;
-      
-      pdf.setFontSize(10);
-      pdf.setFont("helvetica", "normal");
-      pdf.text(`Gerado em: ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}`, pageWidth / 2, yPosition, { align: "center" });
-      yPosition += 15;
+      pdf.text("RELATÓRIO DE TURMA", pageWidth / 2, yPos, { align: "center" });
+      yPos += 15;
 
-      // Dados pessoais completos
+      // Informações da Turma
+      pdf.setFontSize(14);
+      pdf.text(`Turma: ${selectedTurma.nome}`, 20, yPos);
+      yPos += 8;
+      
+      pdf.setFontSize(12);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`Ano: ${selectedTurma.ano}`, 20, yPos);
+      yPos += 6;
+      pdf.text(`Situação: ${selectedTurma.situacao}`, 20, yPos);
+      yPos += 6;
+      pdf.text(`Tipo Militar: ${selectedTurma.tipo_militar}`, 20, yPos);
+      yPos += 6;
+      
+      if (selectedTurma.data_inicio) {
+        pdf.text(`Data Início: ${new Date(selectedTurma.data_inicio).toLocaleDateString('pt-BR')}`, 20, yPos);
+        yPos += 6;
+      }
+      
+      if (selectedTurma.data_fim) {
+        pdf.text(`Data Fim: ${new Date(selectedTurma.data_fim).toLocaleDateString('pt-BR')}`, 20, yPos);
+        yPos += 6;
+      }
+
+      yPos += 10;
+
+      // Lista de Alunos
       pdf.setFontSize(14);
       pdf.setFont("helvetica", "bold");
-      pdf.text("Dados Pessoais e Cadastrais", 14, yPosition);
-      yPosition += 10;
+      pdf.text(`Total de Alunos: ${alunosTurma.length}`, 20, yPos);
+      yPos += 10;
 
-      pdf.setFontSize(10);
+      pdf.setFontSize(11);
+      pdf.text("Nome Completo", 20, yPos);
+      pdf.text("Graduação", 140, yPos);
+      yPos += 8;
+
+      pdf.setLineWidth(0.5);
+      pdf.line(20, yPos, pageWidth - 20, yPos);
+      yPos += 8;
+
+      // Listar alunos
       pdf.setFont("helvetica", "normal");
-      const dadosAluno = [
-        `Nome Completo: ${alunoData.nome_completo}`,
-        `Matrícula: ${alunoData.matricula || "Não informado"}`,
-        `Graduação: ${alunoData.graduacao}`,
-        `Tipo Militar: ${alunoData.tipo_militar}`,
-        `Data de Nascimento: ${alunoData.data_nascimento ? new Date(alunoData.data_nascimento).toLocaleDateString("pt-BR") : "Não informado"}`,
-        `Email: ${alunoData.email || "Não informado"}`,
-        `Telefone: ${alunoData.telefone || "Não informado"}`,
-        `WhatsApp: ${alunoData.whatsapp || "Não informado"}`,
-        `Local de Serviço: ${alunoData.local_servico || "Não informado"}`,
-        `Função: ${alunoData.funcao || "Não informado"}`,
-      ];
+      pdf.setFontSize(10);
 
-      dadosAluno.forEach((linha) => {
-        if (yPosition > pdf.internal.pageSize.getHeight() - 20) {
+      alunosTurma.forEach((aluno, index) => {
+        if (yPos > 270) {
           pdf.addPage();
-          yPosition = 20;
+          yPos = 20;
         }
-        pdf.text(linha, 14, yPosition);
-        yPosition += 6;
+
+        pdf.text(`${index + 1}. ${aluno.nome_completo}`, 20, yPos);
+        pdf.text(aluno.graduacao, 140, yPos);
+        yPos += 7;
       });
 
-      yPosition += 10;
-
-      // Histórico de cursos e turmas
-      if (turmasData && turmasData.length > 0) {
-        if (yPosition > pdf.internal.pageSize.getHeight() - 40) {
-          pdf.addPage();
-          yPosition = 20;
-        }
-
-        pdf.setFontSize(14);
-        pdf.setFont("helvetica", "bold");
-        pdf.text(`Histórico de Cursos (${turmasData.length} participações)`, 14, yPosition);
-        yPosition += 10;
-
-        pdf.setFontSize(10);
-        pdf.setFont("helvetica", "normal");
-        
-        turmasData.forEach((item: any, index: number) => {
-          if (yPosition > pdf.internal.pageSize.getHeight() - 50) {
-            pdf.addPage();
-            yPosition = 20;
-          }
-          
-          const turma = item.turmas;
-          const curso = turma?.cursos;
-          const status = item.status || 'Cursando';
-          
-          // Título do curso
-          pdf.setFont("helvetica", "bold");
-          pdf.text(`${index + 1}. ${curso?.nome || "Curso não informado"}`, 14, yPosition);
-          yPosition += 6;
-          
-          pdf.setFont("helvetica", "normal");
-          
-          // Informações da turma
-          pdf.text(`   Turma: ${turma?.nome || "Não informado"}`, 14, yPosition);
-          yPosition += 5;
-          pdf.text(`   Ano: ${turma?.ano || "Não informado"}`, 14, yPosition);
-          yPosition += 5;
-          
-          if (turma?.data_inicio || turma?.data_fim) {
-            const dataInicio = turma?.data_inicio ? new Date(turma.data_inicio).toLocaleDateString("pt-BR") : "N/A";
-            const dataFim = turma?.data_fim ? new Date(turma.data_fim).toLocaleDateString("pt-BR") : "N/A";
-            pdf.text(`   Período: ${dataInicio} até ${dataFim}`, 14, yPosition);
-            yPosition += 5;
-          }
-          
-          pdf.text(`   Status: ${status}`, 14, yPosition);
-          yPosition += 5;
-          pdf.text(`   Situação da Turma: ${turma?.situacao || "Não informado"}`, 14, yPosition);
-          yPosition += 5;
-          
-          // Informações do curso
-          if (curso) {
-            if (curso.instituicao) {
-              pdf.text(`   Instituição: ${curso.instituicao}`, 14, yPosition);
-              yPosition += 5;
-            }
-            if (curso.modalidade) {
-              pdf.text(`   Modalidade: ${curso.modalidade}`, 14, yPosition);
-              yPosition += 5;
-            }
-            if (curso.tipo_curso) {
-              pdf.text(`   Tipo de Curso: ${curso.tipo_curso}`, 14, yPosition);
-              yPosition += 5;
-            }
-            if (curso.categoria) {
-              pdf.text(`   Categoria: ${curso.categoria}`, 14, yPosition);
-              yPosition += 5;
-            }
-            if (curso.local_realizacao) {
-              pdf.text(`   Local de Realização: ${curso.local_realizacao}`, 14, yPosition);
-              yPosition += 5;
-            }
-            if (curso.coordenador) {
-              pdf.text(`   Coordenador: ${curso.coordenador}`, 14, yPosition);
-              yPosition += 5;
-            }
-          }
-          
-          // Informações adicionais do vínculo
-          if (item.data_duracao_curso) {
-            pdf.text(`   Duração: ${new Date(item.data_duracao_curso).toLocaleDateString("pt-BR")}`, 14, yPosition);
-            yPosition += 5;
-          }
-          if (item.local_curso) {
-            pdf.text(`   Local do Curso: ${item.local_curso}`, 14, yPosition);
-            yPosition += 5;
-          }
-          if (item.sigla_curso) {
-            pdf.text(`   Sigla: ${item.sigla_curso}`, 14, yPosition);
-            yPosition += 5;
-          }
-          
-          yPosition += 8;
-        });
-      } else {
-        pdf.setFontSize(10);
-        pdf.text("Nenhum curso registrado para este aluno.", 14, yPosition);
-        yPosition += 10;
+      // Rodapé
+      const totalPages = pdf.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.text(
+          `Página ${i} de ${totalPages}`,
+          pageWidth / 2,
+          pdf.internal.pageSize.getHeight() - 10,
+          { align: "center" }
+        );
       }
 
-      // Observações
-      if (alunoData.observacoes) {
-        if (yPosition > pdf.internal.pageSize.getHeight() - 40) {
-          pdf.addPage();
-          yPosition = 20;
-        }
-        
-        pdf.setFontSize(14);
-        pdf.setFont("helvetica", "bold");
-        pdf.text("Observações", 14, yPosition);
-        yPosition += 10;
+      pdf.save(`relatorio_turma_${selectedTurma.nome.replace(/\s+/g, '_')}.pdf`);
 
-        pdf.setFontSize(10);
-        pdf.setFont("helvetica", "normal");
-        const lines = pdf.splitTextToSize(alunoData.observacoes, pageWidth - 28);
-        lines.forEach((line: string) => {
-          if (yPosition > pdf.internal.pageSize.getHeight() - 20) {
-            pdf.addPage();
-            yPosition = 20;
-          }
-          pdf.text(line, 14, yPosition);
-          yPosition += 6;
-        });
-      }
-
-      pdf.save(`relatorio-aluno-${alunoData.nome_completo.replace(/\s+/g, '_')}-${Date.now()}.pdf`);
-      toast.success("Relatório individual exportado com sucesso");
+      toast({
+        title: "Sucesso",
+        description: "Relatório da turma gerado com sucesso!",
+      });
     } catch (error) {
-      console.error("Erro ao exportar relatório do aluno:", error);
-      toast.error("Erro ao exportar relatório individual");
+      console.error("Erro ao gerar relatório:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o relatório da turma.",
+        variant: "destructive",
+      });
     }
   };
 
+  const exportChartReport = async () => {
+    if (!chartRef.current) return;
+
+    try {
+      const canvas = await html2canvas(chartRef.current, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("landscape");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      // Título
+      pdf.setFontSize(16);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("RELATÓRIO DE ESTATÍSTICAS - GRÁFICO DE INSCRIÇÕES", pageWidth / 2, 15, { align: "center" });
+
+      // Adicionar gráfico
+      const imgWidth = pageWidth - 40;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      pdf.addImage(imgData, "PNG", 20, 25, imgWidth, Math.min(imgHeight, pageHeight - 80));
+
+      // Explicação
+      pdf.addPage();
+      pdf.setFontSize(14);
+      pdf.text("EXPLICAÇÃO DO GRÁFICO", 20, 20);
+      
+      pdf.setFontSize(11);
+      pdf.setFont("helvetica", "normal");
+      let yPos = 35;
+      
+      const explanation = [
+        "Este gráfico apresenta a evolução das inscrições de alunos ao longo do tempo.",
+        "",
+        "Metodologia de Contagem:",
+        "- O gráfico conta o total de INSCRIÇÕES (vínculos aluno-turma)",
+        "- Cada vez que um aluno se inscreve em uma turma, é contado como uma inscrição",
+        "- Um mesmo aluno pode aparecer múltiplas vezes se estiver inscrito em várias turmas",
+        "",
+        "Categorias:",
+        "- Total: Todas as inscrições independente do tipo militar ou status",
+        "- Marinheiro (Concluídos): Inscrições de alunos do tipo Marinheiro que concluíram",
+        "- Fuzileiro (Concluídos): Inscrições de alunos do tipo Fuzileiro Naval que concluíram",
+        "- Exército (Concluídos): Inscrições de alunos do tipo Exército que concluíram",
+        "- Civil (Concluídos): Inscrições de alunos do tipo Civil que concluíram",
+        "",
+        "Interpretação:",
+        "- Os valores mostram o crescimento cumulativo de inscrições por ano",
+        "- A barra 'Total' inclui todas as inscrições (concluídas ou não)",
+        "- As demais barras mostram apenas inscrições com status 'Concluído'",
+        "- Permite visualizar tendências de matrícula e taxa de conclusão ao longo do tempo",
+        "- Útil para planejamento de recursos e capacidade de turmas",
+      ];
+
+      explanation.forEach((line) => {
+        if (line === "") {
+          yPos += 5;
+        } else if (line.startsWith("-")) {
+          pdf.text(line, 30, yPos);
+          yPos += 6;
+        } else {
+          pdf.setFont("helvetica", "bold");
+          pdf.text(line, 20, yPos);
+          pdf.setFont("helvetica", "normal");
+          yPos += 8;
+        }
+      });
+
+      pdf.save("relatorio_estatisticas_grafico.pdf");
+
+      toast({
+        title: "Sucesso",
+        description: "Relatório do gráfico gerado com sucesso!",
+      });
+    } catch (error) {
+      console.error("Erro ao gerar relatório do gráfico:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o relatório do gráfico.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div>
-        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Relatórios</h2>
-        <p className="text-sm sm:text-base text-muted-foreground">Gere e exporte relatórios customizados com gráficos e análises</p>
-      </div>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold">Relatórios</h1>
 
-      {/* Relatório Geral de Turmas */}
-      <Card className="shadow-card">
-        <CardHeader className="p-4 sm:p-6">
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <FileDown className="h-4 w-4 sm:h-5 sm:w-5" />
-            Relatório Geral de Turmas
-          </CardTitle>
+      {/* Relatório por Turma */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Relatório por Turma</CardTitle>
         </CardHeader>
-        <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Gere um PDF completo com todas as turmas cadastradas e seus respectivos alunos
-          </p>
-          <Button onClick={gerarPDFGeralTurmas} className="gap-2 w-full sm:w-auto">
-            <FileDown className="h-4 w-4" />
-            <span className="text-sm">Gerar PDF Geral (Todas as Turmas)</span>
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Relatório Individual */}
-      <Card className="shadow-card">
-        <CardHeader className="p-4 sm:p-6">
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <User className="h-4 w-4 sm:h-5 sm:w-5" />
-            Relatório Individual por Aluno
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
-          <div className="space-y-2">
-            <Label className="text-sm">Selecionar Aluno</Label>
-            <Select value={selectedAluno} onValueChange={setSelectedAluno}>
-              <SelectTrigger>
-                <SelectValue placeholder="Escolha um aluno" />
-              </SelectTrigger>
-              <SelectContent>
-                {alunos.map((aluno) => (
-                  <SelectItem key={aluno.id} value={aluno.id}>
-                    {aluno.nome_completo}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <Button onClick={exportAlunoReport} className="gap-2 w-full sm:w-auto">
-            <FileDown className="h-4 w-4" />
-            <span className="text-sm">Gerar Relatório Individual (PDF)</span>
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Relatórios Gerais */}
-      <Card className="shadow-card">
-        <CardHeader className="p-4 sm:p-6">
-          <CardTitle className="text-base sm:text-lg">Configurar Relatório Geral</CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 sm:p-6 pt-0 space-y-4 sm:space-y-6">
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Filtrar por Curso</Label>
-              <Select value={selectedCurso} onValueChange={setSelectedCurso}>
+        <CardContent className="space-y-6">
+          <div className="flex gap-4 items-end">
+            <div className="flex-1">
+              <label className="text-sm font-medium mb-2 block">Selecione a Turma</label>
+              <Select value={selectedTurmaId} onValueChange={setSelectedTurmaId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Todos os cursos" />
+                  <SelectValue placeholder="Escolha uma turma" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os cursos</SelectItem>
-                  {cursos.map((curso) => (
-                    <SelectItem key={curso.id} value={curso.id}>
-                      {curso.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Filtrar por Turma</Label>
-              <Select value={selectedTurma} onValueChange={setSelectedTurma}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas as turmas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as turmas</SelectItem>
                   {turmas.map((turma) => (
                     <SelectItem key={turma.id} value={turma.id}>
-                      {turma.nome}
+                      {turma.nome} - {turma.ano}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-2">
-              <Label>Filtrar por Tipo Militar</Label>
-              <Select value={selectedTipo} onValueChange={setSelectedTipo}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os tipos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os tipos</SelectItem>
-                  <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
-                  <SelectItem value="Marinheiro">Marinheiro</SelectItem>
-                  <SelectItem value="Exercito">Exército</SelectItem>
-                  <SelectItem value="Bombeiro">Bombeiro</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Button
+              onClick={exportTurmaReport}
+              disabled={!selectedTurmaId || alunosTurma.length === 0}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Gerar Relatório
+            </Button>
           </div>
 
-          <div className="space-y-3">
-            <Label className="text-sm">Incluir nos Relatórios:</Label>
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="alunos"
-                  checked={incluirAlunos}
-                  onCheckedChange={(checked) => setIncluirAlunos(checked as boolean)}
-                />
-                <label htmlFor="alunos" className="text-xs sm:text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Alunos
-                </label>
+          {selectedTurma && (
+            <div className="border rounded-lg p-6 space-y-4">
+              <div>
+                <h3 className="text-xl font-bold mb-4">{selectedTurma.nome}</h3>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="font-medium">Ano:</span> {selectedTurma.ano}
+                  </div>
+                  <div>
+                    <span className="font-medium">Situação:</span>{" "}
+                    <span className={`font-semibold ${
+                      selectedTurma.situacao === "Em Andamento" ? "text-green-600" :
+                      selectedTurma.situacao === "Concluída" ? "text-blue-600" :
+                      "text-muted-foreground"
+                    }`}>
+                      {selectedTurma.situacao}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium">Tipo Militar:</span> {selectedTurma.tipo_militar}
+                  </div>
+                  {selectedTurma.data_inicio && (
+                    <div>
+                      <span className="font-medium">Data Início:</span>{" "}
+                      {new Date(selectedTurma.data_inicio).toLocaleDateString('pt-BR')}
+                    </div>
+                  )}
+                  {selectedTurma.data_fim && (
+                    <div>
+                      <span className="font-medium">Data Fim:</span>{" "}
+                      {new Date(selectedTurma.data_fim).toLocaleDateString('pt-BR')}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="cursos"
-                  checked={incluirCursos}
-                  onCheckedChange={(checked) => setIncluirCursos(checked as boolean)}
-                />
-                <label htmlFor="cursos" className="text-xs sm:text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Cursos
-                </label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="turmas"
-                  checked={incluirTurmas}
-                  onCheckedChange={(checked) => setIncluirTurmas(checked as boolean)}
-                />
-                <label htmlFor="turmas" className="text-xs sm:text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Turmas
-                </label>
+
+              <div>
+                <h4 className="font-semibold mb-3">Alunos Cadastrados ({alunosTurma.length})</h4>
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {alunosTurma.map((aluno, index) => (
+                    <div
+                      key={aluno.id}
+                      className="flex items-center justify-between p-3 border rounded bg-muted/50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {index + 1}.
+                        </span>
+                        <div>
+                          <p className="font-medium">{aluno.nome_completo}</p>
+                          <p className="text-sm text-muted-foreground">{aluno.graduacao}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {alunosTurma.length === 0 && (
+                    <p className="text-center text-muted-foreground py-8">
+                      Nenhum aluno cadastrado nesta turma.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
+        </CardContent>
+      </Card>
 
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button onClick={exportToCSV} className="gap-2 w-full sm:w-auto">
-              <FileSpreadsheet className="h-4 w-4" />
-              <span className="text-sm">Exportar Excel/CSV</span>
+      {/* Relatório de Gráfico de Estatísticas */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Relatório de Gráfico de Estatísticas</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex justify-end">
+            <Button onClick={exportChartReport} className="gap-2">
+              <Printer className="h-4 w-4" />
+              Exportar Gráfico com Explicação
             </Button>
-            <Button onClick={exportToPDF} variant="outline" className="gap-2 w-full sm:w-auto">
-              <FileDown className="h-4 w-4" />
-              <span className="text-sm">Exportar PDF</span>
-            </Button>
+          </div>
+          
+          <div ref={chartRef} className="border rounded-lg p-4 bg-background">
+            <UltraChart />
           </div>
         </CardContent>
       </Card>
     </div>
   );
-}
+};
+
+export default Relatorios;

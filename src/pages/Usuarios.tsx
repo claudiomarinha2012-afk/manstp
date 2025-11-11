@@ -18,7 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const userSchema = z.object({
   email: z.string().email("Email inválido"),
   nome_completo: z.string().min(3, "Nome deve ter no mínimo 3 caracteres"),
-  password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
+  password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres"),
   role: z.enum(["coordenador", "visualizador"]),
 });
 
@@ -308,13 +308,13 @@ export default function Usuarios() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Senha Temporária</Label>
+                <Label>Senha Temporária (mínimo 8 caracteres)</Label>
                 <Input
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
-                  minLength={6}
+                  minLength={8}
                 />
               </div>
               <div className="space-y-2">

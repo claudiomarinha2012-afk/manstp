@@ -134,21 +134,26 @@ serve(async (req) => {
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
     if (!resendApiKey) {
       console.error('RESEND_API_KEY não configurada');
-      throw new Error('Configuração de email não encontrada');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Configuração de email não encontrada. Configure a chave RESEND_API_KEY.' 
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+    
+    console.log('RESEND_API_KEY configurada:', resendApiKey ? 'Sim' : 'Não');
     
     const resend = new Resend(resendApiKey);
     
-    // Construir URL do convite de forma mais robusta
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-    const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1];
-    const appUrl = projectRef ? `https://${projectRef}.lovable.app` : 'https://lovable.app';
-    const inviteUrl = `${appUrl}/auth?invite=${inviteToken}`;
+    // Construir URL do convite
+    const inviteUrl = `https://1e4d3759-4cee-46ba-8836-10804a033000.lovableproject.com/auth?invite=${inviteToken}`;
     
+    console.log('Enviando email para:', email);
     console.log('URL do convite:', inviteUrl);
 
     const { error: emailError } = await resend.emails.send({
-      from: 'GESTOR ESCOLAR <onboarding@resend.dev>',
+      from: 'Sistema GESTOR ESCOLAR <onboarding@resend.dev>',
       to: [email],
       subject: 'Convite para GESTOR ESCOLAR',
       html: `

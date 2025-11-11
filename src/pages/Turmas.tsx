@@ -39,6 +39,7 @@ interface Turma {
   observacoes: string | null;
   cursos?: { nome: string };
   aluno_count?: number;
+  instrutores?: string[];
 }
 
 interface Aluno {
@@ -94,7 +95,7 @@ export default function Turmas() {
 
       if (error) throw error;
       
-      // Buscar contagem de alunos para cada turma
+      // Buscar contagem de alunos e instrutores para cada turma
       const turmasComContagem = await Promise.all(
         (data || []).map(async (turma) => {
           const { count } = await supabase
@@ -102,7 +103,15 @@ export default function Turmas() {
             .select("*", { count: "exact", head: true })
             .eq("turma_id", turma.id);
           
-          return { ...turma, aluno_count: count || 0 };
+          // Buscar instrutores da turma
+          const { data: instrutoresData } = await supabase
+            .from("instrutor_turma")
+            .select("instrutores(nome_completo)")
+            .eq("turma_id", turma.id);
+          
+          const instrutores = instrutoresData?.map((item: any) => item.instrutores?.nome_completo).filter(Boolean) || [];
+          
+          return { ...turma, aluno_count: count || 0, instrutores };
         })
       );
       
@@ -320,6 +329,7 @@ export default function Turmas() {
                   <TableHead>Curso</TableHead>
                   <TableHead>Ano</TableHead>
                   <TableHead>Tipo</TableHead>
+                  <TableHead>Instrutor(es)</TableHead>
                   <TableHead>Alunos</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -349,6 +359,19 @@ export default function Turmas() {
                       >
                         {turma.tipo_militar}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {turma.instrutores && turma.instrutores.length > 0 ? (
+                        <div className="text-sm">
+                          {turma.instrutores.map((instrutor, idx) => (
+                            <div key={idx} className="text-muted-foreground">
+                              {instrutor}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">

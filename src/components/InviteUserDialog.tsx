@@ -59,7 +59,7 @@ export function InviteUserDialog() {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('send-invitation', {
+      const response = await supabase.functions.invoke('send-invitation', {
         body: {
           email: formData.email,
           nome: formData.nome || undefined,
@@ -70,12 +70,47 @@ export function InviteUserDialog() {
         },
       });
 
-      if (error) {
-        console.error("Erro na invocação:", error);
-        throw new Error(error.message || "Erro ao enviar convite");
+      // Verificar se há erro na resposta
+      if (response.error) {
+        console.error("Erro na invocação:", response.error);
+        
+        // Tratar erros de validação (409) de forma amigável
+        if (response.error.message?.includes("409")) {
+          const data = response.data as { error?: string };
+          if (data?.error?.includes("já está cadastrado")) {
+            toast.warning("Email já cadastrado", {
+              description: "Este email já possui uma conta no sistema.",
+            });
+            setFormData({ email: "", nome: "", role: "visualizador" });
+            return;
+          } else if (data?.error?.includes("convite pendente")) {
+            toast.warning("Convite já enviado", {
+              description: "Já existe um convite pendente para este email.",
+            });
+            setFormData({ email: "", nome: "", role: "visualizador" });
+            return;
+          }
+        }
+        
+        throw new Error(response.error.message || "Erro ao enviar convite");
       }
 
+      // Verificar se há erro no corpo da resposta
+      const data = response.data as { error?: string; success?: boolean };
       if (data?.error) {
+        if (data.error.includes("já está cadastrado")) {
+          toast.warning("Email já cadastrado", {
+            description: "Este email já possui uma conta no sistema.",
+          });
+          setFormData({ email: "", nome: "", role: "visualizador" });
+          return;
+        } else if (data.error.includes("convite pendente")) {
+          toast.warning("Convite já enviado", {
+            description: "Já existe um convite pendente para este email.",
+          });
+          setFormData({ email: "", nome: "", role: "visualizador" });
+          return;
+        }
         throw new Error(data.error);
       }
 
@@ -90,19 +125,9 @@ export function InviteUserDialog() {
       
       const errorMessage = error.message || "Erro ao enviar convite";
       
-      if (errorMessage.includes("já está cadastrado")) {
-        toast.error("Email já cadastrado no sistema", {
-          description: "Este email já possui uma conta. Não é necessário enviar convite.",
-        });
-      } else if (errorMessage.includes("convite pendente")) {
-        toast.error("Convite já enviado anteriormente", {
-          description: "Já existe um convite pendente para este email.",
-        });
-      } else {
-        toast.error("Erro ao enviar convite", {
-          description: errorMessage,
-        });
-      }
+      toast.error("Erro ao enviar convite", {
+        description: errorMessage,
+      });
     } finally {
       setLoading(false);
     }

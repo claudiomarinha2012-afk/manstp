@@ -18,6 +18,7 @@ interface AlunoAndamento {
   local: string;
   turmaAno: string;
   status: string;
+  instrutores: string[];
 }
 
 export default function Dashboard() {
@@ -57,6 +58,19 @@ export default function Dashboard() {
 
       if (!vinculos) return;
 
+      // Buscar instrutores de todas as turmas únicas
+      const turmasIds = [...new Set(vinculos.map((v: any) => v.turmas?.id).filter(Boolean))];
+      const instrutoresPorTurma: { [key: string]: string[] } = {};
+      
+      for (const turmaId of turmasIds) {
+        const { data: instrutoresData } = await supabase
+          .from("instrutor_turma")
+          .select("instrutores(nome_completo)")
+          .eq("turma_id", turmaId);
+        
+        instrutoresPorTurma[turmaId] = instrutoresData?.map((item: any) => item.instrutores?.nome_completo).filter(Boolean) || [];
+      }
+
       // Contadores
       let totalGeral = 0;
       let eadTotal = 0, eadTurmasAtivas = 0;
@@ -89,7 +103,8 @@ export default function Dashboard() {
             curso: vinculo.sigla_curso || curso.nome || "N/A",
             local: vinculo.local_curso || curso.local_realizacao || "N/A",
             turmaAno: `${turma.ano}/${turma.nome}` || "N/A",
-            status: isAndamento ? "Em Andamento" : "Aguardando"
+            status: isAndamento ? "Em Andamento" : "Aguardando",
+            instrutores: instrutoresPorTurma[turma.id] || []
           });
         }
 
@@ -330,6 +345,7 @@ export default function Dashboard() {
                     <TableHead>Curso</TableHead>
                     <TableHead>Local</TableHead>
                     <TableHead>Turma/Ano</TableHead>
+                    <TableHead>Instrutor(es)</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -340,6 +356,19 @@ export default function Dashboard() {
                       <TableCell>{aluno.curso}</TableCell>
                       <TableCell>{aluno.local}</TableCell>
                       <TableCell>{aluno.turmaAno}</TableCell>
+                      <TableCell>
+                        {aluno.instrutores && aluno.instrutores.length > 0 ? (
+                          <div className="text-sm">
+                            {aluno.instrutores.map((instrutor, instIdx) => (
+                              <div key={instIdx} className="text-muted-foreground">
+                                {instrutor}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">-</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           aluno.status === "Em Andamento" 

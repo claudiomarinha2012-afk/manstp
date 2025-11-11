@@ -28,6 +28,7 @@ import {
   Minus,
   Plus,
   Palette,
+  Upload,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,6 +45,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { TemplateDropdown } from "./TemplateDropdown";
+import { TurmaAssociation } from "./TurmaAssociation";
+import { OpacityControl } from "./OpacityControl";
+import { useState, useEffect } from "react";
 
 interface PowerPointToolbarProps {
   selectedElement: any;
@@ -63,6 +67,16 @@ interface PowerPointToolbarProps {
   onTemplateNameChange: (name: string) => void;
   selectedTemplateId: string;
   onSelectTemplate: (template: any) => void;
+  onAddStudentName: () => void;
+  onAddCourseName: () => void;
+  onAddInstructor: () => void;
+  onAddStamp: () => void;
+  orientation: "landscape" | "portrait";
+  onOrientationChange: (value: "landscape" | "portrait") => void;
+  backgroundImage: string;
+  onBackgroundUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  selectedTurmaId: string | null;
+  onSelectTurma: (turmaId: string | null) => void;
 }
 
 export const PowerPointToolbar = ({
@@ -83,6 +97,16 @@ export const PowerPointToolbar = ({
   onTemplateNameChange,
   selectedTemplateId,
   onSelectTemplate,
+  onAddStudentName,
+  onAddCourseName,
+  onAddInstructor,
+  onAddStamp,
+  orientation,
+  onOrientationChange,
+  backgroundImage,
+  onBackgroundUpload,
+  selectedTurmaId,
+  onSelectTurma,
 }: PowerPointToolbarProps) => {
   const fonts = [
     "Arial",
@@ -358,25 +382,118 @@ export const PowerPointToolbar = ({
         <Separator orientation="vertical" className="h-6" />
 
         {/* Inserir elementos */}
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={onAddText} className="h-8">
-            <Type className="w-4 h-4 mr-2" />
-            Texto
-          </Button>
-          <Button variant="ghost" size="sm" className="h-8" asChild>
-            <label htmlFor="image-upload" className="cursor-pointer">
-              <ImageIcon className="w-4 h-4 mr-2" />
-              Imagem
-              <input
-                id="image-upload"
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-            </label>
-          </Button>
-        </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-8">
+              <Plus className="w-4 h-4 mr-2" />
+              Elementos
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-72" align="start">
+            <div className="space-y-2">
+              <Label>Adicionar Elementos</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="outline" size="sm" onClick={onAddText}>
+                  <Type className="w-4 h-4 mr-2" />
+                  Texto Livre
+                </Button>
+                <Button variant="outline" size="sm" onClick={onAddStudentName}>
+                  👤 Nome Aluno
+                </Button>
+                <Button variant="outline" size="sm" onClick={onAddCourseName}>
+                  📚 Nome Curso
+                </Button>
+                <Button variant="outline" size="sm" onClick={onAddInstructor}>
+                  👨‍🏫 Instrutor
+                </Button>
+                <Button variant="outline" size="sm" onClick={onAddStamp}>
+                  📌 Carimbo
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <label htmlFor="element-image-toolbar" className="cursor-pointer">
+                    <ImageIcon className="w-4 h-4 mr-2" />
+                    Imagem
+                    <input
+                      id="element-image-toolbar"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </Button>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        <Separator orientation="vertical" className="h-6" />
+
+        {/* Configurações */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-8">
+              🎨 Configurações
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80" align="start">
+            <div className="space-y-4">
+              <div>
+                <Label className="mb-2 block">Orientação</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant={orientation === "landscape" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => onOrientationChange("landscape")}
+                  >
+                    Paisagem
+                  </Button>
+                  <Button
+                    variant={orientation === "portrait" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => onOrientationChange("portrait")}
+                  >
+                    Retrato
+                  </Button>
+                </div>
+              </div>
+              
+              <div>
+                <Label className="mb-2 block">Imagem de Fundo</Label>
+                <Button variant="outline" size="sm" className="w-full" asChild>
+                  <label htmlFor="bg-upload-toolbar" className="cursor-pointer">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Carregar Fundo
+                    <input
+                      id="bg-upload-toolbar"
+                      type="file"
+                      accept="image/*"
+                      onChange={onBackgroundUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </Button>
+              </div>
+
+              <div className="border-t pt-4">
+                <TurmaAssociation 
+                  selectedTurmaId={selectedTurmaId}
+                  onSelectTurma={onSelectTurma}
+                />
+              </div>
+
+              {selectedElement && (
+                <div className="border-t pt-4">
+                  <Label className="mb-2 block">Transparência</Label>
+                  <OpacityControl
+                    selectedElement={selectedElement}
+                    onUpdateElement={onUpdateElement}
+                  />
+                </div>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
 
         <Separator orientation="vertical" className="h-6" />
 

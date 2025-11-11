@@ -7,13 +7,10 @@ import jsPDF from "jspdf";
 import diplomaTemplate from "@/assets/diploma-template.jpg";
 import { CertificateTemplateSelector } from "@/components/certificados/CertificateTemplateSelector";
 import { CertificateKonvaCanvas } from "@/components/certificados/CertificateKonvaCanvas";
-import { TurmaAssociation } from "@/components/certificados/TurmaAssociation";
 import { StudentCertificatesList } from "@/components/certificados/StudentCertificatesList";
 import { PowerPointToolbar } from "@/components/certificados/PowerPointToolbar";
 import { SlidesPanel } from "@/components/certificados/SlidesPanel";
-import { OpacityControl } from "@/components/certificados/OpacityControl";
 import { useCertificateTemplates } from "@/hooks/useCertificateTemplates";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Element {
@@ -65,7 +62,6 @@ export default function Certificados() {
   const [currentFont, setCurrentFont] = useState<string>("Arial");
   const [selectedTurmaId, setSelectedTurmaId] = useState<string | null>(null);
   const [showSlidesPanel, setShowSlidesPanel] = useState(true);
-  const [showElementsPanel, setShowElementsPanel] = useState(true);
   const [showCertificatesPanel, setShowCertificatesPanel] = useState(true);
 
   const activeSlide = slides.find((s) => s.id === activeSlideId) || slides[0];
@@ -619,14 +615,6 @@ export default function Certificados() {
             📑
           </Button>
           <Button
-            variant={showElementsPanel ? "default" : "outline"}
-            size="sm"
-            onClick={() => setShowElementsPanel(!showElementsPanel)}
-            title="Exibir/Ocultar Elementos e Configurações"
-          >
-            🎨
-          </Button>
-          <Button
             variant={showCertificatesPanel ? "default" : "outline"}
             size="sm"
             onClick={() => setShowCertificatesPanel(!showCertificatesPanel)}
@@ -654,6 +642,16 @@ export default function Certificados() {
             onTemplateNameChange={setTemplateName}
             selectedTemplateId={selectedTemplate?.id || "new"}
             onSelectTemplate={handleSelectTemplate}
+            onAddStudentName={addStudentName}
+            onAddCourseName={addCourseName}
+            onAddInstructor={addInstructor}
+            onAddStamp={addStamp}
+            orientation={orientation}
+            onOrientationChange={setOrientation}
+            backgroundImage={backgroundImage}
+            onBackgroundUpload={handleBackgroundUpload}
+            selectedTurmaId={selectedTurmaId}
+            onSelectTurma={setSelectedTurmaId}
           />
         </div>
       </div>
@@ -679,150 +677,6 @@ export default function Certificados() {
           />
         )}
 
-        {/* Painel lateral esquerdo - Elementos e Configurações */}
-        {showElementsPanel && (
-          <div className="w-80 border-r bg-muted/20">
-          <Tabs defaultValue="elements" className="h-full flex flex-col">
-            <TabsList className="w-full rounded-none border-b">
-              <TabsTrigger value="elements" className="flex-1">Elementos</TabsTrigger>
-              <TabsTrigger value="settings" className="flex-1">Configurações</TabsTrigger>
-            </TabsList>
-
-            <ScrollArea className="flex-1">
-              <TabsContent value="elements" className="p-4 mt-0 space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-3">Adicionar Elementos</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" onClick={addText} className="h-20 flex flex-col gap-2">
-                      <span className="text-2xl">T</span>
-                      <span className="text-xs">Texto Livre</span>
-                    </Button>
-                    <Button variant="outline" onClick={addStudentName} className="h-20 flex flex-col gap-2">
-                      <span className="text-2xl">👤</span>
-                      <span className="text-xs">Nome Aluno</span>
-                    </Button>
-                    <Button variant="outline" onClick={addCourseName} className="h-20 flex flex-col gap-2">
-                      <span className="text-2xl">📚</span>
-                      <span className="text-xs">Nome Curso</span>
-                    </Button>
-                    <Button variant="outline" onClick={addInstructor} className="h-20 flex flex-col gap-2">
-                      <span className="text-2xl">👨‍🏫</span>
-                      <span className="text-xs">Instrutor</span>
-                    </Button>
-                    <Button variant="outline" onClick={addStamp} className="h-20 flex flex-col gap-2">
-                      <span className="text-2xl">📌</span>
-                      <span className="text-xs">Carimbo</span>
-                    </Button>
-                    <Button variant="outline" className="h-20 flex flex-col gap-2" asChild>
-                      <label htmlFor="element-image" className="cursor-pointer">
-                        <span className="text-2xl">🖼️</span>
-                        <span className="text-xs">Imagem</span>
-                        <input
-                          id="element-image"
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) addImage(file);
-                          }}
-                          className="hidden"
-                        />
-                      </label>
-                    </Button>
-                  </div>
-                </div>
-
-                {selectedElement && (
-                  <div className="pt-4 border-t">
-                    <h3 className="font-semibold mb-3">Elemento Selecionado</h3>
-                    <div className="space-y-2">
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => moveLayer("front")}
-                          className="flex-1"
-                        >
-                          Trazer Frente
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => moveLayer("back")}
-                          className="flex-1"
-                        >
-                          Enviar Fundo
-                        </Button>
-                      </div>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={deleteElement}
-                        className="w-full"
-                      >
-                        Excluir Elemento
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="settings" className="p-4 mt-0 space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-3">Orientação</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      variant={orientation === "landscape" ? "default" : "outline"}
-                      onClick={() => setOrientation("landscape")}
-                    >
-                      Paisagem
-                    </Button>
-                    <Button
-                      variant={orientation === "portrait" ? "default" : "outline"}
-                      onClick={() => setOrientation("portrait")}
-                    >
-                      Retrato
-                    </Button>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold mb-3">Imagem de Fundo</h3>
-                  <Button variant="outline" className="w-full" asChild>
-                    <label htmlFor="bg-upload" className="cursor-pointer">
-                      Carregar Fundo
-                      <input
-                        id="bg-upload"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleBackgroundUpload}
-                        className="hidden"
-                      />
-                    </label>
-                  </Button>
-                </div>
-
-                <div className="border-t pt-4">
-                  <TurmaAssociation 
-                    selectedTurmaId={selectedTurmaId}
-                    onSelectTurma={setSelectedTurmaId}
-                  />
-                </div>
-
-                {selectedElement && (
-                  <div className="border-t pt-4">
-                    <h3 className="font-semibold mb-3">Transparência</h3>
-                    <OpacityControl
-                      selectedElement={selectedElement}
-                      onUpdateElement={updateElement}
-                    />
-                  </div>
-                )}
-              </TabsContent>
-            </ScrollArea>
-          </Tabs>
-          </div>
-        )}
 
         {/* Área central - Canvas */}
         <div className="flex-1 flex flex-col bg-muted/30">

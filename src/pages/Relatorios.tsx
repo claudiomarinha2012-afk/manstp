@@ -489,7 +489,28 @@ export default function Relatorios() {
 
       const { data: turmasData } = await supabase
         .from("aluno_turma")
-        .select("status, turmas(nome, ano, cursos(nome, modalidade, coordenador))")
+        .select(`
+          status,
+          data_duracao_curso,
+          local_curso,
+          sigla_curso,
+          turmas(
+            nome, 
+            ano, 
+            data_inicio,
+            data_fim,
+            situacao,
+            cursos(
+              nome, 
+              modalidade, 
+              coordenador,
+              instituicao,
+              local_realizacao,
+              tipo_curso,
+              categoria
+            )
+          )
+        `)
         .eq("aluno_id", selectedAluno);
 
       if (!alunoData) {
@@ -503,71 +524,161 @@ export default function Relatorios() {
 
       // Cabeçalho
       pdf.setFontSize(18);
+      pdf.setFont("helvetica", "bold");
       pdf.text("Relatório Individual do Aluno", pageWidth / 2, yPosition, { align: "center" });
+      yPosition += 10;
+      
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`Gerado em: ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}`, pageWidth / 2, yPosition, { align: "center" });
       yPosition += 15;
 
-      // Dados do aluno
-      pdf.setFontSize(12);
-      pdf.text("Dados Pessoais", 14, yPosition);
+      // Dados pessoais completos
+      pdf.setFontSize(14);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Dados Pessoais e Cadastrais", 14, yPosition);
       yPosition += 10;
 
       pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
       const dadosAluno = [
-        `Nome: ${alunoData.nome_completo}`,
+        `Nome Completo: ${alunoData.nome_completo}`,
+        `Matrícula: ${alunoData.matricula || "Não informado"}`,
         `Graduação: ${alunoData.graduacao}`,
         `Tipo Militar: ${alunoData.tipo_militar}`,
+        `Data de Nascimento: ${alunoData.data_nascimento ? new Date(alunoData.data_nascimento).toLocaleDateString("pt-BR") : "Não informado"}`,
         `Email: ${alunoData.email || "Não informado"}`,
         `Telefone: ${alunoData.telefone || "Não informado"}`,
+        `WhatsApp: ${alunoData.whatsapp || "Não informado"}`,
         `Local de Serviço: ${alunoData.local_servico || "Não informado"}`,
+        `Função: ${alunoData.funcao || "Não informado"}`,
       ];
 
       dadosAluno.forEach((linha) => {
+        if (yPosition > pdf.internal.pageSize.getHeight() - 20) {
+          pdf.addPage();
+          yPosition = 20;
+        }
         pdf.text(linha, 14, yPosition);
-        yPosition += 7;
+        yPosition += 6;
       });
 
       yPosition += 10;
 
-      // Turmas e cursos
+      // Histórico de cursos e turmas
       if (turmasData && turmasData.length > 0) {
-        pdf.setFontSize(12);
-        pdf.text("Turmas e Cursos", 14, yPosition);
+        if (yPosition > pdf.internal.pageSize.getHeight() - 40) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+
+        pdf.setFontSize(14);
+        pdf.setFont("helvetica", "bold");
+        pdf.text(`Histórico de Cursos (${turmasData.length} participações)`, 14, yPosition);
         yPosition += 10;
 
         pdf.setFontSize(10);
-        turmasData.forEach((item: any) => {
-          if (yPosition > pdf.internal.pageSize.getHeight() - 30) {
+        pdf.setFont("helvetica", "normal");
+        
+        turmasData.forEach((item: any, index: number) => {
+          if (yPosition > pdf.internal.pageSize.getHeight() - 50) {
             pdf.addPage();
             yPosition = 20;
           }
           
           const turma = item.turmas;
+          const curso = turma?.cursos;
           const status = item.status || 'Cursando';
-          const ano = turma?.ano || 'Não informado';
-          const modalidade = turma?.cursos?.modalidade || 'Não informado';
-          const coordenador = turma?.cursos?.coordenador || 'Não informado';
           
-          pdf.text(`• Curso: ${turma?.cursos?.nome}`, 14, yPosition);
+          // Título do curso
+          pdf.setFont("helvetica", "bold");
+          pdf.text(`${index + 1}. ${curso?.nome || "Curso não informado"}`, 14, yPosition);
           yPosition += 6;
-          pdf.text(`  Turma: ${turma?.nome} | Ano: ${ano}`, 14, yPosition);
-          yPosition += 6;
-          pdf.text(`  Modalidade: ${modalidade}`, 14, yPosition);
-          yPosition += 6;
-          pdf.text(`  Coordenador: ${coordenador}`, 14, yPosition);
-          yPosition += 6;
-          pdf.text(`  Status: ${status}`, 14, yPosition);
+          
+          pdf.setFont("helvetica", "normal");
+          
+          // Informações da turma
+          pdf.text(`   Turma: ${turma?.nome || "Não informado"}`, 14, yPosition);
+          yPosition += 5;
+          pdf.text(`   Ano: ${turma?.ano || "Não informado"}`, 14, yPosition);
+          yPosition += 5;
+          
+          if (turma?.data_inicio || turma?.data_fim) {
+            const dataInicio = turma?.data_inicio ? new Date(turma.data_inicio).toLocaleDateString("pt-BR") : "N/A";
+            const dataFim = turma?.data_fim ? new Date(turma.data_fim).toLocaleDateString("pt-BR") : "N/A";
+            pdf.text(`   Período: ${dataInicio} até ${dataFim}`, 14, yPosition);
+            yPosition += 5;
+          }
+          
+          pdf.text(`   Status: ${status}`, 14, yPosition);
+          yPosition += 5;
+          pdf.text(`   Situação da Turma: ${turma?.situacao || "Não informado"}`, 14, yPosition);
+          yPosition += 5;
+          
+          // Informações do curso
+          if (curso) {
+            if (curso.instituicao) {
+              pdf.text(`   Instituição: ${curso.instituicao}`, 14, yPosition);
+              yPosition += 5;
+            }
+            if (curso.modalidade) {
+              pdf.text(`   Modalidade: ${curso.modalidade}`, 14, yPosition);
+              yPosition += 5;
+            }
+            if (curso.tipo_curso) {
+              pdf.text(`   Tipo de Curso: ${curso.tipo_curso}`, 14, yPosition);
+              yPosition += 5;
+            }
+            if (curso.categoria) {
+              pdf.text(`   Categoria: ${curso.categoria}`, 14, yPosition);
+              yPosition += 5;
+            }
+            if (curso.local_realizacao) {
+              pdf.text(`   Local de Realização: ${curso.local_realizacao}`, 14, yPosition);
+              yPosition += 5;
+            }
+            if (curso.coordenador) {
+              pdf.text(`   Coordenador: ${curso.coordenador}`, 14, yPosition);
+              yPosition += 5;
+            }
+          }
+          
+          // Informações adicionais do vínculo
+          if (item.data_duracao_curso) {
+            pdf.text(`   Duração: ${new Date(item.data_duracao_curso).toLocaleDateString("pt-BR")}`, 14, yPosition);
+            yPosition += 5;
+          }
+          if (item.local_curso) {
+            pdf.text(`   Local do Curso: ${item.local_curso}`, 14, yPosition);
+            yPosition += 5;
+          }
+          if (item.sigla_curso) {
+            pdf.text(`   Sigla: ${item.sigla_curso}`, 14, yPosition);
+            yPosition += 5;
+          }
+          
           yPosition += 8;
         });
+      } else {
+        pdf.setFontSize(10);
+        pdf.text("Nenhum curso registrado para este aluno.", 14, yPosition);
+        yPosition += 10;
       }
 
       // Observações
       if (alunoData.observacoes) {
-        yPosition += 10;
-        pdf.setFontSize(12);
+        if (yPosition > pdf.internal.pageSize.getHeight() - 40) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        
+        pdf.setFontSize(14);
+        pdf.setFont("helvetica", "bold");
         pdf.text("Observações", 14, yPosition);
         yPosition += 10;
 
         pdf.setFontSize(10);
+        pdf.setFont("helvetica", "normal");
         const lines = pdf.splitTextToSize(alunoData.observacoes, pageWidth - 28);
         lines.forEach((line: string) => {
           if (yPosition > pdf.internal.pageSize.getHeight() - 20) {
@@ -575,11 +686,11 @@ export default function Relatorios() {
             yPosition = 20;
           }
           pdf.text(line, 14, yPosition);
-          yPosition += 7;
+          yPosition += 6;
         });
       }
 
-      pdf.save(`relatorio-aluno-${alunoData.nome_completo}-${Date.now()}.pdf`);
+      pdf.save(`relatorio-aluno-${alunoData.nome_completo.replace(/\s+/g, '_')}-${Date.now()}.pdf`);
       toast.success("Relatório individual exportado com sucesso");
     } catch (error) {
       console.error("Erro ao exportar relatório do aluno:", error);

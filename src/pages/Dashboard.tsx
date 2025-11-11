@@ -115,11 +115,19 @@ export default function Dashboard() {
 
         // Expeditos (STP) - TODOS os cursos em São Tomé e Príncipe
         const localCurso = (vinculo.local_curso || curso.local_realizacao || '').toLowerCase();
+        const siglaCurso = (vinculo.sigla_curso || '').toLowerCase();
         const isSTP = localCurso.includes('são tomé') || localCurso.includes('sao tome') || 
                       localCurso.includes('stp') || localCurso.includes('príncipe') || 
-                      localCurso.includes('principe');
+                      localCurso.includes('principe') || siglaCurso.includes('stp');
         
         if (isSTP) {
+          console.log('STP Course found:', {
+            aluno: vinculo.alunos?.nome_completo,
+            curso: curso.nome,
+            local: localCurso,
+            sigla: siglaCurso,
+            status: vinculo.status
+          });
           expeditosTotal++;
           if (isAndamento) expeditosAndamento++;
           if (isAguardando) expeditosAguardando++;
@@ -148,6 +156,13 @@ export default function Dashboard() {
       });
 
       eadTurmasAtivas = turmasUnicas.size;
+
+      console.log('📊 Dashboard Counts:', {
+        expeditosTotal,
+        expeditosAndamento,
+        expeditosAguardando,
+        totalVinculos: vinculos.length
+      });
 
       // Criar cards
       const now = new Date();

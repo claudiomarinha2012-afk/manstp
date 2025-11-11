@@ -85,8 +85,14 @@ export default function Horarios() {
 
   useEffect(() => {
     const last = localStorage.getItem("lovable_last_turma");
+    const lastSemana = localStorage.getItem("lastSelectedSemanaHorarios");
+    
     if (last) {
       setActiveTurma(JSON.parse(last));
+    }
+    
+    if (lastSemana) {
+      setSemanaAtual(parseInt(lastSemana));
     }
   }, []);
 
@@ -105,6 +111,9 @@ export default function Horarios() {
 
   useEffect(() => {
     if (activeTurma) {
+      // Salvar semana atual no localStorage
+      localStorage.setItem("lastSelectedSemanaHorarios", semanaAtual.toString());
+      
       loadGradeSemana(activeTurma.id, semanaAtual);
       calcularDataSemana(semanaAtual);
       setExportTurmaInfo(`${activeTurma.nome} - Semana ${semanaAtual}`);
@@ -118,10 +127,18 @@ export default function Horarios() {
       setTurmas(t || []);
 
       const last = localStorage.getItem("lovable_last_turma");
+      const lastSemana = localStorage.getItem("lastSelectedSemanaHorarios");
+      
       if (last) {
         const parsed = JSON.parse(last);
         const found = (t || []).find((x: any) => x.id === parsed.id);
-        if (found) setActiveTurma(found);
+        if (found) {
+          setActiveTurma(found);
+        }
+      }
+      
+      if (lastSemana) {
+        setSemanaAtual(parseInt(lastSemana));
       }
     } catch (err) {
       console.error(err);

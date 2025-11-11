@@ -76,15 +76,19 @@ serve(async (req) => {
     
     if (listError) {
       console.error('Erro ao listar usuários:', listError);
-      throw new Error('Erro ao verificar usuários existentes');
+      return new Response(
+        JSON.stringify({ success: false, error: 'Erro ao verificar usuários existentes' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
     
     const emailExists = existingUser?.users?.some(u => u.email?.toLowerCase() === email.toLowerCase());
 
     if (emailExists) {
+      console.log(`Email já cadastrado: ${email}`);
       return new Response(
-        JSON.stringify({ error: 'Este email já está cadastrado no sistema' }),
-        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, error: 'Este email já está cadastrado no sistema' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -99,13 +103,17 @@ serve(async (req) => {
 
     if (inviteCheckError) {
       console.error('Erro ao verificar convites:', inviteCheckError);
-      throw new Error('Erro ao verificar convites pendentes');
+      return new Response(
+        JSON.stringify({ success: false, error: 'Erro ao verificar convites pendentes' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     if (existingInvitation) {
+      console.log(`Convite pendente já existe para: ${email}`);
       return new Response(
-        JSON.stringify({ error: 'Já existe um convite pendente para este email' }),
-        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, error: 'Já existe um convite pendente para este email' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -127,7 +135,10 @@ serve(async (req) => {
 
     if (insertError) {
       console.error('Erro ao criar convite:', insertError);
-      throw new Error(`Erro ao criar convite: ${insertError.message}`);
+      return new Response(
+        JSON.stringify({ success: false, error: `Erro ao criar convite: ${insertError.message}` }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Enviar email via Resend

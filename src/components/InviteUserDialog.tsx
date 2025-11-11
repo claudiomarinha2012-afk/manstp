@@ -72,12 +72,21 @@ export function InviteUserDialog() {
 
       console.log("Resposta da função:", { error: response.error, data: response.data });
 
-      // Verificar primeiro se há erro no corpo da resposta (priority)
-      const data = response.data as { error?: string; success?: boolean };
+      // Verificar primeiro se há erro de rede
+      if (response.error) {
+        console.error("Erro de rede na invocação:", response.error);
+        toast.error("Erro ao enviar convite", {
+          description: "Erro de comunicação com o servidor.",
+        });
+        return;
+      }
+
+      // Verificar o corpo da resposta
+      const data = response.data as { success?: boolean; error?: string; message?: string };
       
-      // Tratar erros de validação retornados no corpo da resposta
-      if (data?.error) {
-        console.log("Erro no corpo da resposta:", data.error);
+      // Se success é false, temos um erro de validação
+      if (data?.success === false && data?.error) {
+        console.log("Erro de validação:", data.error);
         
         if (data.error.includes("já está cadastrado")) {
           toast.warning("Email já cadastrado", {
@@ -102,11 +111,10 @@ export function InviteUserDialog() {
         return;
       }
 
-      // Verificar se há erro no objeto error da resposta
-      if (response.error) {
-        console.error("Erro na invocação:", response.error);
+      // Se chegou aqui e success não é true, algo deu errado
+      if (data?.success !== true) {
         toast.error("Erro ao enviar convite", {
-          description: response.error.message || "Erro desconhecido",
+          description: "Resposta inesperada do servidor.",
         });
         return;
       }

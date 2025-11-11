@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RealtimeChannel } from "@supabase/supabase-js";
-import { DashboardCardConfig, DashboardCardType } from "@/components/DashboardCardConfig";
+import { DashboardCardConfig, DashboardCardType, CustomFilter } from "@/components/DashboardCardConfig";
 
 interface DashboardCard {
   id: string;
@@ -13,6 +13,7 @@ interface DashboardCard {
   valor: number;
   subtitulo?: string;
   cor: string; // Tailwind border color class
+  customFilter?: CustomFilter;
 }
 
 interface AlunoAndamento {
@@ -31,7 +32,8 @@ const DEFAULT_CARD_CONFIGS: { [key in DashboardCardType]: string } = {
   expeditos_stp: "Cursos Expeditos São Tomé e Príncipe",
   efomm_ciaga: "EFOMM CIAGA (And/Agd)",
   efomm_ciaba: "EFOMM CIABA (And/Agd)",
-  rov_eb: "ROV - EB"
+  rov_eb: "ROV - EB",
+  custom: "Card Personalizado"
 };
 
 export default function Dashboard() {
@@ -40,7 +42,7 @@ export default function Dashboard() {
   const [alunosAndamento, setAlunosAndamento] = useState<AlunoAndamento[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<string>("");
-  const [cardConfigs, setCardConfigs] = useState<{ [key: string]: { type: DashboardCardType; titulo: string } }>(() => {
+  const [cardConfigs, setCardConfigs] = useState<{ [key: string]: { type: DashboardCardType; titulo: string; customFilter?: CustomFilter } }>(() => {
     const saved = localStorage.getItem("dashboardCardConfigs");
     return saved ? JSON.parse(saved) : {};
   });
@@ -97,6 +99,14 @@ export default function Dashboard() {
       let efommCiabaTotal = 0, efommCiabaAndamento = 0, efommCiabaAguardando = 0;
       let rovEbTotal = 0, rovEbAndamento = 0, rovEbAguardando = 0;
       let cursosAndamentoBrasil = 0;
+
+      // Custom counts for each card config
+      const customCounts: { [key: string]: { total: number; andamento: number; aguardando: number } } = {};
+      Object.keys(cardConfigs).forEach(cardId => {
+        if (cardConfigs[cardId].type === "custom") {
+          customCounts[cardId] = { total: 0, andamento: 0, aguardando: 0 };
+        }
+      });
 
       const turmasUnicas = new Set<string>();
       const alunosArray: AlunoAndamento[] = [];
@@ -178,6 +188,43 @@ export default function Dashboard() {
           if (isAndamento) rovEbAndamento++;
           if (isAguardando) rovEbAguardando++;
         }
+
+        // Custom filters
+        Object.keys(cardConfigs).forEach(cardId => {
+          const config = cardConfigs[cardId];
+          if (config.type === "custom" && config.customFilter) {
+            const filter = config.customFilter;
+            let matches = false;
+
+            if (filter.nomeCurso) {
+              const keywords = filter.nomeCurso.toLowerCase().split(',').map(k => k.trim());
+              matches = matches || keywords.some(keyword => nomeCurso.includes(keyword));
+            }
+            if (filter.siglaCurso) {
+              const siglaCursoLower = siglaCurso.toLowerCase();
+              const keywords = filter.siglaCurso.toLowerCase().split(',').map(k => k.trim());
+              matches = matches || keywords.some(keyword => siglaCursoLower.includes(keyword));
+            }
+            if (filter.tipoCurso) {
+              const keywords = filter.tipoCurso.toLowerCase().split(',').map(k => k.trim());
+              matches = matches || keywords.some(keyword => tipoCurso.includes(keyword));
+            }
+            if (filter.modalidade) {
+              const keywords = filter.modalidade.toLowerCase().split(',').map(k => k.trim());
+              matches = matches || keywords.some(keyword => modalidade.includes(keyword));
+            }
+            if (filter.localCurso) {
+              const keywords = filter.localCurso.toLowerCase().split(',').map(k => k.trim());
+              matches = matches || keywords.some(keyword => localCurso.includes(keyword));
+            }
+
+            if (matches && customCounts[cardId]) {
+              customCounts[cardId].total++;
+              if (isAndamento) customCounts[cardId].andamento++;
+              if (isAguardando) customCounts[cardId].aguardando++;
+            }
+          }
+        });
       });
 
       eadTurmasAtivas = turmasUnicas.size;
@@ -206,7 +253,7 @@ export default function Dashboard() {
       const getCardConfig = (type: DashboardCardType, id: string) => {
         const saved = cardConfigs[id];
         if (saved) {
-          return { type: saved.type, titulo: saved.titulo };
+          return { type: saved.type, titulo: saved.titulo, customFilter: saved.customFilter };
         }
         return { type, titulo: DEFAULT_CARD_CONFIGS[type] };
       };
@@ -284,6 +331,12 @@ export default function Dashboard() {
               return { ...card, type, valor: efommCiabaTotal, subtitulo: `Andamento: ${efommCiabaAndamento} • Aguardando: ${efommCiabaAguardando}` };
             case "rov_eb":
               return { ...card, type, valor: rovEbTotal, subtitulo: `Andamento: ${rovEbAndamento} • Aguardando: ${rovEbAguardando}` };
+            case "custom":
+              const customData = customCounts[card.id];
+              if (customData) {
+                return { ...card, type, valor: customData.total, subtitulo: `Andamento: ${customData.andamento} • Aguardando: ${customData.aguardando}`, customFilter: savedConfig.customFilter };
+              }
+              return card;
           }
         }
         return card;
@@ -301,10 +354,10 @@ export default function Dashboard() {
     }
   };
 
-  const handleSaveCardConfig = (config: { id: string; type: DashboardCardType; titulo: string }) => {
+  const handleSaveCardConfig = (config: { id: string; type: DashboardCardType; titulo: string; customFilter?: CustomFilter }) => {
     const updated = {
       ...cardConfigs,
-      [config.id]: { type: config.type, titulo: config.titulo }
+      [config.id]: { type: config.type, titulo: config.titulo, customFilter: config.customFilter }
     };
     setCardConfigs(updated);
     localStorage.setItem("dashboardCardConfigs", JSON.stringify(updated));
@@ -384,7 +437,7 @@ export default function Dashboard() {
         {cards.map((card) => (
           <Card key={card.id} className={`shadow-card border-l-4 ${card.cor} relative`}>
             <DashboardCardConfig 
-              config={{ id: card.id, type: card.type, titulo: card.titulo }}
+              config={{ id: card.id, type: card.type, titulo: card.titulo, customFilter: card.customFilter }}
               onSave={handleSaveCardConfig}
             />
             <CardContent className="p-5 pt-10">

@@ -617,23 +617,23 @@ export default function Notas() {
                                        onChange={(e) => atualizarNota(aluno.id, disc.id, e.target.value)}
                                        className={`w-20 text-center font-semibold border-2 ${getNotaColor(nota)} transition-all focus:scale-105`}
                                      />
-                                     {precisaRecuperacao && nota > 0 && (
-                                       <div className="space-y-1">
-                                         <div className="text-xs text-red-600 dark:text-red-400 font-semibold">
-                                           Recuperação
-                                         </div>
-                                         <Input
-                                           type="number"
-                                           min="0"
-                                           max="20"
-                                           step="0.1"
-                                           value={notaRec || ""}
-                                           onChange={(e) => atualizarNotaRecuperacao(aluno.id, disc.id, e.target.value)}
-                                           placeholder="Rec."
-                                           className="w-20 text-center text-sm bg-yellow-50 dark:bg-yellow-950/20 border-yellow-400"
-                                         />
-                                       </div>
-                                     )}
+                                      {precisaRecuperacao && nota > 0 && (
+                                        <div className="space-y-1">
+                                          <div className="text-xs text-red-600 dark:text-red-400 font-semibold">
+                                            Recuperação
+                                          </div>
+                                          <Input
+                                            type="number"
+                                            min="0"
+                                            max="20"
+                                            step="0.1"
+                                            value={notaRec || ""}
+                                            onChange={(e) => atualizarNotaRecuperacao(aluno.id, disc.id, e.target.value)}
+                                            placeholder="Rec."
+                                            className="w-20 text-center text-sm bg-yellow-50 dark:bg-yellow-950/20 border-yellow-400 animate-pulse"
+                                          />
+                                        </div>
+                                      )}
                                    </div>
                                  </TableCell>
                               );

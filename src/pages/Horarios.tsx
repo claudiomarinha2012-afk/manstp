@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, User, Calendar, ChevronLeft, ChevronRight, Save, BookOpen, Download } from "lucide-react";
+import { Plus, User, Calendar, ChevronLeft, ChevronRight, Save, BookOpen, Download, Eye, EyeOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { startOfYear, addDays, format } from "date-fns";
@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUserRole } from "@/hooks/useUserRole";
 import { playBlockSound } from "@/lib/blockSound";
 import { PermissionBlockModal } from "@/components/PermissionBlockModal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 const DIAS = ["SEGUNDA-FEIRA", "TERÇA-FEIRA", "QUARTA-FEIRA", "QUINTA-FEIRA", "SEXTA-FEIRA"];
 const HORARIOS = [
@@ -69,6 +70,9 @@ export default function Horarios() {
   const [showAllTurmas, setShowAllTurmas] = useState(false);
   const [blockModal, setBlockModal] = useState({ open: false, message: "" });
   const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
+  const [showAlunos, setShowAlunos] = useState(true);
+  const [exportTurmaInfo, setExportTurmaInfo] = useState("");
+  const [exportDateRange, setExportDateRange] = useState("");
 
   // Filter turmas based on keywords
   const filteredTurmas = showAllTurmas 
@@ -95,6 +99,7 @@ export default function Horarios() {
       localStorage.setItem("lovable_last_turma", JSON.stringify(activeTurma));
       loadTurmaData(activeTurma.id);
       calcularDataSemana(semanaAtual);
+      setExportTurmaInfo(`${activeTurma.nome} - Semana ${semanaAtual}`);
     }
   }, [activeTurma]);
 
@@ -102,6 +107,7 @@ export default function Horarios() {
     if (activeTurma) {
       loadGradeSemana(activeTurma.id, semanaAtual);
       calcularDataSemana(semanaAtual);
+      setExportTurmaInfo(`${activeTurma.nome} - Semana ${semanaAtual}`);
     }
   }, [semanaAtual, anoSelecionado]);
 
@@ -160,6 +166,7 @@ export default function Horarios() {
     const inicioAno = startOfYear(new Date(ano, 0, 1));
     const dataInicio = addDays(inicioAno, (numeroSemana - 1) * 7);
     setDataInicioSemana(dataInicio);
+    setExportDateRange(`${format(dataInicio, "dd/MM/yyyy")} - ${format(addDays(dataInicio, 4), "dd/MM/yyyy")}`);
   }
 
   async function loadGradeSemana(turmaId: string, semana: number) {
@@ -391,8 +398,8 @@ export default function Horarios() {
     if (!activeTurma) return;
     
     try {
-      const turmaInfo = `${activeTurma.nome} - Semana ${semanaAtual}`;
-      const dateRange = `${format(dataInicioSemana, "dd/MM/yyyy")} - ${format(addDays(dataInicioSemana, 4), "dd/MM/yyyy")}`;
+      const turmaInfo = exportTurmaInfo || `${activeTurma.nome} - Semana ${semanaAtual}`;
+      const dateRange = exportDateRange || `${format(dataInicioSemana, "dd/MM/yyyy")} - ${format(addDays(dataInicioSemana, 4), "dd/MM/yyyy")}`;
       
       const doc = new Document({
         sections: [
@@ -545,26 +552,40 @@ export default function Horarios() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-lg">Alunos - {activeTurma.nome}</h2>
                 <div className="flex items-center gap-2">
-                  <Input
-                    value={novoAlunoNome}
-                    onChange={e => setNovoAlunoNome(e.target.value)}
-                    placeholder="Novo aluno"
-                    className="w-48"
-                  />
-                  <Button onClick={criarAluno}>Adicionar</Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAlunos(!showAlunos)}
+                  >
+                    {showAlunos ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
+                    {showAlunos ? "Ocultar" : "Mostrar"}
+                  </Button>
+                  {showAlunos && (
+                    <>
+                      <Input
+                        value={novoAlunoNome}
+                        onChange={e => setNovoAlunoNome(e.target.value)}
+                        placeholder="Novo aluno"
+                        className="w-48"
+                      />
+                      <Button onClick={criarAluno}>Adicionar</Button>
+                    </>
+                  )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
-                {alunos.map(al => (
-                  <div key={al.id} className="p-2 border rounded flex items-center gap-2">
-                    <User className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <div className="font-medium">{al.nome_completo}</div>
+              {showAlunos && (
+                <div className="grid grid-cols-3 gap-2">
+                  {alunos.map(al => (
+                    <div key={al.id} className="p-2 border rounded flex items-center gap-2">
+                      <User className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <div className="font-medium">{al.nome_completo}</div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </Card>
 
             <Card className="p-4">
@@ -619,15 +640,47 @@ export default function Horarios() {
                   <span className="text-sm text-muted-foreground">
                     {format(dataInicioSemana, "dd/MM/yyyy")} - {format(addDays(dataInicioSemana, 4), "dd/MM/yyyy")}
                   </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={exportToWord}
-                    className="gap-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    Exportar Word
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                      >
+                        <Download className="w-4 h-4" />
+                        Exportar Word
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Configurar Exportação</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="turmaInfo">Título da Grade</Label>
+                          <Input
+                            id="turmaInfo"
+                            value={exportTurmaInfo}
+                            onChange={(e) => setExportTurmaInfo(e.target.value)}
+                            placeholder="Ex: Turma FMN - Semana 10"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="dateRange">Período</Label>
+                          <Input
+                            id="dateRange"
+                            value={exportDateRange}
+                            onChange={(e) => setExportDateRange(e.target.value)}
+                            placeholder="Ex: 01/01/2025 - 05/01/2025"
+                          />
+                        </div>
+                        <Button onClick={exportToWord} className="w-full">
+                          <Download className="w-4 h-4 mr-2" />
+                          Exportar
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"

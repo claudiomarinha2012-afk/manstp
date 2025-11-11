@@ -65,8 +65,22 @@ export default function Notas() {
     fetchTurmas();
   }, []);
 
+  // Restaurar última turma selecionada ao carregar
+  useEffect(() => {
+    const lastTurmaId = localStorage.getItem("lastSelectedTurmaNotas");
+    if (lastTurmaId && turmas.length > 0) {
+      const turma = turmas.find(t => t.id === lastTurmaId);
+      if (turma) {
+        setSelectedTurma(turma);
+      }
+    }
+  }, [turmas]);
+
   useEffect(() => {
     if (selectedTurma) {
+      // Salvar turma selecionada no localStorage
+      localStorage.setItem("lastSelectedTurmaNotas", selectedTurma.id);
+      
       fetchAlunosDaTurma();
       fetchDisciplinas();
       fetchNotas();

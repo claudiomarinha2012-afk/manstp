@@ -14,6 +14,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
+import { InviteUserDialog } from "@/components/InviteUserDialog";
 
 const userSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -278,13 +279,15 @@ export default function Usuarios() {
           </p>
         </div>
         {isCoordenador && (
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2 w-full sm:w-auto">
-                <UserPlus className="h-4 w-4" />
-                Novo Usuário
-              </Button>
-            </DialogTrigger>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <InviteUserDialog />
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2 w-full sm:w-auto">
+                  <UserPlus className="h-4 w-4" />
+                  Criar Diretamente
+                </Button>
+              </DialogTrigger>
           <DialogContent className="max-w-md" onInteractOutside={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle>Cadastrar Novo Usuário</DialogTitle>
@@ -345,6 +348,7 @@ export default function Usuarios() {
             </form>
           </DialogContent>
         </Dialog>
+          </div>
         )}
       </div>
 

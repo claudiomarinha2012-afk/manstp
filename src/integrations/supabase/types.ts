@@ -515,6 +515,42 @@ export type Database = {
         }
         Relationships: []
       }
+      invitations: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          role: Database["public"]["Enums"]["app_role"]
+          token: string
+          used: boolean
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          invited_by: string
+          role?: Database["public"]["Enums"]["app_role"]
+          token: string
+          used?: boolean
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          token?: string
+          used?: boolean
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       notas: {
         Row: {
           aluno_id: string
@@ -725,6 +761,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_invitations: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

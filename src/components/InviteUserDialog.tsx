@@ -84,7 +84,22 @@ export function InviteUserDialog() {
       setOpen(false);
     } catch (error: any) {
       console.error("Erro ao enviar convite:", error);
-      toast.error(error.message || "Erro ao enviar convite");
+      
+      const errorMessage = error.message || "Erro ao enviar convite";
+      
+      if (errorMessage.includes("já está cadastrado")) {
+        toast.error("Email já cadastrado no sistema", {
+          description: "Este email já possui uma conta. Não é necessário enviar convite.",
+        });
+      } else if (errorMessage.includes("convite pendente")) {
+        toast.error("Convite já enviado anteriormente", {
+          description: "Já existe um convite pendente para este email.",
+        });
+      } else {
+        toast.error("Erro ao enviar convite", {
+          description: errorMessage,
+        });
+      }
     } finally {
       setLoading(false);
     }

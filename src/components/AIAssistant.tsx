@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bot, Send, X, Loader2, Sparkles, Volume2, VolumeX } from "lucide-react";
+import { Bot, Send, X, Loader2, Sparkles, Volume2, VolumeX, Mic, MicOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Message {
@@ -17,7 +17,10 @@ export const AIAssistant = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [listeningEnabled, setListeningEnabled] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -25,6 +28,97 @@ export const AIAssistant = () => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'pt-BR';
+    recognition.continuous = true;
+    recognition.interimResults = false;
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+      console.log('Reconhecido:', transcript);
+
+      if (transcript.includes('gestor')) {
+        const question = transcript.replace(/gestor/gi, '').trim();
+        if (question) {
+          setInput(question);
+          streamChat(question);
+          if (voiceEnabled) {
+            speakText('Sim, estou aqui. Processando sua pergunta.');
+          }
+        }
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Erro no reconhecimento de voz:', event.error);
+      if (event.error === 'no-speech') {
+        if (listeningEnabled) {
+          recognition.start();
+        }
+      }
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      if (listeningEnabled) {
+        try {
+          recognition.start();
+          setIsListening(true);
+        } catch (err) {
+          console.error('Erro ao reiniciar reconhecimento:', err);
+        }
+      }
+    };
+
+    recognitionRef.current = recognition;
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, [listeningEnabled, voiceEnabled]);
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      toast({
+        title: "Não suportado",
+        description: "Seu navegador não suporta reconhecimento de voz",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (listeningEnabled) {
+      recognitionRef.current.stop();
+      setListeningEnabled(false);
+      setIsListening(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+        setListeningEnabled(true);
+        setIsListening(true);
+        toast({
+          title: "Escuta ativada",
+          description: "Diga 'Gestor' seguido da sua pergunta",
+        });
+      } catch (err) {
+        console.error('Erro ao iniciar reconhecimento:', err);
+        toast({
+          title: "Erro",
+          description: "Não foi possível ativar a escuta",
+          variant: "destructive",
+        });
+      }
+    }
+  };
 
   const speakText = (text: string) => {
     if (!voiceEnabled || !('speechSynthesis' in window)) return;
@@ -182,6 +276,19 @@ export const AIAssistant = () => {
               <CardTitle className="text-base">Assistente IA</CardTitle>
             </div>
             <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleListening}
+                className={`h-8 w-8 hover:bg-primary-foreground/20 ${isListening ? 'bg-red-500/20' : ''}`}
+                title={listeningEnabled ? "Desativar escuta de voz" : "Ativar escuta de voz (diga 'Gestor')"}
+              >
+                {listeningEnabled ? (
+                  <Mic className={`h-4 w-4 ${isListening ? 'text-red-500 animate-pulse' : ''}`} />
+                ) : (
+                  <MicOff className="h-4 w-4" />
+                )}
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"

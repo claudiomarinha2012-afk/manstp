@@ -344,9 +344,53 @@ export default function Notas() {
     toast.info("Gerando PDF...");
     
     try {
+      // Salvar estilos originais
+      const originalStyles = {
+        fontSize: tableRef.current.style.fontSize,
+        background: tableRef.current.style.background,
+        backgroundColor: tableRef.current.style.backgroundColor,
+      };
+
+      // Aplicar estilos para PDF (fundo branco e fonte 14px)
+      tableRef.current.style.fontSize = "14px";
+      tableRef.current.style.background = "#ffffff";
+      tableRef.current.style.backgroundColor = "#ffffff";
+      
+      // Forçar todos os elementos filhos a terem fundo branco
+      const allElements = tableRef.current.querySelectorAll('*');
+      const originalElementStyles: { element: HTMLElement; background: string; backgroundColor: string }[] = [];
+      
+      allElements.forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        originalElementStyles.push({
+          element: htmlEl,
+          background: htmlEl.style.background,
+          backgroundColor: htmlEl.style.backgroundColor,
+        });
+        
+        // Remover backgrounds coloridos e gradientes
+        const computedStyle = window.getComputedStyle(htmlEl);
+        if (computedStyle.background.includes('gradient') || 
+            computedStyle.backgroundColor !== 'rgba(0, 0, 0, 0)' && 
+            computedStyle.backgroundColor !== 'transparent') {
+          htmlEl.style.background = "#ffffff";
+          htmlEl.style.backgroundColor = "#ffffff";
+        }
+      });
+
       const canvas = await html2canvas(tableRef.current, {
         scale: 2,
         backgroundColor: "#ffffff"
+      });
+      
+      // Restaurar estilos originais
+      tableRef.current.style.fontSize = originalStyles.fontSize;
+      tableRef.current.style.background = originalStyles.background;
+      tableRef.current.style.backgroundColor = originalStyles.backgroundColor;
+      
+      originalElementStyles.forEach(({ element, background, backgroundColor }) => {
+        element.style.background = background;
+        element.style.backgroundColor = backgroundColor;
       });
       
       const imgData = canvas.toDataURL('image/png');

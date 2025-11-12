@@ -119,16 +119,6 @@ export const OnboardingTour = () => {
       placement: "right",
     },
     {
-      target: '[data-tour="ai-assistant"]',
-      content: (
-        <div>
-          <h3 className="font-bold mb-2">🤖 Assistente IA</h3>
-          <p>Use o assistente virtual "Gestor" para consultar dados, gerar insights e receber ajuda com comandos de voz.</p>
-        </div>
-      ),
-      placement: "left",
-    },
-    {
       target: "body",
       content: (
         <div>

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bot, Send, X, Loader2, Sparkles, Volume2, VolumeX, Mic, MicOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   role: "user" | "assistant";
@@ -20,8 +21,10 @@ export const AIAssistant = () => {
   const [listeningEnabled, setListeningEnabled] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [waitingForQuestion, setWaitingForQuestion] = useState(false);
+  const [userName, setUserName] = useState<string>("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+  const hasGreeted = useRef(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -29,6 +32,49 @@ export const AIAssistant = () => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Buscar nome do usuário e dar boas-vindas
+  useEffect(() => {
+    const fetchUserAndGreet = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('nome_completo')
+            .eq('id', user.id)
+            .single();
+          
+          if (profile?.nome_completo) {
+            setUserName(profile.nome_completo);
+            
+            // Dar boas-vindas apenas uma vez por sessão
+            if (!hasGreeted.current) {
+              hasGreeted.current = true;
+              
+              // Aguardar um pouco para dar tempo do componente renderizar
+              setTimeout(() => {
+                const primeiroNome = profile.nome_completo.split(' ')[0];
+                const greeting = `Olá ${primeiroNome}, bem-vindo ao Gestor Escolar. Como posso ajudá-lo hoje?`;
+                
+                speakText(greeting);
+                
+                setMessages([{
+                  role: "assistant",
+                  content: greeting
+                }]);
+              }, 1000);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao buscar dados do usuário:', error);
+      }
+    };
+
+    fetchUserAndGreet();
+  }, []);
 
   useEffect(() => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {

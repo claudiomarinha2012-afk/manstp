@@ -25,11 +25,12 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Fetch system data for context
-    const [alunosRes, cursosRes, turmasRes, alunoTurmaRes] = await Promise.all([
-      supabase.from("alunos").select("id, nome_completo, graduacao, tipo_militar, funcao, local_servico"),
+    const [alunosRes, cursosRes, turmasRes, alunoTurmaRes, notasRes] = await Promise.all([
+      supabase.from("alunos").select("id, nome_completo, graduacao, tipo_militar, funcao, local_servico, email, telefone, whatsapp, matricula"),
       supabase.from("cursos").select("id, nome, tipo_curso, modalidade, local_realizacao, categoria"),
       supabase.from("turmas").select("id, nome, ano, situacao, data_inicio, data_fim"),
-      supabase.from("aluno_turma").select("aluno_id, turma_id, status, sigla_curso, local_curso")
+      supabase.from("aluno_turma").select("aluno_id, turma_id, status, sigla_curso, local_curso"),
+      supabase.from("notas").select("aluno_id, disciplina_id, nota, nota_recuperacao, turma_id")
     ]);
 
     const totalAlunos = alunosRes.data?.length || 0;
@@ -49,6 +50,12 @@ serve(async (req) => {
       return acc;
     }, {});
 
+    // Build detailed context with actual data
+    const alunosData = alunosRes.data || [];
+    const turmasData = turmasRes.data || [];
+    const alunoTurmaData = alunoTurmaRes.data || [];
+    const notasData = notasRes.data || [];
+
     const systemPrompt = `Você é um assistente inteligente do GESTOR ESCOLAR, um sistema de gestão educacional militar.
 
 DADOS DO SISTEMA:
@@ -63,20 +70,41 @@ ${Object.entries(statusCounts || {}).map(([status, count]) => `- ${status}: ${co
 Distribuição de turmas por situação:
 ${Object.entries(situacaoCounts || {}).map(([situacao, count]) => `- ${situacao}: ${count}`).join('\n')}
 
+DADOS DETALHADOS DE ALUNOS:
+${alunosData.slice(0, 100).map(a => `- ${a.nome_completo} (${a.graduacao} - ${a.tipo_militar}): ${a.funcao || 'N/A'} | ${a.local_servico || 'N/A'}`).join('\n')}
+${alunosData.length > 100 ? `... e mais ${alunosData.length - 100} alunos` : ''}
+
+DADOS DE TURMAS:
+${turmasData.map(t => `- ${t.nome} (${t.ano}): ${t.situacao} | ${t.data_inicio || 'N/A'} a ${t.data_fim || 'N/A'}`).join('\n')}
+
+VÍNCULOS ALUNO-TURMA:
+${alunoTurmaData.slice(0, 50).map(at => {
+  const aluno = alunosData.find(a => a.id === at.aluno_id);
+  const turma = turmasData.find(t => t.id === at.turma_id);
+  return `- ${aluno?.nome_completo || 'Aluno'} → ${turma?.nome || 'Turma'}: ${at.status} (${at.sigla_curso || 'N/A'})`;
+}).join('\n')}
+${alunoTurmaData.length > 50 ? `... e mais ${alunoTurmaData.length - 50} vínculos` : ''}
+
 SUAS CAPACIDADES:
 1. Responder perguntas sobre estatísticas e dados do sistema
-2. Gerar insights sobre desempenho de alunos e cursos
-3. Sugerir relatórios e análises
-4. Ajudar na interpretação de dados
-5. Fornecer recomendações baseadas nos dados
+2. Fornecer informações detalhadas sobre alunos específicos (nome, graduação, função, local de serviço, contatos)
+3. Listar alunos de turmas específicas com seus status
+4. Gerar insights sobre desempenho de alunos e cursos
+5. Sugerir relatórios e análises
+6. Ajudar na interpretação de dados
+7. Fornecer recomendações baseadas nos dados
+8. Buscar alunos por nome, graduação, turma ou função
 
 INSTRUÇÕES:
 - Seja conciso e direto nas respostas
 - Use os dados fornecidos para dar respostas precisas
+- Quando perguntarem sobre um aluno específico, forneça todos os detalhes disponíveis
+- Para perguntas sobre turmas, liste os alunos vinculados
 - Quando não souber algo específico, seja honesto
 - Sugira análises e relatórios relevantes quando apropriado
 - Use linguagem profissional mas acessível
-- Formate respostas com markdown quando necessário (listas, negrito, etc)`;
+- Formate respostas com markdown quando necessário (listas, negrito, tabelas)
+- Ao listar alunos, organize por relevância ou ordem alfabética`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

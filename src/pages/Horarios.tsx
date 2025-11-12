@@ -67,6 +67,7 @@ export default function Horarios() {
   const [novoAlunoNome, setNovoAlunoNome] = useState("");
   const [novaDisciplinaNome, setNovaDisciplinaNome] = useState("");
   const [showAllTurmas, setShowAllTurmas] = useState(false);
+  const [hideAllTurmas, setHideAllTurmas] = useState(false);
   const [blockModal, setBlockModal] = useState({ open: false, message: "" });
   const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
   const [showAlunos, setShowAlunos] = useState(true);
@@ -75,13 +76,15 @@ export default function Horarios() {
   const [showSidebar, setShowSidebar] = useState(true);
 
   // Filter turmas based on keywords
-  const filteredTurmas = showAllTurmas 
-    ? turmas 
-    : turmas.filter(t => 
-        TURMA_FILTER_KEYWORDS.some(keyword => 
-          (t.nome || "").toLowerCase().includes(keyword.toLowerCase())
-        )
-      );
+  const filteredTurmas = hideAllTurmas 
+    ? []
+    : showAllTurmas 
+      ? turmas 
+      : turmas.filter(t => 
+          TURMA_FILTER_KEYWORDS.some(keyword => 
+            (t.nome || "").toLowerCase().includes(keyword.toLowerCase())
+          )
+        );
 
   useEffect(() => {
     const last = localStorage.getItem("lovable_last_turma");
@@ -465,14 +468,26 @@ export default function Horarios() {
           </div>
         )}
 
-        <div className="mb-3">
+        <div className="mb-3 space-y-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setShowAllTurmas(!showAllTurmas)}
+            onClick={() => {
+              setHideAllTurmas(false);
+              setShowAllTurmas(!showAllTurmas);
+            }}
             className="w-full"
           >
             {showAllTurmas ? "Mostrar Filtradas" : "Mostrar Todas"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setHideAllTurmas(!hideAllTurmas)}
+            className="w-full"
+          >
+            {hideAllTurmas ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
+            {hideAllTurmas ? "Mostrar Turmas" : "Ocultar Todas"}
           </Button>
         </div>
 

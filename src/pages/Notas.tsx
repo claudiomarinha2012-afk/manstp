@@ -344,124 +344,88 @@ export default function Notas() {
     toast.info("Gerando PDF...");
     
     try {
-      // Salvar estilos originais
-      const originalStyles = {
-        fontSize: tableRef.current.style.fontSize,
-        background: tableRef.current.style.background,
-        backgroundColor: tableRef.current.style.backgroundColor,
-      };
-
-      // Aplicar estilos para PDF (fundo branco e fonte 14px)
-      tableRef.current.style.fontSize = "14px";
-      tableRef.current.style.background = "#ffffff";
-      tableRef.current.style.backgroundColor = "#ffffff";
+      // Coletar todos os inputs e seus valores
+      const inputs = tableRef.current.querySelectorAll('input');
+      const inputData: { element: HTMLInputElement; parent: HTMLElement; value: string; span?: HTMLSpanElement }[] = [];
       
-      // Forçar todos os elementos filhos a terem fundo branco e texto preto
+      inputs.forEach((input) => {
+        const htmlInput = input as HTMLInputElement;
+        const parent = htmlInput.parentElement;
+        if (!parent) return;
+        
+        // Criar span com o valor do input
+        const span = document.createElement('span');
+        span.textContent = htmlInput.value || '';
+        span.style.fontSize = '14px';
+        span.style.fontWeight = '600';
+        span.style.color = '#000000';
+        span.style.display = 'block';
+        span.style.textAlign = 'center';
+        span.style.padding = '12px';
+        span.style.minHeight = '40px';
+        span.style.lineHeight = '40px';
+        
+        // Substituir input por span
+        parent.replaceChild(span, htmlInput);
+        
+        inputData.push({
+          element: htmlInput,
+          parent: parent,
+          value: htmlInput.value,
+          span: span
+        });
+      });
+      
+      // Aplicar estilos para PDF
       const allElements = tableRef.current.querySelectorAll('*');
-      const originalElementStyles: { 
-        element: HTMLElement; 
-        background: string; 
-        backgroundColor: string;
-        color: string;
-        borderColor: string;
-        padding: string;
-        paddingTop: string;
-        height: string;
-        minHeight: string;
-        lineHeight: string;
-        display: string;
-        alignItems: string;
-        justifyContent: string;
-        textAlign: string;
-        verticalAlign: string;
-      }[] = [];
+      const originalStyles: { element: HTMLElement; background: string; backgroundColor: string; color: string }[] = [];
       
       allElements.forEach((el) => {
         const htmlEl = el as HTMLElement;
-        originalElementStyles.push({
+        originalStyles.push({
           element: htmlEl,
           background: htmlEl.style.background,
           backgroundColor: htmlEl.style.backgroundColor,
           color: htmlEl.style.color,
-          borderColor: htmlEl.style.borderColor,
-          padding: htmlEl.style.padding,
-          paddingTop: htmlEl.style.paddingTop,
-          height: htmlEl.style.height,
-          minHeight: htmlEl.style.minHeight,
-          lineHeight: htmlEl.style.lineHeight,
-          display: htmlEl.style.display,
-          alignItems: htmlEl.style.alignItems,
-          justifyContent: htmlEl.style.justifyContent,
-          textAlign: htmlEl.style.textAlign,
-          verticalAlign: htmlEl.style.verticalAlign,
         });
         
-        // Forçar fundo branco, texto preto e bordas pretas
-        htmlEl.style.background = "#ffffff";
-        htmlEl.style.backgroundColor = "#ffffff";
-        htmlEl.style.color = "#000000";
-        htmlEl.style.borderColor = "#000000";
-        
-        // Ajustar inputs para melhor visualização
-        if (htmlEl.tagName === 'INPUT') {
-          htmlEl.style.padding = "16px 8px";
-          htmlEl.style.paddingTop = "18px";
-          htmlEl.style.height = "50px";
-          htmlEl.style.minHeight = "50px";
-          htmlEl.style.lineHeight = "2";
-          htmlEl.style.textAlign = "center";
-          htmlEl.style.display = "flex";
-          htmlEl.style.alignItems = "center";
-          htmlEl.style.justifyContent = "center";
-          htmlEl.style.verticalAlign = "middle";
-        }
-        
-        // Ajustar células
-        if (htmlEl.tagName === 'TD' || htmlEl.tagName === 'TH') {
-          htmlEl.style.padding = "16px";
-          htmlEl.style.lineHeight = "2";
-          htmlEl.style.verticalAlign = "middle";
+        // Forçar fundo branco e texto preto
+        htmlEl.style.background = '#ffffff';
+        htmlEl.style.backgroundColor = '#ffffff';
+        if (htmlEl.textContent && htmlEl.textContent.trim()) {
+          htmlEl.style.color = '#000000';
         }
       });
 
+      // Capturar canvas
       const canvas = await html2canvas(tableRef.current, {
-        scale: 3,
-        backgroundColor: "#ffffff",
+        scale: 2.5,
+        backgroundColor: '#ffffff',
         logging: false,
         useCORS: true,
-        allowTaint: true,
-        windowWidth: tableRef.current.scrollWidth,
-        windowHeight: tableRef.current.scrollHeight,
       });
       
-      // Restaurar estilos originais
-      tableRef.current.style.fontSize = originalStyles.fontSize;
-      tableRef.current.style.background = originalStyles.background;
-      tableRef.current.style.backgroundColor = originalStyles.backgroundColor;
+      // Restaurar inputs
+      inputData.forEach(({ element, parent, span }) => {
+        if (span && parent) {
+          parent.replaceChild(element, span);
+        }
+      });
       
-      originalElementStyles.forEach(({ element, background, backgroundColor, color, borderColor, padding, paddingTop, height, minHeight, lineHeight, display, alignItems, justifyContent, textAlign, verticalAlign }) => {
+      // Restaurar estilos
+      originalStyles.forEach(({ element, background, backgroundColor, color }) => {
         element.style.background = background;
         element.style.backgroundColor = backgroundColor;
         element.style.color = color;
-        element.style.borderColor = borderColor;
-        element.style.padding = padding;
-        element.style.paddingTop = paddingTop;
-        element.style.height = height;
-        element.style.minHeight = minHeight;
-        element.style.lineHeight = lineHeight;
-        element.style.display = display;
-        element.style.alignItems = alignItems;
-        element.style.justifyContent = justifyContent;
-        element.style.textAlign = textAlign;
-        element.style.verticalAlign = verticalAlign;
       });
       
+      // Gerar PDF
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('l', 'mm', 'a4'); // landscape A4
+      const pdf = new jsPDF('l', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      // Adicionar cabeçalho
+      // Cabeçalho
       pdf.setFontSize(16);
       pdf.setFont('helvetica', 'bold');
       pdf.text(`Boletim de Notas - ${selectedTurma?.nome || 'Turma'}`, pdfWidth / 2, 15, { align: 'center' });
@@ -472,10 +436,10 @@ export default function Notas() {
       pdf.text(`Local: ${infoTurma.local}`, 15, 32);
       pdf.text(`Ano: ${selectedTurma?.ano || ''}`, pdfWidth - 15, 25, { align: 'right' });
       
-      // Adicionar tabela com melhor proporção
+      // Adicionar tabela
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
-      const ratio = Math.min((pdfWidth - 10) / imgWidth, (pdfHeight - 50) / imgHeight);
+      const ratio = Math.min((pdfWidth - 20) / imgWidth, (pdfHeight - 50) / imgHeight);
       const finalWidth = imgWidth * ratio;
       const finalHeight = imgHeight * ratio;
       const imgX = (pdfWidth - finalWidth) / 2;

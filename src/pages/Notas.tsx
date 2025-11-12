@@ -356,9 +356,15 @@ export default function Notas() {
       tableRef.current.style.background = "#ffffff";
       tableRef.current.style.backgroundColor = "#ffffff";
       
-      // Forçar todos os elementos filhos a terem fundo branco
+      // Forçar todos os elementos filhos a terem fundo branco e texto preto
       const allElements = tableRef.current.querySelectorAll('*');
-      const originalElementStyles: { element: HTMLElement; background: string; backgroundColor: string }[] = [];
+      const originalElementStyles: { 
+        element: HTMLElement; 
+        background: string; 
+        backgroundColor: string;
+        color: string;
+        borderColor: string;
+      }[] = [];
       
       allElements.forEach((el) => {
         const htmlEl = el as HTMLElement;
@@ -366,16 +372,15 @@ export default function Notas() {
           element: htmlEl,
           background: htmlEl.style.background,
           backgroundColor: htmlEl.style.backgroundColor,
+          color: htmlEl.style.color,
+          borderColor: htmlEl.style.borderColor,
         });
         
-        // Remover backgrounds coloridos e gradientes
-        const computedStyle = window.getComputedStyle(htmlEl);
-        if (computedStyle.background.includes('gradient') || 
-            computedStyle.backgroundColor !== 'rgba(0, 0, 0, 0)' && 
-            computedStyle.backgroundColor !== 'transparent') {
-          htmlEl.style.background = "#ffffff";
-          htmlEl.style.backgroundColor = "#ffffff";
-        }
+        // Forçar fundo branco, texto preto e bordas pretas
+        htmlEl.style.background = "#ffffff";
+        htmlEl.style.backgroundColor = "#ffffff";
+        htmlEl.style.color = "#000000";
+        htmlEl.style.borderColor = "#000000";
       });
 
       const canvas = await html2canvas(tableRef.current, {
@@ -388,9 +393,11 @@ export default function Notas() {
       tableRef.current.style.background = originalStyles.background;
       tableRef.current.style.backgroundColor = originalStyles.backgroundColor;
       
-      originalElementStyles.forEach(({ element, background, backgroundColor }) => {
+      originalElementStyles.forEach(({ element, background, backgroundColor, color, borderColor }) => {
         element.style.background = background;
         element.style.backgroundColor = backgroundColor;
+        element.style.color = color;
+        element.style.borderColor = borderColor;
       });
       
       const imgData = canvas.toDataURL('image/png');

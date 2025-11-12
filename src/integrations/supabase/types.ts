@@ -606,6 +606,57 @@ export type Database = {
           },
         ]
       }
+      presencas: {
+        Row: {
+          aluno_id: string
+          created_at: string | null
+          data: string
+          id: string
+          observacao: string | null
+          presente: boolean
+          turma_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          aluno_id: string
+          created_at?: string | null
+          data: string
+          id?: string
+          observacao?: string | null
+          presente?: boolean
+          turma_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          aluno_id?: string
+          created_at?: string | null
+          data?: string
+          id?: string
+          observacao?: string | null
+          presente?: boolean
+          turma_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presencas_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "presencas_turma_id_fkey"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "turmas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null

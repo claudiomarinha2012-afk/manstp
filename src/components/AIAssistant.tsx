@@ -29,8 +29,19 @@ export const AIAssistant = () => {
   const speakText = (text: string) => {
     if (!voiceEnabled || !('speechSynthesis' in window)) return;
     
+    // Remove markdown formatting for cleaner speech
+    const cleanText = text
+      .replace(/\*\*/g, '') // Remove bold markers
+      .replace(/\*/g, '')   // Remove italic markers
+      .replace(/#{1,6}\s/g, '') // Remove heading markers
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove links, keep text
+      .replace(/`{1,3}/g, '') // Remove code markers
+      .replace(/[-•]\s/g, '') // Remove bullet points
+      .replace(/\n{2,}/g, '. ') // Replace multiple newlines with period
+      .replace(/\n/g, ' '); // Replace single newlines with space
+    
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
+    const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = 'pt-BR';
     utterance.rate = 1.0;
     utterance.pitch = 1.0;

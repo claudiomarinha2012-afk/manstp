@@ -9,6 +9,7 @@ import { OnlineUsers } from "./OnlineUsers";
 import { ThemeToggle } from "./ThemeToggle";
 import { BackgroundSettings } from "./BackgroundSettings";
 import { supabase } from "@/integrations/supabase/client";
+import { OnboardingTour } from "./OnboardingTour";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -44,6 +45,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     : (customBackgrounds.background1 || logoFundo);
   return (
     <SidebarProvider>
+      <OnboardingTour />
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col relative">

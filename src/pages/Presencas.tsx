@@ -5,11 +5,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Calendar, Download, Check, X, Share2 } from "lucide-react";
+import { Calendar, Download, Check, X, Share2, FileText } from "lucide-react";
 import { format, addDays, startOfWeek, endOfWeek, isWeekend } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { Document, Packer, Table as DocxTable, TableRow as DocxTableRow, TableCell as DocxTableCell, Paragraph, TextRun, AlignmentType, WidthType, BorderStyle } from "docx";
+import { saveAs } from "file-saver";
 import { useUserRole } from "@/hooks/useUserRole";
 import { playBlockSound } from "@/lib/blockSound";
 import { PermissionBlockModal } from "@/components/PermissionBlockModal";
@@ -331,6 +333,154 @@ export default function Presencas() {
     }
   };
 
+  const exportarPresencasWord = async () => {
+    if (!selectedTurma || alunos.length === 0) return;
+
+    toast.info("Gerando documento Word...");
+
+    try {
+      const firstDay = weekDates[0];
+      const lastDay = weekDates[weekDates.length - 1];
+      const periodoStr = `${format(firstDay, "dd/MM/yyyy", { locale: ptBR })} a ${format(
+        lastDay,
+        "dd/MM/yyyy",
+        { locale: ptBR }
+      )}`;
+
+      // Criar cabeçalho da tabela
+      const headerCells = [
+        new DocxTableCell({
+          children: [new Paragraph({ text: "Aluno", alignment: AlignmentType.CENTER })],
+          width: { size: 30, type: WidthType.PERCENTAGE },
+        }),
+      ];
+
+      weekDates.forEach((data) => {
+        headerCells.push(
+          new DocxTableCell({
+            children: [
+              new Paragraph({
+                children: [
+                  new TextRun({ text: format(data, "EEE", { locale: ptBR }), bold: true }),
+                  new TextRun({ text: "\n" + format(data, "dd/MM"), bold: true }),
+                ],
+                alignment: AlignmentType.CENTER,
+              }),
+            ],
+            width: { size: 10, type: WidthType.PERCENTAGE },
+          })
+        );
+      });
+
+      headerCells.push(
+        new DocxTableCell({
+          children: [new Paragraph({ text: "Presenças", alignment: AlignmentType.CENTER })],
+          width: { size: 10, type: WidthType.PERCENTAGE },
+        }),
+        new DocxTableCell({
+          children: [new Paragraph({ text: "Faltas", alignment: AlignmentType.CENTER })],
+          width: { size: 10, type: WidthType.PERCENTAGE },
+        }),
+        new DocxTableCell({
+          children: [new Paragraph({ text: "%", alignment: AlignmentType.CENTER })],
+          width: { size: 10, type: WidthType.PERCENTAGE },
+        })
+      );
+
+      const headerRow = new DocxTableRow({
+        children: headerCells,
+        tableHeader: true,
+      });
+
+      // Criar linhas de dados
+      const dataRows = alunos.map((aluno) => {
+        const stats = estatisticas.find((s) => s.alunoId === aluno.id);
+        const cells = [
+          new DocxTableCell({
+            children: [
+              new Paragraph({ text: aluno.nome_completo }),
+              new Paragraph({ text: aluno.graduacao }),
+            ],
+          }),
+        ];
+
+        weekDates.forEach((data) => {
+          const presente = getPresenca(aluno.id, data);
+          const symbol = presente === true ? "✓" : presente === false ? "✗" : "-";
+          cells.push(
+            new DocxTableCell({
+              children: [new Paragraph({ text: symbol, alignment: AlignmentType.CENTER })],
+            })
+          );
+        });
+
+        cells.push(
+          new DocxTableCell({
+            children: [new Paragraph({ text: String(stats?.presentes || 0), alignment: AlignmentType.CENTER })],
+          }),
+          new DocxTableCell({
+            children: [new Paragraph({ text: String(stats?.ausentes || 0), alignment: AlignmentType.CENTER })],
+          }),
+          new DocxTableCell({
+            children: [new Paragraph({ text: `${stats?.percentual}%`, alignment: AlignmentType.CENTER })],
+          })
+        );
+
+        return new DocxTableRow({ children: cells });
+      });
+
+      // Criar documento
+      const doc = new Document({
+        sections: [
+          {
+            properties: {
+              page: {
+                size: {
+                  orientation: "landscape",
+                },
+              },
+            },
+            children: [
+              new Paragraph({
+                text: `MAPA DE PRESENÇA - ${selectedTurma.nome}`,
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 200 },
+                style: "Heading1",
+              }),
+              new Paragraph({
+                text: `Período: ${periodoStr}`,
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 400 },
+              }),
+              new DocxTable({
+                rows: [headerRow, ...dataRows],
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                borders: {
+                  top: { style: BorderStyle.SINGLE, size: 1 },
+                  bottom: { style: BorderStyle.SINGLE, size: 1 },
+                  left: { style: BorderStyle.SINGLE, size: 1 },
+                  right: { style: BorderStyle.SINGLE, size: 1 },
+                  insideHorizontal: { style: BorderStyle.SINGLE, size: 1 },
+                  insideVertical: { style: BorderStyle.SINGLE, size: 1 },
+                },
+              }),
+            ],
+          },
+        ],
+      });
+
+      // Gerar blob e salvar
+      const blob = await Packer.toBlob(doc);
+      const fileName = `presenca_${selectedTurma.nome.replace(/\s+/g, '_')}_${format(weekStart, "yyyy-MM-dd")}.docx`;
+      saveAs(blob, fileName);
+
+      toast.success("Documento Word gerado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar documento Word:", error);
+      toast.error("Erro ao gerar documento Word");
+    }
+  };
+
   const estatisticas = calcularEstatisticas();
 
   return (
@@ -384,14 +534,18 @@ export default function Presencas() {
           </div>
 
           {selectedTurma && alunos.length > 0 && (
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button onClick={() => exportarPresencas('download')} className="gap-2">
                 <Download className="h-4 w-4" />
-                Salvar no Computador
+                PDF - Computador
               </Button>
               <Button onClick={() => exportarPresencas('whatsapp')} variant="outline" className="gap-2">
                 <Share2 className="h-4 w-4" />
-                Compartilhar WhatsApp
+                PDF - WhatsApp
+              </Button>
+              <Button onClick={exportarPresencasWord} variant="secondary" className="gap-2">
+                <FileText className="h-4 w-4" />
+                Exportar Word
               </Button>
             </div>
           )}

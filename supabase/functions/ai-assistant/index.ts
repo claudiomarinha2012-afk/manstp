@@ -107,65 +107,26 @@ ${Object.entries(situacaoCounts || {}).map(([situacao, count]) => `- ${situacao}
 DADOS COMPLETOS DO SISTEMA (ACESSO IRRESTRITO)
 ═══════════════════════════════════════════════════════
 
-📚 ALUNOS (${alunosData.length} registros):
-${alunosData.map(a => `
-• ID: ${a.id}
-  Nome: ${a.nome_completo}
-  Matrícula: ${a.matricula}
-  Graduação: ${a.graduacao} | Tipo: ${a.tipo_militar}
-  Função: ${a.funcao || 'N/A'}
-  Local: ${a.local_servico || 'N/A'}
-  Email: ${a.email || 'N/A'}
-  Tel: ${a.telefone || 'N/A'} | WhatsApp: ${a.whatsapp || 'N/A'}
-  Nasc: ${a.data_nascimento || 'N/A'}
-`).join('\n')}
+📚 ALUNOS CADASTRADOS (${alunosData.length} registros):
+${alunosData.map(a => `[ALUNO_ID: ${a.id}] ${a.nome_completo} | Matrícula: ${a.matricula} | ${a.graduacao} ${a.tipo_militar} | Função: ${a.funcao || 'N/A'} | Local: ${a.local_servico || 'N/A'} | Email: ${a.email || 'N/A'} | Tel: ${a.telefone || 'N/A'} | WhatsApp: ${a.whatsapp || 'N/A'} | Nasc: ${a.data_nascimento || 'N/A'}`).join('\n')}
 
 🎓 CURSOS (${cursosData.length} registros):
-${cursosData.map(c => `
-• ID: ${c.id}
-  Nome: ${c.nome}
-  Tipo: ${c.tipo_curso || 'N/A'} | Modalidade: ${c.modalidade || 'N/A'}
-  Local: ${c.local_realizacao || 'N/A'}
-  Categoria: ${c.categoria || 'N/A'}
-  Coordenador: ${c.coordenador || 'N/A'}
-  Obs: ${c.observacoes || 'N/A'}
-`).join('\n')}
+${cursosData.map(c => `[CURSO_ID: ${c.id}] ${c.nome} | Tipo: ${c.tipo_curso || 'N/A'} | Modalidade: ${c.modalidade || 'N/A'} | Local: ${c.local_realizacao || 'N/A'} | Categoria: ${c.categoria || 'N/A'} | Coord: ${c.coordenador || 'N/A'}`).join('\n')}
 
 🏫 TURMAS (${turmasData.length} registros):
-${turmasData.map(t => `
-• ID: ${t.id}
-  Nome: ${t.nome} | Ano: ${t.ano}
-  Curso ID: ${t.curso_id}
-  Situação: ${t.situacao}
-  Tipo Militar: ${t.tipo_militar}
-  Período: ${t.data_inicio || 'N/A'} até ${t.data_fim || 'N/A'}
-  Obs: ${t.observacoes || 'N/A'}
-`).join('\n')}
+${turmasData.map(t => `[TURMA_ID: ${t.id}] ${t.nome} (${t.ano}) | Curso_ID: ${t.curso_id} | Situação: ${t.situacao} | Tipo: ${t.tipo_militar} | Período: ${t.data_inicio || 'N/A'} até ${t.data_fim || 'N/A'}`).join('\n')}
 
 👨‍🏫 INSTRUTORES (${instrutoresData.length} registros):
-${instrutoresData.map(i => `
-• ID: ${i.id}
-  Nome: ${i.nome_completo}
-  Graduação: ${i.graduacao} | Tipo: ${i.tipo_militar}
-  Especialidade: ${i.especialidade || 'N/A'}
-  Email: ${i.email || 'N/A'}
-  Tel: ${i.telefone || 'N/A'}
-  Obs: ${i.observacoes || 'N/A'}
-`).join('\n')}
+${instrutoresData.map(i => `[INSTRUTOR_ID: ${i.id}] ${i.nome_completo} | ${i.graduacao} ${i.tipo_militar} | Especialidade: ${i.especialidade || 'N/A'} | Email: ${i.email || 'N/A'} | Tel: ${i.telefone || 'N/A'}`).join('\n')}
 
 📖 DISCIPLINAS (${disciplinasData.length} registros):
-${disciplinasData.map(d => `
-• ID: ${d.id}
-  Nome: ${d.nome}
-  Turma ID: ${d.turma_id}
-  Carga Horária: ${d.carga_horaria || 0}h
-`).join('\n')}
+${disciplinasData.map(d => `[DISCIPLINA_ID: ${d.id}] ${d.nome} | Turma_ID: ${d.turma_id} | Carga: ${d.carga_horaria || 0}h`).join('\n')}
 
 📊 NOTAS (${notasData.length} registros):
 ${notasData.slice(0, 200).map(n => {
   const aluno = alunosData.find(a => a.id === n.aluno_id);
   const disciplina = disciplinasData.find(d => d.id === n.disciplina_id);
-  return `• Aluno: ${aluno?.nome_completo || n.aluno_id} | Disciplina: ${disciplina?.nome || n.disciplina_id} | Nota: ${n.nota} | Rec: ${n.nota_recuperacao || 'N/A'}`;
+  return `[ALUNO_ID: ${n.aluno_id}] ${aluno?.nome_completo || 'Aluno'} | [DISCIPLINA_ID: ${n.disciplina_id}] ${disciplina?.nome || 'Disciplina'} | [TURMA_ID: ${n.turma_id}] | Nota: ${n.nota} | Recuperação: ${n.nota_recuperacao || 'N/A'}`;
 }).join('\n')}
 ${notasData.length > 200 ? `\n... e mais ${notasData.length - 200} registros de notas` : ''}
 
@@ -173,7 +134,7 @@ ${notasData.length > 200 ? `\n... e mais ${notasData.length - 200} registros de 
 ${alunoTurmaData.map(at => {
   const aluno = alunosData.find(a => a.id === at.aluno_id);
   const turma = turmasData.find(t => t.id === at.turma_id);
-  return `• ${aluno?.nome_completo || at.aluno_id} → ${turma?.nome || at.turma_id}: ${at.status} | Sigla: ${at.sigla_curso || 'N/A'} | Local: ${at.local_curso || 'N/A'}`;
+  return `[ALUNO_ID: ${at.aluno_id}] ${aluno?.nome_completo || 'Aluno'} → [TURMA_ID: ${at.turma_id}] ${turma?.nome || 'Turma'} | Status: ${at.status} | Sigla: ${at.sigla_curso || 'N/A'} | Local: ${at.local_curso || 'N/A'}`;
 }).join('\n')}
 
 🔗 VÍNCULOS INSTRUTOR-TURMA (${instrutorTurmaData.length}):

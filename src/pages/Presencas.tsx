@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Calendar, Download, Check, X, Share2 } from "lucide-react";
-import { format, addDays, startOfWeek, endOfWeek } from "date-fns";
+import { format, addDays, startOfWeek, endOfWeek, isWeekend } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -43,8 +43,10 @@ export default function Presencas() {
   const [blockModal, setBlockModal] = useState({ open: false, message: "" });
   const tableRef = useRef<HTMLDivElement>(null);
 
-  // Gerar datas da semana
-  const weekDates = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  // Gerar datas da semana (apenas dias úteis - segunda a sexta)
+  const weekDates = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)).filter(
+    (date) => !isWeekend(date)
+  );
 
   useEffect(() => {
     fetchTurmas();
@@ -234,8 +236,10 @@ export default function Presencas() {
 
       pdf.setFontSize(12);
       pdf.setFont("helvetica", "normal");
-      const periodoStr = `${format(weekStart, "dd/MM/yyyy", { locale: ptBR })} a ${format(
-        endOfWeek(weekStart, { locale: ptBR }),
+      const firstDay = weekDates[0];
+      const lastDay = weekDates[weekDates.length - 1];
+      const periodoStr = `${format(firstDay, "dd/MM/yyyy", { locale: ptBR })} a ${format(
+        lastDay,
         "dd/MM/yyyy",
         { locale: ptBR }
       )}`;
@@ -357,8 +361,12 @@ export default function Presencas() {
             <CardTitle className="text-center">
               Mapa de Presença - {selectedTurma.nome}
               <p className="text-sm font-normal text-muted-foreground mt-1">
-                {format(weekStart, "dd/MM/yyyy", { locale: ptBR })} a{" "}
-                {format(endOfWeek(weekStart, { locale: ptBR }), "dd/MM/yyyy", { locale: ptBR })}
+                {weekDates.length > 0 && (
+                  <>
+                    {format(weekDates[0], "dd/MM/yyyy", { locale: ptBR })} a{" "}
+                    {format(weekDates[weekDates.length - 1], "dd/MM/yyyy", { locale: ptBR })}
+                  </>
+                )}
               </p>
             </CardTitle>
           </CardHeader>

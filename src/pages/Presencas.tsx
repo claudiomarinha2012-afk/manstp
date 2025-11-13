@@ -363,7 +363,7 @@ export default function Presencas() {
       const headerCells = [
         new DocxTableCell({
           children: [new Paragraph({ text: "Aluno", alignment: AlignmentType.CENTER })],
-          width: { size: 30, type: WidthType.PERCENTAGE },
+          width: { size: 40, type: WidthType.PERCENTAGE },
         }),
       ];
 
@@ -379,7 +379,7 @@ export default function Presencas() {
                 alignment: AlignmentType.CENTER,
               }),
             ],
-            width: { size: 10, type: WidthType.PERCENTAGE },
+            width: { size: 8, type: WidthType.PERCENTAGE },
           })
         );
       });
@@ -387,15 +387,15 @@ export default function Presencas() {
       headerCells.push(
         new DocxTableCell({
           children: [new Paragraph({ text: "Presenças", alignment: AlignmentType.CENTER })],
-          width: { size: 10, type: WidthType.PERCENTAGE },
+          width: { size: 6, type: WidthType.PERCENTAGE },
         }),
         new DocxTableCell({
           children: [new Paragraph({ text: "Faltas", alignment: AlignmentType.CENTER })],
-          width: { size: 10, type: WidthType.PERCENTAGE },
+          width: { size: 6, type: WidthType.PERCENTAGE },
         }),
         new DocxTableCell({
           children: [new Paragraph({ text: "%", alignment: AlignmentType.CENTER })],
-          width: { size: 10, type: WidthType.PERCENTAGE },
+          width: { size: 6, type: WidthType.PERCENTAGE },
         })
       );
 
@@ -410,9 +410,16 @@ export default function Presencas() {
         const cells = [
           new DocxTableCell({
             children: [
-              new Paragraph({ text: aluno.nome_completo }),
-              new Paragraph({ text: aluno.graduacao }),
+              new Paragraph({ 
+                text: aluno.nome_completo,
+                style: "Normal"
+              }),
+              new Paragraph({ 
+                text: aluno.graduacao,
+                style: "Normal"
+              }),
             ],
+            width: { size: 40, type: WidthType.PERCENTAGE },
           }),
         ];
 
@@ -429,12 +436,15 @@ export default function Presencas() {
         cells.push(
           new DocxTableCell({
             children: [new Paragraph({ text: String(stats?.presentes || 0), alignment: AlignmentType.CENTER })],
+            width: { size: 6, type: WidthType.PERCENTAGE },
           }),
           new DocxTableCell({
             children: [new Paragraph({ text: String(stats?.ausentes || 0), alignment: AlignmentType.CENTER })],
+            width: { size: 6, type: WidthType.PERCENTAGE },
           }),
           new DocxTableCell({
             children: [new Paragraph({ text: `${stats?.percentual}%`, alignment: AlignmentType.CENTER })],
+            width: { size: 6, type: WidthType.PERCENTAGE },
           })
         );
 
@@ -584,7 +594,7 @@ export default function Presencas() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="min-w-[200px]">Aluno</TableHead>
+                    <TableHead className="min-w-[250px] w-[250px]">Aluno</TableHead>
                     {weekDates.map((data) => (
                       <TableHead key={data.toISOString()} className="text-center min-w-[100px]">
                         <div className="flex flex-col">
@@ -603,12 +613,12 @@ export default function Presencas() {
                     const stats = estatisticas.find((s) => s.alunoId === aluno.id);
                     return (
                       <TableRow key={aluno.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{aluno.nome_completo}</p>
-                            <p className="text-xs text-muted-foreground">{aluno.graduacao}</p>
-                          </div>
-                        </TableCell>
+                         <TableCell className="min-w-[250px] w-[250px]">
+                           <div className="whitespace-normal break-words">
+                             <p className="font-medium text-sm leading-tight">{aluno.nome_completo}</p>
+                             <p className="text-xs text-muted-foreground">{aluno.graduacao}</p>
+                           </div>
+                         </TableCell>
                         {weekDates.map((data) => {
                           const presente = getPresenca(aluno.id, data);
                           return (

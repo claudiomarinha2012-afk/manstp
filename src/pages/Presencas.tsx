@@ -139,17 +139,29 @@ export default function Presencas() {
 
     try {
       if (presencaExistente) {
-        // Atualizar presença existente
-        const { error } = await supabase
-          .from("presencas")
-          .update({ presente: !presencaExistente.presente })
-          .eq("turma_id", selectedTurma.id)
-          .eq("aluno_id", alunoId)
-          .eq("data", dataStr);
+        if (presencaExistente.presente) {
+          // Se está presente, marca como ausente
+          const { error } = await supabase
+            .from("presencas")
+            .update({ presente: false })
+            .eq("turma_id", selectedTurma.id)
+            .eq("aluno_id", alunoId)
+            .eq("data", dataStr);
 
-        if (error) throw error;
+          if (error) throw error;
+        } else {
+          // Se está ausente, apaga a marcação (volta ao estado inicial)
+          const { error } = await supabase
+            .from("presencas")
+            .delete()
+            .eq("turma_id", selectedTurma.id)
+            .eq("aluno_id", alunoId)
+            .eq("data", dataStr);
+
+          if (error) throw error;
+        }
       } else {
-        // Criar nova presença
+        // Se não tem marcação, cria como presente
         const { error } = await supabase
           .from("presencas")
           .insert({

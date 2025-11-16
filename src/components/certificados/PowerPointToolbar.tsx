@@ -80,6 +80,10 @@ interface PowerPointToolbarProps {
   onSelectTurma: (turmaId: string | null) => void;
   showRulers: boolean;
   onToggleRulers: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 export const PowerPointToolbar = ({
@@ -112,6 +116,10 @@ export const PowerPointToolbar = ({
   onSelectTurma,
   showRulers,
   onToggleRulers,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
 }: PowerPointToolbarProps) => {
   const fonts = [
     "Arial",
@@ -224,6 +232,25 @@ export const PowerPointToolbar = ({
           />
         </div>
         <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onUndo}
+            disabled={!canUndo}
+            title="Desfazer (Ctrl+Z)"
+          >
+            <Undo className="w-4 h-4" />
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onRedo}
+            disabled={!canRedo}
+            title="Refazer (Ctrl+Y)"
+          >
+            <Redo className="w-4 h-4" />
+          </Button>
+          <Separator orientation="vertical" className="h-6" />
           <Button variant="outline" size="sm" onClick={onPreview}>
             <Eye className="w-4 h-4 mr-2" />
             Visualizar

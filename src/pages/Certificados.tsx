@@ -63,6 +63,10 @@ export default function Certificados() {
   const [selectedTurmaId, setSelectedTurmaId] = useState<string | null>(null);
   const [showSlidesPanel, setShowSlidesPanel] = useState(true);
   const [showRulers, setShowRulers] = useState(false);
+  
+  // Undo/Redo state
+  const [history, setHistory] = useState<Slide[][]>([slides]);
+  const [historyIndex, setHistoryIndex] = useState(0);
 
   const activeSlide = slides.find((s) => s.id === activeSlideId) || slides[0];
   const orientation = activeSlide.orientation;
@@ -161,8 +165,36 @@ export default function Certificados() {
   };
 
   const setElements = (newElements: Element[]) => {
-    updateActiveSlide({ elements: newElements });
+    const updatedSlides = slides.map((slide) =>
+      slide.id === activeSlideId
+        ? { ...slide, elements: newElements }
+        : slide
+    );
+    
+    // Add to history
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push(updatedSlides);
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+    
+    setSlides(updatedSlides);
     setTimeout(updateSlideThumbnail, 100);
+  };
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      setHistoryIndex(historyIndex - 1);
+      setSlides(history[historyIndex - 1]);
+      toast.success("Ação desfeita");
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      setHistoryIndex(historyIndex + 1);
+      setSlides(history[historyIndex + 1]);
+      toast.success("Ação refeita");
+    }
   };
 
   const handleBackgroundChange = (file: File | null) => {
@@ -712,6 +744,10 @@ export default function Certificados() {
             onSelectTurma={setSelectedTurmaId}
             showRulers={showRulers}
             onToggleRulers={() => setShowRulers(!showRulers)}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            canUndo={historyIndex > 0}
+            canRedo={historyIndex < history.length - 1}
           />
         </div>
       </div>

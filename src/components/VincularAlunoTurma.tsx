@@ -4,8 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-
-import { UserPlus } from "lucide-react";
+import { UserPlus, Upload, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -24,6 +23,8 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
   const [open, setOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("Aguardando");
   const [loading, setLoading] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   
   const rankKeys = [
     "brigadeiro", "coronel", "capitao_mar_guerra", "tenente_coronel",
@@ -86,6 +87,31 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
     local_curso: "",
     sigla_curso: "",
   });
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("A foto deve ter no máximo 2MB");
+        return;
+      }
+      if (!file.type.includes('jpeg') && !file.type.includes('jpg')) {
+        toast.error("Apenas arquivos JPG são permitidos");
+        return;
+      }
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+  };
 
   const handleCreateAndVincular = async () => {
     if (!user) {
@@ -153,7 +179,10 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
         local_curso: "",
         sigla_curso: "",
       });
+      setPhotoFile(null);
+      setPhotoPreview(null);
       setSelectedStatus("Aguardando");
+      setOpen(false);
       onSuccess();
     } catch (error) {
       console.error("Erro ao criar e vincular aluno:", error);
@@ -171,13 +200,15 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
           Vincular Aluno
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl" onInteractOutside={(e) => e.preventDefault()}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Criar e Vincular Novo Aluno à Turma: {turmaNome}</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4 mt-4">
-            <div className="grid gap-4 md:grid-cols-2">
+          <div className="flex gap-6">
+            {/* Main Form Fields */}
+            <div className="flex-1 grid gap-4 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
                 <Label>Nome Completo *</Label>
                 <Input
@@ -341,18 +372,62 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
                 />
               </div>
             </div>
-            
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setOpen(false)}>
-                Cancelar
-              </Button>
-              <Button 
-                onClick={handleCreateAndVincular} 
-                disabled={loading || !newAlunoData.nome_completo || !newAlunoData.graduacao || !newAlunoData.tipo_militar}
-              >
-                {loading ? "Criando..." : "Criar e Vincular"}
-              </Button>
+
+            {/* Photo Upload Section */}
+            <div className="w-48 shrink-0">
+              <div className="space-y-2">
+                <Label>Foto 3x4</Label>
+                <div className="border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center h-64 bg-muted/20">
+                  {photoPreview ? (
+                    <div className="relative w-full h-full">
+                      <img
+                        src={photoPreview}
+                        alt="Foto do aluno"
+                        className="w-full h-full object-cover rounded"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6"
+                        onClick={handleRemovePhoto}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground mb-2">JPG até 2MB</p>
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          accept=".jpg,.jpeg"
+                          className="hidden"
+                          onChange={handlePhotoChange}
+                        />
+                        <span className="text-xs text-primary hover:underline">
+                          Selecionar foto
+                        </span>
+                      </label>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
+          </div>
+            
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleCreateAndVincular} 
+              disabled={loading || !newAlunoData.nome_completo || !newAlunoData.graduacao || !newAlunoData.tipo_militar}
+            >
+              {loading ? "Criando..." : "Criar e Vincular"}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

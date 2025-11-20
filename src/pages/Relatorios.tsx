@@ -203,7 +203,7 @@ const Relatorios = () => {
       pdf.text("Nome Completo", 14, yPos);
       pdf.text("Graduação", 70, yPos);
       pdf.text("Período", 105, yPos);
-      pdf.text("Nº Reg", 130, yPos);
+      pdf.text("OM DE REGISTRO", 130, yPos);
       pdf.text("Local Curso", 150, yPos);
       pdf.text("Status", 180, yPos);
       yPos += 6;
@@ -237,9 +237,10 @@ const Relatorios = () => {
         const periodoText = periodo.toString().length > 10 ? periodo.toString().substring(0, 10) : periodo.toString();
         pdf.text(periodoText, 105, yPos);
         
-        // Número de Registro (matricula)
-        const registro = aluno.matricula ? aluno.matricula.toString() : 'N/A';
-        pdf.text(registro, 130, yPos);
+        // OM DE REGISTRO (local_servico)
+        const omRegistro = aluno.local_servico || 'N/A';
+        const omRegistroText = omRegistro.toString().length > 20 ? omRegistro.toString().substring(0, 18) + '...' : omRegistro.toString();
+        pdf.text(omRegistroText, 130, yPos);
         
         // Local do Curso
         const localCurso = (aluno as any).local_curso || 'N/A';

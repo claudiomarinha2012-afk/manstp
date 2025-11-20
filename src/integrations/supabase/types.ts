@@ -103,6 +103,7 @@ export type Database = {
           created_at: string | null
           data_nascimento: string | null
           email: string | null
+          foto_url: string | null
           funcao: string | null
           graduacao: Database["public"]["Enums"]["graduacao_militar"]
           id: string
@@ -120,6 +121,7 @@ export type Database = {
           created_at?: string | null
           data_nascimento?: string | null
           email?: string | null
+          foto_url?: string | null
           funcao?: string | null
           graduacao: Database["public"]["Enums"]["graduacao_militar"]
           id?: string
@@ -137,6 +139,7 @@ export type Database = {
           created_at?: string | null
           data_nascimento?: string | null
           email?: string | null
+          foto_url?: string | null
           funcao?: string | null
           graduacao?: Database["public"]["Enums"]["graduacao_militar"]
           id?: string

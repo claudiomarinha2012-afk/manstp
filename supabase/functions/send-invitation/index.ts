@@ -21,6 +21,11 @@ function generateSecureToken(): string {
   return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
+// Rate limiting map
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT = 10; // 10 invitations per hour
+const RATE_WINDOW = 60 * 60 * 1000; // 1 hour in milliseconds
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -56,6 +61,26 @@ serve(async (req) => {
 
     if (roleError || roleData?.role !== 'coordenador') {
       throw new Error('Apenas coordenadores podem enviar convites');
+    }
+
+    // Rate limiting check
+    const now = Date.now();
+    const userLimit = rateLimitMap.get(currentUser.id);
+    
+    if (userLimit) {
+      if (now < userLimit.resetTime) {
+        if (userLimit.count >= RATE_LIMIT) {
+          return new Response(
+            JSON.stringify({ error: 'Limite de convites excedido. Tente novamente mais tarde.' }),
+            { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        userLimit.count++;
+      } else {
+        rateLimitMap.set(currentUser.id, { count: 1, resetTime: now + RATE_WINDOW });
+      }
+    } else {
+      rateLimitMap.set(currentUser.id, { count: 1, resetTime: now + RATE_WINDOW });
     }
 
     // Validar dados do convite

@@ -22,6 +22,12 @@ interface Aluno {
   telefone: string | null;
   email: string | null;
   observacoes: string | null;
+  foto_url?: string | null;
+  data_nascimento?: string | null;
+  funcao?: string | null;
+  matricula?: number;
+  whatsapp?: string | null;
+  local_servico?: string;
 }
 
 interface AlunoFormProps {
@@ -53,14 +59,24 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
     telefone: string;
     email: string;
     observacoes: string;
+    foto_url: string;
+    data_nascimento: string;
+    funcao: string;
+    matricula: number;
+    whatsapp: string;
   }>({
     nome_completo: aluno?.nome_completo || "",
     graduacao: aluno?.graduacao || "",
     tipo_militar: aluno?.tipo_militar || "",
-    local_servico: (aluno as any)?.local_servico || "",
+    local_servico: aluno?.local_servico || "",
     telefone: aluno?.telefone || "",
     email: aluno?.email || "",
     observacoes: aluno?.observacoes || "",
+    foto_url: aluno?.foto_url || "",
+    data_nascimento: aluno?.data_nascimento || "",
+    funcao: aluno?.funcao || "",
+    matricula: aluno?.matricula || 0,
+    whatsapp: aluno?.whatsapp || "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -103,6 +119,11 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
           telefone: "",
           email: "",
           observacoes: "",
+          foto_url: "",
+          data_nascimento: "",
+          funcao: "",
+          matricula: 0,
+          whatsapp: "",
         });
       }
     } catch (error) {
@@ -216,6 +237,45 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="whatsapp">WhatsApp</Label>
+              <Input
+                id="whatsapp"
+                type="tel"
+                value={formData.whatsapp}
+                onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="matricula">Matrícula</Label>
+              <Input
+                id="matricula"
+                type="number"
+                value={formData.matricula || ""}
+                onChange={(e) => setFormData({ ...formData, matricula: e.target.value ? parseInt(e.target.value) : 0 })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="funcao">Função</Label>
+              <Input
+                id="funcao"
+                value={formData.funcao}
+                onChange={(e) => setFormData({ ...formData, funcao: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="data_nascimento">Data de Nascimento</Label>
+              <Input
+                id="data_nascimento"
+                type="date"
+                value={formData.data_nascimento}
+                onChange={(e) => setFormData({ ...formData, data_nascimento: e.target.value })}
+              />
+            </div>
+
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="email">{t("email")}</Label>
               <Input
@@ -223,6 +283,17 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="foto_url">URL da Foto</Label>
+              <Input
+                id="foto_url"
+                type="url"
+                value={formData.foto_url}
+                onChange={(e) => setFormData({ ...formData, foto_url: e.target.value })}
+                placeholder="https://exemplo.com/foto.jpg"
               />
             </div>
 

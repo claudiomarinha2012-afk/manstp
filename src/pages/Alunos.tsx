@@ -22,6 +22,7 @@ import { AlunoNotasDialog } from "@/components/AlunoNotasDialog";
 import { useTranslation } from "react-i18next";
 import { useReactToPrint } from "react-to-print";
 import { PrintableList } from "@/components/PrintableList";
+import { PrintableStudentForm } from "@/components/PrintableStudentForm";
 
 interface Aluno {
   id: string;
@@ -32,6 +33,11 @@ interface Aluno {
   telefone: string | null;
   email: string | null;
   observacoes: string | null;
+  foto_url?: string | null;
+  data_nascimento?: string | null;
+  funcao?: string | null;
+  matricula?: number;
+  whatsapp?: string | null;
 }
 
 export default function Alunos() {
@@ -44,10 +50,17 @@ export default function Alunos() {
   const [notasDialogOpen, setNotasDialogOpen] = useState(false);
   const [selectedAluno, setSelectedAluno] = useState<{ id: string; nome: string } | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
+  const printStudentRef = useRef<HTMLDivElement>(null);
+  const [selectedStudentForPrint, setSelectedStudentForPrint] = useState<Aluno | null>(null);
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `Lista_Alunos_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}`,
+  });
+
+  const handlePrintStudent = useReactToPrint({
+    contentRef: printStudentRef,
+    documentTitle: `Ficha_Aluno_${selectedStudentForPrint?.nome_completo || 'desconhecido'}_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}`,
   });
 
   // Mapeamento reverso de graduações portuguesas para chaves de tradução
@@ -289,6 +302,18 @@ export default function Alunos() {
                             <StickyNote className="h-4 w-4" />
                             <span className="hidden sm:inline">Notas</span>
                           </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedStudentForPrint(aluno);
+                              setTimeout(() => handlePrintStudent(), 100);
+                            }}
+                            className="gap-2"
+                          >
+                            <Printer className="h-4 w-4" />
+                            <span className="hidden sm:inline">Imprimir</span>
+                          </Button>
                           <AlunoForm aluno={aluno} onSuccess={fetchAlunos} />
                           <DeleteDialog
                             table="alunos"
@@ -337,6 +362,16 @@ export default function Alunos() {
             </TableRow>
           )}
         />
+      </div>
+
+      {/* Printable student form - hidden on screen */}
+      <div className="hidden">
+        {selectedStudentForPrint && (
+          <PrintableStudentForm
+            ref={printStudentRef}
+            student={selectedStudentForPrint}
+          />
+        )}
       </div>
     </div>
   );

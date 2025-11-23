@@ -155,7 +155,7 @@ const Relatorios = () => {
 
       if (turmaError) throw turmaError;
 
-      const pdf = new jsPDF();
+      const pdf = new jsPDF('landscape');
       const pageWidth = pdf.internal.pageSize.getWidth();
       let yPos = 20;
 
@@ -197,24 +197,43 @@ const Relatorios = () => {
       pdf.text(`Total de Alunos: ${alunosTurma.length}`, 20, yPos);
       yPos += 10;
 
-      // Cabeçalhos da tabela - Layout em modo paisagem
-      pdf.setFontSize(10);
+      // Definir larguras das colunas com base na largura da página (modo paisagem)
+      const pageMargin = 14;
+      const totalWidth = pageWidth - (pageMargin * 2);
+      const colWidths = {
+        nome: totalWidth * 0.32,      // Nome Completo
+        graduacao: totalWidth * 0.14, // Graduação
+        omRegistro: totalWidth * 0.21, // OM DE REGISTRO
+        localCurso: totalWidth * 0.21, // Local Curso
+        status: totalWidth * 0.12      // Status
+      };
+
+      // Definir posições iniciais das colunas
+      const colPositions = {
+        nome: pageMargin,
+        graduacao: pageMargin + colWidths.nome,
+        omRegistro: pageMargin + colWidths.nome + colWidths.graduacao,
+        localCurso: pageMargin + colWidths.nome + colWidths.graduacao + colWidths.omRegistro,
+        status: pageMargin + colWidths.nome + colWidths.graduacao + colWidths.omRegistro + colWidths.localCurso
+      };
+
+      // Cabeçalhos da tabela
+      pdf.setFontSize(9);
       pdf.setFont("helvetica", "bold");
-      pdf.text("Nome Completo", 14, yPos);
-      pdf.text("Graduação", 70, yPos);
-      pdf.text("Período", 105, yPos);
-      pdf.text("OM DE REGISTRO", 130, yPos);
-      pdf.text("Local Curso", 150, yPos);
-      pdf.text("Status", 180, yPos);
+      pdf.text("Nome Completo", colPositions.nome, yPos);
+      pdf.text("Graduação", colPositions.graduacao + 2, yPos);
+      pdf.text("OM DE REGISTRO", colPositions.omRegistro + 2, yPos);
+      pdf.text("Local Curso", colPositions.localCurso + 2, yPos);
+      pdf.text("Status", colPositions.status + 8, yPos);
       yPos += 6;
 
       pdf.setLineWidth(0.5);
-      pdf.line(14, yPos, pageWidth - 14, yPos);
+      pdf.line(pageMargin, yPos, pageWidth - pageMargin, yPos);
       yPos += 6;
 
       // Listar alunos
       pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(9);
+      pdf.setFontSize(8);
 
       alunosTurma.forEach((aluno, index) => {
         if (yPos > 270) {
@@ -224,34 +243,39 @@ const Relatorios = () => {
 
         // Nome completo
         const nome = aluno.nome_completo;
-        const nomeLines = pdf.splitTextToSize(nome, 52);
-        pdf.text(nomeLines[0], 14, yPos);
+        const nomeLines = pdf.splitTextToSize(nome, colWidths.nome - 2);
+        pdf.text(nomeLines, colPositions.nome + 1, yPos);
         
         // Graduação
         const grad = aluno.graduacao;
-        const gradLines = pdf.splitTextToSize(grad, 32);
-        pdf.text(gradLines[0], 70, yPos);
-        
-        // Período (data_duracao_curso)
-        const periodo = (aluno as any).data_duracao_curso || 'N/A';
-        const periodoText = periodo.toString().length > 10 ? periodo.toString().substring(0, 10) : periodo.toString();
-        pdf.text(periodoText, 105, yPos);
+        const gradLines = pdf.splitTextToSize(grad, colWidths.graduacao - 2);
+        pdf.text(gradLines, colPositions.graduacao + 1, yPos);
         
         // OM DE REGISTRO (local_servico)
         const omRegistro = aluno.local_servico || 'N/A';
-        const omRegistroText = omRegistro.toString().length > 20 ? omRegistro.toString().substring(0, 18) + '...' : omRegistro.toString();
-        pdf.text(omRegistroText, 130, yPos);
+        const omRegistroLines = pdf.splitTextToSize(omRegistro.toString(), colWidths.omRegistro - 2);
+        pdf.text(omRegistroLines, colPositions.omRegistro + 1, yPos);
         
         // Local do Curso
         const localCurso = (aluno as any).local_curso || 'N/A';
-        const localLines = pdf.splitTextToSize(localCurso, 26);
-        pdf.text(localLines[0], 150, yPos);
+        const localLines = pdf.splitTextToSize(localCurso, colWidths.localCurso - 2);
+        pdf.text(localLines, colPositions.localCurso + 1, yPos);
         
         // Status
         const status = (aluno as any).status || 'N/A';
-        pdf.text(status, 180, yPos);
+        const statusLines = pdf.splitTextToSize(status, colWidths.status - 2);
+        pdf.text(statusLines, colPositions.status + 1, yPos);
         
-        yPos += 7;
+        // Calcular altura necessária para a linha
+        const maxHeight = Math.max(
+          nomeLines.length * 5,
+          gradLines.length * 5,
+          omRegistroLines.length * 5,
+          localLines.length * 5,
+          statusLines.length * 5
+        );
+        
+        yPos += maxHeight + 2;
       });
 
       // Rodapé

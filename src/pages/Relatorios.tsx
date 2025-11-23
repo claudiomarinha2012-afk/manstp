@@ -201,11 +201,10 @@ const Relatorios = () => {
       const pageMargin = 14;
       const totalWidth = pageWidth - (pageMargin * 2);
       const colWidths = {
-        nome: totalWidth * 0.28,      // Nome Completo
-        graduacao: totalWidth * 0.12, // Graduação
-        periodo: totalWidth * 0.12,   // Período
-        omRegistro: totalWidth * 0.18, // OM DE REGISTRO
-        localCurso: totalWidth * 0.18, // Local Curso
+        nome: totalWidth * 0.32,      // Nome Completo
+        graduacao: totalWidth * 0.14, // Graduação
+        omRegistro: totalWidth * 0.21, // OM DE REGISTRO
+        localCurso: totalWidth * 0.21, // Local Curso
         status: totalWidth * 0.12      // Status
       };
 
@@ -213,10 +212,9 @@ const Relatorios = () => {
       const colPositions = {
         nome: pageMargin,
         graduacao: pageMargin + colWidths.nome,
-        periodo: pageMargin + colWidths.nome + colWidths.graduacao,
-        omRegistro: pageMargin + colWidths.nome + colWidths.graduacao + colWidths.periodo,
-        localCurso: pageMargin + colWidths.nome + colWidths.graduacao + colWidths.periodo + colWidths.omRegistro,
-        status: pageMargin + colWidths.nome + colWidths.graduacao + colWidths.periodo + colWidths.omRegistro + colWidths.localCurso
+        omRegistro: pageMargin + colWidths.nome + colWidths.graduacao,
+        localCurso: pageMargin + colWidths.nome + colWidths.graduacao + colWidths.omRegistro,
+        status: pageMargin + colWidths.nome + colWidths.graduacao + colWidths.omRegistro + colWidths.localCurso
       };
 
       // Cabeçalhos da tabela
@@ -224,7 +222,6 @@ const Relatorios = () => {
       pdf.setFont("helvetica", "bold");
       pdf.text("Nome Completo", colPositions.nome, yPos);
       pdf.text("Graduação", colPositions.graduacao + 2, yPos);
-      pdf.text("Período", colPositions.periodo + 2, yPos);
       pdf.text("OM DE REGISTRO", colPositions.omRegistro + 2, yPos);
       pdf.text("Local Curso", colPositions.localCurso + 2, yPos);
       pdf.text("Status", colPositions.status + 8, yPos);
@@ -254,11 +251,6 @@ const Relatorios = () => {
         const gradLines = pdf.splitTextToSize(grad, colWidths.graduacao - 2);
         pdf.text(gradLines, colPositions.graduacao + 1, yPos);
         
-        // Período (data_duracao_curso)
-        const periodo = (aluno as any).data_duracao_curso || 'N/A';
-        const periodoLines = pdf.splitTextToSize(periodo.toString(), colWidths.periodo - 2);
-        pdf.text(periodoLines, colPositions.periodo + 1, yPos);
-        
         // OM DE REGISTRO (local_servico)
         const omRegistro = aluno.local_servico || 'N/A';
         const omRegistroLines = pdf.splitTextToSize(omRegistro.toString(), colWidths.omRegistro - 2);
@@ -278,7 +270,6 @@ const Relatorios = () => {
         const maxHeight = Math.max(
           nomeLines.length * 5,
           gradLines.length * 5,
-          periodoLines.length * 5,
           omRegistroLines.length * 5,
           localLines.length * 5,
           statusLines.length * 5

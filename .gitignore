@@ -1,24 +1,31 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Examples 1:
+# Project with source files only
+# Expected output: (empty - output nothing)
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# Example 2:
+# Project with artifacts
+# Expected output:
+# # Compiled and build artifacts
+# *.pyc
+# __pycache__/
+# *.o
+# *.obj
+# dist/
+# build/
+# # Dependencies
+# .venv/
+# venv/
+# node_modules/
+# # Logs and temp files
+# *.log
+# *.tmp
+# *.swp
+# # Environment
+# .env
+# .env.local
+# .env.*
+# # Editors
+# .vscode/
+# .idea/
+# # Original rules preserved
+# *.log

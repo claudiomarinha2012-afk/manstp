@@ -264,8 +264,8 @@ export default function Turmas() {
           pdf.text(`Curso: ${aluno.sigla_curso}`, pageWidth / 2, 165, { align: "center" });
         }
 
-        if (aluno.local_curso) {
-          pdf.text(`Local: ${aluno.local_curso}`, pageWidth / 2, 180, { align: "center" });
+        if (aluno.local_servico) {
+          pdf.text(`Local: ${aluno.local_servico}`, pageWidth / 2, 180, { align: "center" });
         }
 
         // Data de emissão

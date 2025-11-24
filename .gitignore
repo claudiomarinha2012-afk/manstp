@@ -1,106 +1,76 @@
 ```
-# Dependencies
-node_modules/
-
-# Build artifacts
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
 dist/
 build/
-*.tsbuildinfo
+target/
 
-# Environment
+# Dependencies
+node_modules/
+venv/
+.venv/
 .env
 .env.local
-.env.*
+*.env.*
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
 
 # Editors
 .vscode/
 .idea/
-*.swp
-*.swo
-
-# Logs
-*.log
-
-# Coverage
-coverage/
-htmlcov/
-*.coverage
-
-# Temp files
-*.tmp
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Python (if present)
-__pycache__/
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Python specific
 *.pyc
+__pycache__/
 *.pyo
 *.pyd
 .Python
-venv/
-.venv/
-pip-log.txt
-pip-delete-this-directory.txt
-
-# MyPy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pytest
+*.so
 .pytest_cache/
+.mypy_cache/
 
-# Coverage
-.coverage
-.coverage.*
-htmlcov/
+# Node specific
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+node_modules/
 
-# Distribution / packaging
-.Python
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Testing
-junit.xml
-coverage.xml
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Logs
-logs/
-*.log
-
-# Local configuration
-*.local
-
-# Runtime data
-pids/
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage directory
-coverage/
-
-# Debug
-debug.log
-*.trace
-
-# System
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+# Compressed files
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
 ```

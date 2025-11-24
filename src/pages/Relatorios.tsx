@@ -242,8 +242,8 @@ const Relatorios = () => {
         const omRegistroText = omRegistro.toString().length > 20 ? omRegistro.toString().substring(0, 18) + '...' : omRegistro.toString();
         pdf.text(omRegistroText, 130, yPos);
         
-        // Local do Curso
-        const localCurso = (aluno as any).local_curso || 'N/A';
+        // Local do Curso - deve ser preenchido com o local que está na ficha do aluno
+        const localCurso = aluno.local_servico || 'N/A';
         const localLines = pdf.splitTextToSize(localCurso, 26);
         pdf.text(localLines[0], 150, yPos);
         
